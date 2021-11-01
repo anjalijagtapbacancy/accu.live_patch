@@ -1,0 +1,4 @@
+#Mon Nov 01 11:54:14 IST 2021
+base.0=/Users/apple/Desktop/Work/flutter_bluetooth_connection/build/app/intermediates/dex/release/minifyReleaseWithR8/classes.dex
+path.0=classes.dex
+renamed.0=classes.dex
