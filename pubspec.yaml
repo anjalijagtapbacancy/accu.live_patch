@@ -21,11 +21,15 @@ environment:
   sdk: ">=2.12.0 <3.0.0"
 
 dependencies:
+  csv: ^5.0.0
   cupertino_icons: ^1.0.2
+  ext_storage: 
   fl_chart: ^0.40.2
   flutter:
     sdk: flutter
   flutter_blue: ^0.8.0
+  path_provider: null
+  permission_handler: null
 
 dev_dependencies:
   flutter_test:
