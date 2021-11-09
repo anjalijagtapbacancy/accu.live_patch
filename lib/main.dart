@@ -2,27 +2,38 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'package:csv/csv.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bluetooth_connection/provider_ecg_data.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:ext_storage/ext_storage.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'package:flutter_bluetooth_connection/linear_chart.dart';
+import 'package:provider/provider.dart';
+import 'package:share/share.dart';
 
-void main() => runApp(MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations(
+    [DeviceOrientation.portraitUp],
+  );
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   @override
-  Widget build(BuildContext context) => MaterialApp(
-        title: 'BLE Demo',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
+  Widget build(BuildContext context) => MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (context) => ProviderEcgData()),
+        ],
+        child: MaterialApp(
+          title: 'BLE Connection',
+          theme: ThemeData(
+            primarySwatch: Colors.blue,
+          ),
+          home: MyHomePage(title: 'BLE Connection'),
         ),
-        home: MyHomePage(title: 'Flutter BLE Demo'),
-        // home: LineChartPage(
-        //   graphData: [6596, 7141, 8221, 7130, 6529, 7265, 8242, 7278, 6554, 7327],
-        // ),
       );
 }
 
@@ -66,6 +77,17 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
+
+    widget.flutterBlue.isOn.then((value) {
+      print("Mirinda isOn ${value.toString()}");
+      if (value) {
+      } else {}
+    });
+
+    widget.flutterBlue.isAvailable.then((value) {
+      print("Mirinda isAvailable ${value.toString()}");
+    });
+
     widget.flutterBlue.connectedDevices.asStream().listen((List<BluetoothDevice> devices) {
       print("Mirinda devices ${devices.length}");
 
@@ -140,59 +162,17 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   ListView _buildConnectDeviceView() {
-    List<Container> containers = [];
-
     for (BluetoothService service in _services!) {
-      List<Widget> characteristicsWidget = [];
-
       for (BluetoothCharacteristic characteristic in service.characteristics) {
         if (characteristic.uuid.toString() == "0000abf4-0000-1000-8000-00805f9b34fb") {
           readCharacteristic = characteristic;
           try {
-            // print("XXXX " + widget.readValues[characteristic.uuid].toString());
-            // print("YYY " + widget.readValues[readCharacteristic!.uuid].toString());
-            // print("ZZZ " + utf8.decode(widget.readValues[characteristic.uuid]!, allowMalformed: true));
-
             generateGraphValuesList(widget.readValues[readCharacteristic!.uuid]);
           } catch (err) {
             print(" caught err ${err.toString()}");
           }
         }
-
-        // if(characteristic.uuid.toString() == "6e400003-b5a3-f393-e0a9-e50e24dcca9e"){
-        //   writeCharacteristic = characteristic;
-        // }
-
-        characteristicsWidget.add(
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Column(
-              children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    Text(characteristic.uuid.toString(), style: TextStyle(fontWeight: FontWeight.bold)),
-                  ],
-                ),
-                // Row(
-                //   children: <Widget>[
-                //     ..._buildReadWriteNotifyButton(characteristic),
-                //   ],
-                // ),
-
-                // Text('Decoded Value: ' +
-                //     utf8.decode([196, 25, 229, 27, 29, 32, 218, 27, 129, 25, 97, 28, 50, 32, 110, 28, 154, 25, 159, 28])),
-
-                Divider(),
-              ],
-            ),
-          ),
-        );
       }
-      containers.add(
-        Container(
-          child: ExpansionTile(title: Text(service.uuid.toString()), children: characteristicsWidget),
-        ),
-      );
     }
 
     return ListView(
@@ -202,7 +182,7 @@ class _MyHomePageState extends State<MyHomePage> {
           padding: const EdgeInsets.all(8.0),
           child: Text('Value: ' + decimalList.toString()),
         ),
-        ...containers,
+        // ...containers,
         Visibility(
             visible: decimalList.isNotEmpty,
             child: AspectRatio(
@@ -317,6 +297,17 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
         actions: [
           Visibility(
+            visible: decimalList.isNotEmpty,
+            child: TextButton(
+                child: Text(
+                  "Export",
+                  style: TextStyle(color: Colors.white),
+                ),
+                onPressed: () {
+                  _generateCsvFile();
+                }),
+          ),
+          Visibility(
             visible: _connectedDevice != null,
             child: TextButton(
                 onPressed: () async {
@@ -393,29 +384,32 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  void getCsv() async {
-    //create an element rows of type list of list. All the above data set are stored in associate list
-    //Let associate be a model class with attributes name,gender and age and associateList be a list of associate model class.
-    List<List<dynamic>> rows = [];
-    var associateList = [];
+  void _generateCsvFile() async {
+    Map<Permission, PermissionStatus> statuses = await [
+      Permission.storage,
+    ].request();
 
-    for (int i = 0; i < associateList.length; i++) {
-      //row refer to each column of a row in csv file and rows refer to each row in a file
+    List<dynamic> associateList = [
+      {"number": 1, "lat": "14.97534313396318", "lon": "101.22998536005622"},
+      {"number": 2, "lat": "14.97534313396318", "lon": "101.22998536005622"},
+      {"number": 3, "lat": "14.97534313396318", "lon": "101.22998536005622"},
+      {"number": 4, "lat": "14.97534313396318", "lon": "101.22998536005622"}
+    ];
+
+    List<List<dynamic>> rows = [];
+
+    for (int i = 0; i < decimalList.length; i++) {
       List<dynamic> row = [];
-      row.add("graph_data");
+      row.add(decimalList[i]);
       rows.add(row);
     }
 
-    if (await Permission.storage.request().isGranted) {
-      // store file in documents folder
-      String dir = (await getExternalStorageDirectory())!.absolute.path + "/documents";
-      var file = "$dir";
-      print("FILE " + file);
-      File f = new File(file + "filename.csv");
-
-      // convert rows to String and write as csv file
-      String csv = const ListToCsvConverter().convert(rows);
-      f.writeAsString(csv);
-    }
+    String csvData = ListToCsvConverter().convert(rows);
+    final String directory = (await getApplicationSupportDirectory()).path;
+    final path = "$directory/csv_ecg_data.csv";
+    print(path);
+    final File file = File(path);
+    await file.writeAsString(csvData);
+    Share.shareFiles(['${file.path}'], text: 'Exported csv');
   }
 }
