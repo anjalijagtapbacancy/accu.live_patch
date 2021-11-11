@@ -1,4 +1,0 @@
-#Wed Nov 10 10:04:53 IST 2021
-base.0=/Users/apple/Desktop/Work/BLE-Connection/build/app/intermediates/dex/release/minifyReleaseWithR8/classes.dex
-path.0=classes.dex
-renamed.0=classes.dex

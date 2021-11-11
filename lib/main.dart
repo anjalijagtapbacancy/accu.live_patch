@@ -4,7 +4,9 @@ import 'dart:math';
 import 'package:csv/csv.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bluetooth_connection/progressbar.dart';
 import 'package:flutter_bluetooth_connection/provider_ecg_data.dart';
+import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -17,8 +19,10 @@ import 'package:share/share.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setPreferredOrientations(
-    [DeviceOrientation.portraitUp],
+    [DeviceOrientation.landscapeRight],
   );
+  Directory directory = await getApplicationDocumentsDirectory();
+  Hive.init(directory.path);
   runApp(MyApp());
 }
 
@@ -49,19 +53,19 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final _writeController = TextEditingController();
   List<BluetoothService>? _services;
-  var isServiceStarted = false;
-  // writeCharacteristic
   var sub;
   List<Color> gradientColors = [
     const Color(0xff23b6e6),
     const Color(0xff02d39a),
   ];
-  List<String> hexList = [];
-  List<double> decimalList = [];
 
-  List<FlSpot> spotsListData = [];
+  List<String> mainHexList = [];
+  List<double> mainDecimalList = [];
+
+  List<String> tempHexList = [];
+  List<double> tempDecimalList = [];
+
   ProviderEcgData? providerEcgDataRead;
   ProviderEcgData? providerEcgDataWatch;
 
@@ -77,29 +81,29 @@ class _MyHomePageState extends State<MyHomePage> {
       providerEcgDataRead = context.read<ProviderEcgData>();
 
       widget.flutterBlue.isOn.then((value) {
-        print("Mirinda isOn ${value.toString()}");
+        print("  isOn ${value.toString()}");
         if (value) {
         } else {}
       });
 
       widget.flutterBlue.isAvailable.then((value) {
-        print("Mirinda isAvailable ${value.toString()}");
+        print(" isAvailable ${value.toString()}");
       });
 
       widget.flutterBlue.connectedDevices.asStream().listen((List<BluetoothDevice> devices) {
-        print("Mirinda devices ${devices.length}");
+        print("  devices ${devices.length}");
 
         for (BluetoothDevice device in devices) {
-          print("Mirinda connectedDevices ${device}");
+          print("  connectedDevices ${device}");
 
           _addDeviceTolist(device);
         }
       });
       widget.flutterBlue.scanResults.listen((List<ScanResult> results) {
-        print("Mirinda scan result length devices ${results.length}");
+        print("  scan result length devices ${results.length}");
 
         for (ScanResult result in results) {
-          print("Mirinda scanResults ${result.device}");
+          print("  scanResults ${result.device}");
           _addDeviceTolist(result.device);
         }
       });
@@ -114,8 +118,10 @@ class _MyHomePageState extends State<MyHomePage> {
         Container(
           height: 50,
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               Expanded(
+                flex: 4,
                 child: Column(
                   children: <Widget>[
                     Text(device.name == '' ? '(unknown device)' : device.name),
@@ -123,27 +129,32 @@ class _MyHomePageState extends State<MyHomePage> {
                   ],
                 ),
               ),
-              FlatButton(
-                color: Colors.blue,
-                child: Text(
-                  'Connect',
-                  style: TextStyle(color: Colors.white),
+              Expanded(
+                // flex: 2,
+                child: FlatButton(
+                  color: Colors.blue,
+                  child: Text(
+                    'Connect',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  onPressed: () async {
+                    providerEcgDataWatch!.setLoading(true);
+                    widget.flutterBlue.stopScan();
+                    try {
+                      await device.connect();
+                      await device.requestMtu(512);
+                    } catch (e) {
+                      // if (e.code != 'already_connected') {
+                      //   throw e;
+                      // }
+                      print(e.toString());
+                    } finally {
+                      _services = await device.discoverServices();
+                    }
+                    providerEcgDataWatch!.setConnectedDevice(device);
+                    providerEcgDataWatch!.setLoading(false);
+                  },
                 ),
-                onPressed: () async {
-                  widget.flutterBlue.stopScan();
-                  try {
-                    await device.connect();
-                    await device.requestMtu(512);
-                  } catch (e) {
-                    // if (e.code != 'already_connected') {
-                    //   throw e;
-                    // }
-                    print(e.toString());
-                  } finally {
-                    _services = await device.discoverServices();
-                  }
-                  providerEcgDataWatch!.setConnectedDevice(device);
-                },
               ),
             ],
           ),
@@ -163,8 +174,9 @@ class _MyHomePageState extends State<MyHomePage> {
     for (BluetoothService service in _services!) {
       for (BluetoothCharacteristic characteristic in service.characteristics) {
         if (characteristic.uuid.toString() == "0000abf4-0000-1000-8000-00805f9b34fb") {
-          providerEcgDataWatch!.setReadCharacteristic(characteristic);
           try {
+            providerEcgDataWatch!.setReadCharacteristic(characteristic);
+
             generateGraphValuesList(providerEcgDataWatch!.readValues[characteristic.uuid]);
           } catch (err) {
             print(" caught err ${err.toString()}");
@@ -178,9 +190,9 @@ class _MyHomePageState extends State<MyHomePage> {
       children: <Widget>[
         // ...containers,
         Visibility(
-            visible: decimalList.isNotEmpty,
+            visible: tempDecimalList.isNotEmpty,
             child: AspectRatio(
-              aspectRatio: 1.1,
+              aspectRatio: 6 / (2.4),
               child: Container(
                 decoration: const BoxDecoration(
                     borderRadius: BorderRadius.all(
@@ -229,7 +241,9 @@ class _MyHomePageState extends State<MyHomePage> {
         bottomTitles: SideTitles(
           showTitles: true,
           // reservedSize: 22,
-          // interval: decimalList.isNotEmpty ? decimalList.length / 100 : 100,
+          // interval: providerEcgDataWatch!.savedLocalDataList.isNotEmpty
+          //     ? providerEcgDataWatch!.savedLocalDataList.length / 100
+          //     : 100,
           interval: 100,
           getTextStyles: (context, value) =>
               const TextStyle(color: Color(0xff68737d), fontWeight: FontWeight.bold, fontSize: 13),
@@ -252,7 +266,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           getTitles: (value) {
             print(
-                "getTitles max: ${decimalList.reduce(max)} interval: ${decimalList.reduce(max) / (decimalList.length)}");
+                "getTitles max: ${tempDecimalList.reduce(max)} interval: ${tempDecimalList.reduce(max) / (tempDecimalList.length)}");
             return value.toString();
           },
           reservedSize: 50,
@@ -260,8 +274,8 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
       borderData: FlBorderData(show: true, border: Border.all(color: const Color(0xff37434d), width: 1)),
-      minX: spotsListData.isNotEmpty ? spotsListData.first.x : 0,
-      maxX: spotsListData.isNotEmpty ? spotsListData.last.x : 0,
+      minX: providerEcgDataWatch!.tempSpotsListData.isNotEmpty ? providerEcgDataWatch!.tempSpotsListData.first.x : 0,
+      maxX: providerEcgDataWatch!.tempSpotsListData.isNotEmpty ? providerEcgDataWatch!.tempSpotsListData.last.x + 1 : 0,
 
       // maxX: double.parse(spotsListData.length.toString()),
       // minY: decimalList.isNotEmpty ? decimalList.reduce(min) : 0,
@@ -270,7 +284,7 @@ class _MyHomePageState extends State<MyHomePage> {
       maxY: 18000,
       lineBarsData: [
         LineChartBarData(
-          spots: spotsListData,
+          spots: providerEcgDataWatch!.tempSpotsListData,
           isCurved: true, // graph shape
           colors: gradientColors,
           barWidth: 1, //curve border width
@@ -303,8 +317,8 @@ class _MyHomePageState extends State<MyHomePage> {
           title: Text(widget.title),
           actions: [
             Visibility(
-              // visible: decimalList.isNotEmpty,
-              visible: false,
+              visible: tempDecimalList.isNotEmpty,
+              // visible: false,
               child: TextButton(
                   child: Text(
                     "Export",
@@ -318,19 +332,23 @@ class _MyHomePageState extends State<MyHomePage> {
               visible: providerEcgDataWatch!.connectedDevice != null,
               child: TextButton(
                   onPressed: () async {
-                    if (isServiceStarted) {
+                    if (providerEcgDataWatch!.isServiceStarted) {
+                      providerEcgDataWatch!.setLoading(true);
                       print("stop service");
-                      isServiceStarted = false;
+                      providerEcgDataWatch!.setServiceStarted(false);
 
                       //stop service
                       //    writeCharacteristic!.write( utf8.encode("0"));
                       //     if(sub!=null){
                       //    sub.cancel();
-
                       //  }
 
                       await providerEcgDataWatch!.readCharacteristic!.setNotifyValue(false);
+                      providerEcgDataWatch!.setLoading(false);
                     } else {
+                      providerEcgDataWatch!.setLoading(true);
+
+                      await providerEcgDataWatch!.clearStoreDataToLocal();
                       // start service
                       //  writeCharacteristic!.write(utf8.encode("1"));
                       print("start service");
@@ -339,9 +357,11 @@ class _MyHomePageState extends State<MyHomePage> {
                         sub.cancel();
                       }
 
-                      isServiceStarted = true;
+                      providerEcgDataWatch!.setServiceStarted(true);
 
                       await providerEcgDataWatch!.readCharacteristic!.setNotifyValue(true);
+                      providerEcgDataWatch!.setLoading(false);
+
                       await Future.delayed(Duration(seconds: 2));
 
                       sub = providerEcgDataWatch!.readCharacteristic!.value.listen((value) {
@@ -352,59 +372,71 @@ class _MyHomePageState extends State<MyHomePage> {
                     }
                   },
                   child: Text(
-                    isServiceStarted ? "Stop" : "Start",
+                    providerEcgDataWatch!.isServiceStarted ? "Stop" : "Start",
                     style: TextStyle(color: Colors.white),
                   )),
             )
           ],
         ),
-        body: _buildView());
+        body: Stack(
+          children: [
+            _buildView(),
+            providerEcgDataWatch!.isLoading ? ProgressBar() : Offstage(),
+          ],
+        ));
   }
 
-  void generateGraphValuesList(List<int>? valueList) {
+  // for (int k = decimalList.length; k > 0; k--) {
+  //   if (k == decimalList.length - 5) {
+  //     break;
+  //   }
+
+  void generateGraphValuesList(List<int>? valueList) async {
+    // await Future.delayed(Duration(microseconds: 200));
+
     if (valueList != null) {
       print("VVV valueList ${valueList.toString()}");
-      if (hexList.length >= 500) {
-        hexList.clear();
-      }
-      for (int i = 0; i < valueList.length; i++) {
-        hexList.add(valueList[i].toRadixString(16).padLeft(2, '0'));
-      }
-      print("VVV hexList ${hexList.toString()}");
 
-      if (decimalList.length >= 500) {
-        decimalList.clear();
+      // tempValueList = valueList.getRange(valueList.length - 10, valueList.length).toList();
+
+      for (int i = 0; i < valueList.length; i++) {
+        mainHexList.add(valueList[i].toRadixString(16).padLeft(2, '0'));
       }
-      for (int h = 0; h < hexList.length; h++) {
+      tempHexList = mainHexList.getRange(mainHexList.length - 1000, mainHexList.length).toList();
+      for (int h = 0; h < tempHexList.length; h++) {
         if (h % 2 == 0) {
-          String strHex = hexList[h + 1] + hexList[h];
-          decimalList.add(double.parse(int.parse(strHex, radix: 16).toString()));
+          String strHex = tempHexList[h + 1] + tempHexList[h];
+          mainDecimalList.add(double.parse(int.parse(strHex, radix: 16).toString()));
         }
       }
+      tempDecimalList = mainDecimalList.getRange(mainDecimalList.length - 500, mainDecimalList.length).toList();
 
-      spotsListData.clear();
-      for (int k = 0; k < decimalList.length; k++) {
-        // for (int k = decimalList.length; k > 0; k--) {
-        //   if (k == decimalList.length - 5) {
-        //     break;
-        //   }
-        spotsListData.add(FlSpot(double.tryParse((k).toString()) ?? 0, decimalList[k]));
-      }
-      print("VVV decimalList ${decimalList.toString()}");
-      print("VVV length: ${spotsListData.length} spotsListData: ${spotsListData.toList()}");
+      providerEcgDataWatch!.storeDataToLocal(tempDecimalList);
+      providerEcgDataWatch!.setSpotsListData(tempDecimalList, mainDecimalList);
+
+      // print("VVV valueList ${valueList.length} ${valueList.toString()} ");
+      // print("VVV mainHexList ${mainHexList.length} ${mainHexList.toString()}");
+      // print("VVV tempHexList ${tempHexList.length} ${tempHexList.toString()}");
+
+      // print("VVV mainDecimalList ${mainDecimalList.length} ${mainDecimalList.toString()}");
+      // print("VVV tempDecimalList ${tempDecimalList.length} ${tempDecimalList.toString()}");
+
+      print(
+          "VVV tempSpotsListData length: ${providerEcgDataWatch!.tempSpotsListData.length} spotsListData: ${providerEcgDataWatch!.tempSpotsListData.toList()}");
     }
   }
 
   void _generateCsvFile() async {
-    Map<Permission, PermissionStatus> statuses = await [
-      Permission.storage,
-    ].request();
-
+    // Map<Permission, PermissionStatus> statuses = await [
+    //   Permission.storage,
+    // ].request();
+    providerEcgDataWatch!.setLoading(true);
     List<List<dynamic>> rows = [];
+    await providerEcgDataWatch!.getStoreDataToLocal();
 
-    for (int i = 0; i < decimalList.length; i++) {
+    for (int i = 0; i < providerEcgDataWatch!.savedLocalDataList.length; i++) {
       List<dynamic> row = [];
-      row.add(decimalList[i]);
+      row.add(providerEcgDataWatch!.savedLocalDataList[i]);
       rows.add(row);
     }
 
@@ -414,6 +446,8 @@ class _MyHomePageState extends State<MyHomePage> {
     print(path);
     final File file = File(path);
     await file.writeAsString(csvData);
+    providerEcgDataWatch!.setLoading(false);
+
     Share.shareFiles(['${file.path}'], text: 'Exported csv');
   }
 }

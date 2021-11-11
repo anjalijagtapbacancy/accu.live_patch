@@ -1,4 +1,0 @@
-io/flutter/plugins/GeneratedPluginRegistrant.java
- io.flutter.plugins.GeneratedPluginRegistrant
-com/example/flutter_bluetooth_connection/BuildConfig.java
- com.example.flutter_bluetooth_connection.BuildConfig
