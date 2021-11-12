@@ -116,7 +116,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
     for (BluetoothDevice device in providerEcgDataWatch!.devicesList) {
       containers.add(
         Container(
-          height: 50,
+          margin: EdgeInsets.only(bottom: 4),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: <Widget>[
@@ -153,7 +153,6 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
                       printLog("Mirinda 2222");
 
                       await device.connect();
-                      await device.requestMtu(512);
                       printLog("Mirinda 33333");
                     } catch (e) {
                       printLog("Mirinda 4444");
@@ -164,6 +163,8 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
                     } finally {
                       printLog("Mirinda 5555");
                       providerEcgDataWatch!.setConnectedDevice(device);
+                      await device.requestMtu(512);
+
                       providerEcgDataWatch!.setLoading(false);
 
                       printLog("Mirinda 6666");
@@ -178,7 +179,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
     }
 
     return ListView(
-      padding: const EdgeInsets.all(8),
+      padding: EdgeInsets.all(16),
       children: <Widget>[
         ...containers,
       ],
@@ -205,24 +206,31 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
       padding: const EdgeInsets.all(8),
       children: <Widget>[
         // ...containers,
-        Visibility(
-            visible: providerEcgDataWatch!.tempDecimalList.isNotEmpty,
-            child: AspectRatio(
-              aspectRatio: 6 / (2.4),
-              child: Container(
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(18),
-                    ),
-                    color: clrDarkBg),
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 18.0, left: 12.0, top: 24, bottom: 12),
-                  child: LineChart(
-                    mainData(),
-                  ),
+        // providerEcgDataWatch!.tempDecimalList.isEmpty
+        //     ? Center(
+        //         child: Padding(
+        //             padding: EdgeInsets.only(top: 120),
+        //             child: Text(
+        //               "Please start measurement ...",
+        //               style: TextStyle(color: clrGrey, fontSize: 14),
+        //             )))
+        // :
+        AspectRatio(
+          aspectRatio: 6 / (2.4),
+          child: Container(
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.all(
+                  Radius.circular(18),
                 ),
+                color: clrDarkBg),
+            child: Padding(
+              padding: const EdgeInsets.only(right: 18.0, left: 12.0, top: 24, bottom: 12),
+              child: LineChart(
+                mainData(),
               ),
-            )),
+            ),
+          ),
+        ),
         // Padding(
         //   padding: const EdgeInsets.all(8.0),
         //   child: Text('Value: ' + decimalList.toString()),
@@ -271,9 +279,6 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
         // graph data
         leftTitles: SideTitles(
           showTitles: true,
-          // interval: (decimalList.isNotEmpty && decimalList.reduce(max) != 0)
-          //     ? decimalList.reduce(max) / (decimalList.length)
-          //     : 1,
           interval: 2000,
           getTextStyles: (context, value) => TextStyle(
             color: clrLeftTitles,
@@ -281,8 +286,6 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
             fontSize: 12,
           ),
           getTitles: (value) {
-            printLog(
-                "getTitles max: ${providerEcgDataWatch!.tempDecimalList.reduce(max)} interval: ${providerEcgDataWatch!.tempDecimalList.reduce(max) / (providerEcgDataWatch!.tempDecimalList.length)}");
             return value.toString();
           },
           reservedSize: 50,
@@ -292,10 +295,6 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
       borderData: FlBorderData(show: true, border: Border.all(color: clrGraphLine, width: 1)),
       minX: providerEcgDataWatch!.tempSpotsListData.isNotEmpty ? providerEcgDataWatch!.tempSpotsListData.first.x : 0,
       maxX: providerEcgDataWatch!.tempSpotsListData.isNotEmpty ? providerEcgDataWatch!.tempSpotsListData.last.x + 1 : 0,
-
-      // maxX: double.parse(spotsListData.length.toString()),
-      // minY: decimalList.isNotEmpty ? decimalList.reduce(min) : 0,
-      // maxY: decimalList.isNotEmpty ? decimalList.reduce(max) : 0,
       minY: 0,
       maxY: 18000,
       lineBarsData: [
@@ -381,9 +380,8 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
                       providerEcgDataWatch!.setServiceStarted(true);
 
                       await providerEcgDataWatch!.readCharacteristic!.setNotifyValue(true);
+                      await Future.delayed(Duration(milliseconds: 200));
                       providerEcgDataWatch!.setLoading(false);
-
-                      await Future.delayed(Duration(seconds: 2));
 
                       sub = providerEcgDataWatch!.readCharacteristic!.value.listen((value) {
                         providerEcgDataWatch!.setReadValues(value);
