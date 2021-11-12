@@ -4,15 +4,14 @@ import 'dart:math';
 import 'package:csv/csv.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bluetooth_connection/constant.dart';
 import 'package:flutter_bluetooth_connection/progressbar.dart';
 import 'package:flutter_bluetooth_connection/provider_ecg_data.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
-import 'package:flutter_bluetooth_connection/linear_chart.dart';
 import 'package:provider/provider.dart';
 import 'package:share/share.dart';
 
@@ -26,19 +25,23 @@ void main() async {
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatelessWidget with Constant {
   @override
   Widget build(BuildContext context) => MultiProvider(
         providers: [
           ChangeNotifierProvider(create: (context) => ProviderEcgData()),
         ],
         child: MaterialApp(
-          title: 'BLE Connection',
+          title: appName,
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
-            primarySwatch: Colors.blue,
-          ),
-          home: MyHomePage(title: 'BLE Connection'),
+              primarySwatch: clrPrimarySwatch,
+              textTheme: TextTheme(
+                button: TextStyle(color: clrWhite),
+                bodyText1: TextStyle(color: clrWhite),
+                bodyText2: TextStyle(color: clrWhite),
+              )),
+          home: MyHomePage(title: appName),
         ),
       );
 }
@@ -53,19 +56,8 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  List<BluetoothService>? _services;
+class _MyHomePageState extends State<MyHomePage> with Constant {
   var sub;
-  List<Color> gradientColors = [
-    const Color(0xff23b6e6),
-    const Color(0xff02d39a),
-  ];
-
-  List<String> mainHexList = [];
-  List<double> mainDecimalList = [];
-
-  List<String> tempHexList = [];
-  List<double> tempDecimalList = [];
 
   ProviderEcgData? providerEcgDataRead;
   ProviderEcgData? providerEcgDataWatch;
@@ -82,34 +74,41 @@ class _MyHomePageState extends State<MyHomePage> {
       providerEcgDataRead = context.read<ProviderEcgData>();
 
       widget.flutterBlue.isOn.then((value) {
-        print("  isOn ${value.toString()}");
+        printLog("  isOn ${value.toString()}");
         if (value) {
         } else {}
       });
 
       widget.flutterBlue.isAvailable.then((value) {
-        print(" isAvailable ${value.toString()}");
+        printLog(" isAvailable ${value.toString()}");
       });
 
       widget.flutterBlue.connectedDevices.asStream().listen((List<BluetoothDevice> devices) {
-        print("  devices ${devices.length}");
+        printLog("  devices ${devices.length}");
 
         for (BluetoothDevice device in devices) {
-          print("  connectedDevices ${device}");
+          printLog("  connectedDevices ${device}");
 
           _addDeviceTolist(device);
         }
       });
       widget.flutterBlue.scanResults.listen((List<ScanResult> results) {
-        print("  scan result length devices ${results.length}");
+        printLog("  scan result length devices ${results.length}");
 
         for (ScanResult result in results) {
-          print("  scanResults ${result.device}");
+          printLog("  scanResults ${result.device}");
           _addDeviceTolist(result.device);
         }
       });
       widget.flutterBlue.startScan();
     });
+  }
+
+  @override
+  void dispose() {
+    providerEcgDataWatch!.clearProviderEcgData();
+
+    super.dispose();
   }
 
   ListView _buildListViewOfDevices() {
@@ -119,41 +118,56 @@ class _MyHomePageState extends State<MyHomePage> {
         Container(
           height: 50,
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: <Widget>[
-              Expanded(
-                flex: 4,
-                child: Column(
-                  children: <Widget>[
-                    Text(device.name == '' ? '(unknown device)' : device.name),
-                    Text(device.id.toString()),
-                  ],
-                ),
+              Column(
+                children: <Widget>[
+                  Text(
+                    device.name == '' ? '(unknown device)' : device.name,
+                    style: TextStyle(color: clrWhite),
+                  ),
+                  Text(
+                    device.id.toString(),
+                    style: TextStyle(color: clrGrey),
+                  ),
+                ],
               ),
-              Expanded(
-                // flex: 2,
-                child: FlatButton(
-                  color: Colors.blue,
+              SizedBox(
+                width: 200,
+                child: OutlinedButton(
+                  style: TextButton.styleFrom(
+                    side: BorderSide(color: clrPrimary, width: 1),
+                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(25))),
+                  ),
                   child: Text(
                     'Connect',
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(color: clrPrimary, fontWeight: FontWeight.w500),
                   ),
                   onPressed: () async {
+                    printLog("Mirinda 0000");
                     providerEcgDataWatch!.setLoading(true);
                     widget.flutterBlue.stopScan();
+                    printLog("Mirinda 1111");
+
                     try {
+                      printLog("Mirinda 2222");
+
                       await device.connect();
                       await device.requestMtu(512);
+                      printLog("Mirinda 33333");
                     } catch (e) {
+                      printLog("Mirinda 4444");
                       // if (e.code != 'already_connected') {
                       //   throw e;
                       // }
-                      print(e.toString());
+                      printLog(e.toString());
                     } finally {
-                      _services = await device.discoverServices();
+                      printLog("Mirinda 5555");
+                      providerEcgDataWatch!.setConnectedDevice(device);
+                      providerEcgDataWatch!.setLoading(false);
+
+                      printLog("Mirinda 6666");
                     }
-                    providerEcgDataWatch!.setConnectedDevice(device);
-                    providerEcgDataWatch!.setLoading(false);
                   },
                 ),
               ),
@@ -172,15 +186,16 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   ListView _buildConnectDeviceView() {
-    for (BluetoothService service in _services!) {
+    for (BluetoothService service in providerEcgDataWatch!.services!) {
       for (BluetoothCharacteristic characteristic in service.characteristics) {
         if (characteristic.uuid.toString() == "0000abf4-0000-1000-8000-00805f9b34fb") {
           try {
             providerEcgDataWatch!.setReadCharacteristic(characteristic);
-
-            generateGraphValuesList(providerEcgDataWatch!.readValues[characteristic.uuid]);
+            if (providerEcgDataWatch!.isServiceStarted) {
+              providerEcgDataWatch!.generateGraphValuesList(providerEcgDataWatch!.readValues[characteristic.uuid]);
+            }
           } catch (err) {
-            print(" caught err ${err.toString()}");
+            printLog(" caught err ${err.toString()}");
           }
         }
       }
@@ -191,15 +206,15 @@ class _MyHomePageState extends State<MyHomePage> {
       children: <Widget>[
         // ...containers,
         Visibility(
-            visible: tempDecimalList.isNotEmpty,
+            visible: providerEcgDataWatch!.tempDecimalList.isNotEmpty,
             child: AspectRatio(
               aspectRatio: 6 / (2.4),
               child: Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                     borderRadius: BorderRadius.all(
                       Radius.circular(18),
                     ),
-                    color: Color(0xff232d37)),
+                    color: clrDarkBg),
                 child: Padding(
                   padding: const EdgeInsets.only(right: 18.0, left: 12.0, top: 24, bottom: 12),
                   child: LineChart(
@@ -223,13 +238,13 @@ class _MyHomePageState extends State<MyHomePage> {
         drawVerticalLine: true,
         getDrawingHorizontalLine: (value) {
           return FlLine(
-            color: const Color(0xff37434d),
+            color: clrGraphLine,
             strokeWidth: 1,
           );
         },
         getDrawingVerticalLine: (value) {
           return FlLine(
-            color: const Color(0xff37434d),
+            color: clrGraphLine,
             strokeWidth: 1,
           );
         },
@@ -247,7 +262,7 @@ class _MyHomePageState extends State<MyHomePage> {
           //     : 100,
           interval: 100,
           getTextStyles: (context, value) =>
-              const TextStyle(color: Color(0xff68737d), fontWeight: FontWeight.bold, fontSize: 13),
+              TextStyle(color: clrBottomTitles, fontWeight: FontWeight.bold, fontSize: 13),
           getTitles: (value) {
             return value.toString();
           },
@@ -260,21 +275,21 @@ class _MyHomePageState extends State<MyHomePage> {
           //     ? decimalList.reduce(max) / (decimalList.length)
           //     : 1,
           interval: 2000,
-          getTextStyles: (context, value) => const TextStyle(
-            color: Color(0xff67727d),
+          getTextStyles: (context, value) => TextStyle(
+            color: clrLeftTitles,
             fontWeight: FontWeight.bold,
             fontSize: 12,
           ),
           getTitles: (value) {
-            print(
-                "getTitles max: ${tempDecimalList.reduce(max)} interval: ${tempDecimalList.reduce(max) / (tempDecimalList.length)}");
+            printLog(
+                "getTitles max: ${providerEcgDataWatch!.tempDecimalList.reduce(max)} interval: ${providerEcgDataWatch!.tempDecimalList.reduce(max) / (providerEcgDataWatch!.tempDecimalList.length)}");
             return value.toString();
           },
           reservedSize: 50,
           margin: 8,
         ),
       ),
-      borderData: FlBorderData(show: true, border: Border.all(color: const Color(0xff37434d), width: 1)),
+      borderData: FlBorderData(show: true, border: Border.all(color: clrGraphLine, width: 1)),
       minX: providerEcgDataWatch!.tempSpotsListData.isNotEmpty ? providerEcgDataWatch!.tempSpotsListData.first.x : 0,
       maxX: providerEcgDataWatch!.tempSpotsListData.isNotEmpty ? providerEcgDataWatch!.tempSpotsListData.last.x + 1 : 0,
 
@@ -287,7 +302,7 @@ class _MyHomePageState extends State<MyHomePage> {
         LineChartBarData(
           spots: providerEcgDataWatch!.tempSpotsListData,
           isCurved: true, // graph shape
-          colors: gradientColors,
+          colors: [clrPrimary, clrSecondary],
           barWidth: 1, //curve border width
           isStrokeCapRound: true,
           dotData: FlDotData(
@@ -314,16 +329,20 @@ class _MyHomePageState extends State<MyHomePage> {
     providerEcgDataWatch = context.watch<ProviderEcgData>();
 
     return Scaffold(
+        backgroundColor: clrDarkBg,
         appBar: AppBar(
-          title: Text(widget.title),
+          title: Text(
+            widget.title,
+            style: TextStyle(color: clrWhite),
+          ),
           actions: [
             Visibility(
-              visible: tempDecimalList.isNotEmpty,
+              visible: providerEcgDataWatch!.tempDecimalList.isNotEmpty,
               // visible: false,
               child: TextButton(
                   child: Text(
                     "Export",
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(color: clrWhite),
                   ),
                   onPressed: () {
                     _generateCsvFile();
@@ -335,7 +354,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   onPressed: () async {
                     if (providerEcgDataWatch!.isServiceStarted) {
                       providerEcgDataWatch!.setLoading(true);
-                      print("stop service");
+                      printLog("stop service");
+                      providerEcgDataWatch!.storeDataToLocal();
                       providerEcgDataWatch!.setServiceStarted(false);
 
                       //stop service
@@ -352,7 +372,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       await providerEcgDataWatch!.clearStoreDataToLocal();
                       // start service
                       //  writeCharacteristic!.write(utf8.encode("1"));
-                      print("start service");
+                      printLog("start service");
                       // ignore: cancel_subscriptions
                       if (sub != null) {
                         sub.cancel();
@@ -374,7 +394,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   },
                   child: Text(
                     providerEcgDataWatch!.isServiceStarted ? "Stop" : "Start",
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(color: clrWhite),
                   )),
             )
           ],
@@ -392,48 +412,13 @@ class _MyHomePageState extends State<MyHomePage> {
   //     break;
   //   }
 
-  void generateGraphValuesList(List<int>? valueList) async {
-    // await Future.delayed(Duration(microseconds: 200));
-
-    if (valueList != null) {
-      print("VVV valueList ${valueList.toString()}");
-
-      // tempValueList = valueList.getRange(valueList.length - 10, valueList.length).toList();
-
-      for (int i = 0; i < valueList.length; i++) {
-        mainHexList.add(valueList[i].toRadixString(16).padLeft(2, '0'));
-      }
-      tempHexList = mainHexList.getRange(mainHexList.length - 1000, mainHexList.length).toList();
-      for (int h = 0; h < tempHexList.length; h++) {
-        if (h % 2 == 0) {
-          String strHex = tempHexList[h + 1] + tempHexList[h];
-          mainDecimalList.add(double.parse(int.parse(strHex, radix: 16).toString()));
-        }
-      }
-      tempDecimalList = mainDecimalList.getRange(mainDecimalList.length - 500, mainDecimalList.length).toList();
-
-      providerEcgDataWatch!.storeDataToLocal(tempDecimalList);
-      providerEcgDataWatch!.setSpotsListData(tempDecimalList, mainDecimalList);
-
-      // print("VVV valueList ${valueList.length} ${valueList.toString()} ");
-      // print("VVV mainHexList ${mainHexList.length} ${mainHexList.toString()}");
-      // print("VVV tempHexList ${tempHexList.length} ${tempHexList.toString()}");
-
-      // print("VVV mainDecimalList ${mainDecimalList.length} ${mainDecimalList.toString()}");
-      // print("VVV tempDecimalList ${tempDecimalList.length} ${tempDecimalList.toString()}");
-
-      print(
-          "VVV tempSpotsListData length: ${providerEcgDataWatch!.tempSpotsListData.length} spotsListData: ${providerEcgDataWatch!.tempSpotsListData.toList()}");
-    }
-  }
-
   void _generateCsvFile() async {
     // Map<Permission, PermissionStatus> statuses = await [
     //   Permission.storage,
     // ].request();
     providerEcgDataWatch!.setLoading(true);
     List<List<dynamic>> rows = [];
-    await providerEcgDataWatch!.getStoreDataToLocal();
+    await providerEcgDataWatch!.getStoredLocalData();
 
     for (int i = 0; i < providerEcgDataWatch!.savedLocalDataList.length; i++) {
       List<dynamic> row = [];
@@ -444,7 +429,7 @@ class _MyHomePageState extends State<MyHomePage> {
     String csvData = ListToCsvConverter().convert(rows);
     final String directory = (await getApplicationSupportDirectory()).path;
     final path = "$directory/csv_ecg_data.csv";
-    print(path);
+    printLog(path);
     final File file = File(path);
     await file.writeAsString(csvData);
     providerEcgDataWatch!.setLoading(false);
