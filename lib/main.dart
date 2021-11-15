@@ -144,30 +144,19 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
                     style: TextStyle(color: clrPrimary, fontWeight: FontWeight.w500),
                   ),
                   onPressed: () async {
-                    printLog("Mirinda 0000");
                     providerEcgDataWatch!.setLoading(true);
                     widget.flutterBlue.stopScan();
-                    printLog("Mirinda 1111");
 
                     try {
-                      printLog("Mirinda 2222");
-
                       await device.connect();
-                      printLog("Mirinda 33333");
                     } catch (e) {
-                      printLog("Mirinda 4444");
                       // if (e.code != 'already_connected') {
                       //   throw e;
                       // }
                       printLog(e.toString());
                     } finally {
-                      printLog("Mirinda 5555");
                       providerEcgDataWatch!.setConnectedDevice(device);
-                      await device.requestMtu(512);
-
                       providerEcgDataWatch!.setLoading(false);
-
-                      printLog("Mirinda 6666");
                     }
                   },
                 ),
@@ -189,7 +178,15 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
   ListView _buildConnectDeviceView() {
     for (BluetoothService service in providerEcgDataWatch!.services!) {
       for (BluetoothCharacteristic characteristic in service.characteristics) {
-        if (characteristic.uuid.toString() == "0000abf4-0000-1000-8000-00805f9b34fb") {
+        if (characteristic.uuid.toString() == writeUuid) {
+          try {
+            providerEcgDataWatch!.setWriteCharacteristic(characteristic);
+          } catch (err) {
+            printLog("setWriteCharacteristic caught err ${err.toString()}");
+          }
+        }
+        if (characteristic.uuid.toString() == readUuid) {
+          printLog("readUUid matched ! ${readUuid.toString()}");
           try {
             providerEcgDataWatch!.setReadCharacteristic(characteristic);
             if (providerEcgDataWatch!.isServiceStarted) {
@@ -205,18 +202,11 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
     return ListView(
       padding: const EdgeInsets.all(8),
       children: <Widget>[
-        // ...containers,
-        // providerEcgDataWatch!.tempDecimalList.isEmpty
-        //     ? Center(
-        //         child: Padding(
-        //             padding: EdgeInsets.only(top: 120),
-        //             child: Text(
-        //               "Please start measurement ...",
-        //               style: TextStyle(color: clrGrey, fontSize: 14),
-        //             )))
-        // :
+        // rowTitle(
+        //   "PPG",
+        // ),
         AspectRatio(
-          aspectRatio: 6 / (2.4),
+          aspectRatio: 6 / (1.2),
           child: Container(
             decoration: BoxDecoration(
                 borderRadius: BorderRadius.all(
@@ -231,11 +221,58 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
             ),
           ),
         ),
-        // Padding(
-        //   padding: const EdgeInsets.all(8.0),
-        //   child: Text('Value: ' + decimalList.toString()),
+        // rowTitle(
+        //   "ECG",
+        // ),
+        // AspectRatio(
+        //   aspectRatio: 14 / (2.4),
+        //   child: Container(
+        //     decoration: BoxDecoration(
+        //         borderRadius: BorderRadius.all(
+        //           Radius.circular(18),
+        //         ),
+        //         color: clrDarkBg),
+        //     child: Padding(
+        //       padding: const EdgeInsets.only(right: 18.0, left: 12.0, top: 24, bottom: 12),
+        //       child: LineChart(
+        //         mainData(),
+        //       ),
+        //     ),
+        //   ),
         // ),
       ],
+    );
+  }
+
+  Widget rowTitle(String title) {
+    return Padding(
+      padding: EdgeInsets.only(top: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Expanded(
+            flex: 6,
+            child: Center(
+              child: Text(
+                title,
+                style: TextStyle(fontSize: 12),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Visibility(
+              visible: title != "ECG" && providerEcgDataWatch!.heartRate != 0,
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  "Heart Rate: " + providerEcgDataWatch!.heartRate.toString(),
+                  style: TextStyle(fontSize: 12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -265,10 +302,10 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
         bottomTitles: SideTitles(
           showTitles: true,
           // reservedSize: 22,
-          // interval: providerEcgDataWatch!.savedLocalDataList.isNotEmpty
-          //     ? providerEcgDataWatch!.savedLocalDataList.length / 100
+          // interval: providerEcgDataWatch!.savedEcgLocalDataList.isNotEmpty
+          //     ? providerEcgDataWatch!.savedEcgLocalDataList.length / 100
           //     : 100,
-          interval: 100,
+          interval: 50,
           getTextStyles: (context, value) =>
               TextStyle(color: clrBottomTitles, fontWeight: FontWeight.bold, fontSize: 13),
           getTitles: (value) {
@@ -279,7 +316,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
         // graph data
         leftTitles: SideTitles(
           showTitles: true,
-          interval: 2000,
+          interval: 4000,
           getTextStyles: (context, value) => TextStyle(
             color: clrLeftTitles,
             fontWeight: FontWeight.bold,
@@ -293,13 +330,17 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
         ),
       ),
       borderData: FlBorderData(show: true, border: Border.all(color: clrGraphLine, width: 1)),
-      minX: providerEcgDataWatch!.tempSpotsListData.isNotEmpty ? providerEcgDataWatch!.tempSpotsListData.first.x : 0,
-      maxX: providerEcgDataWatch!.tempSpotsListData.isNotEmpty ? providerEcgDataWatch!.tempSpotsListData.last.x + 1 : 0,
-      minY: 0,
-      maxY: 18000,
+      minX: providerEcgDataWatch!.tempEcgSpotsListData.isNotEmpty
+          ? providerEcgDataWatch!.tempEcgSpotsListData.first.x
+          : 0,
+      maxX: providerEcgDataWatch!.tempEcgSpotsListData.isNotEmpty
+          ? providerEcgDataWatch!.tempEcgSpotsListData.last.x + 1
+          : 0,
+      minY: 4000,
+      maxY: 16000,
       lineBarsData: [
         LineChartBarData(
-          spots: providerEcgDataWatch!.tempSpotsListData,
+          spots: providerEcgDataWatch!.tempEcgSpotsListData,
           isCurved: true, // graph shape
           colors: [clrPrimary, clrSecondary],
           barWidth: 1, //curve border width
@@ -336,7 +377,21 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
           ),
           actions: [
             Visibility(
-              visible: providerEcgDataWatch!.tempDecimalList.isNotEmpty,
+              visible: !providerEcgDataWatch!.isServiceStarted && providerEcgDataWatch!.tempEcgDecimalList.isNotEmpty,
+              // visible: false,
+              child: TextButton(
+                  child: Text(
+                    providerEcgDataWatch!.isEnabled ? "Disabled" : "Enabled",
+                    style: TextStyle(color: clrWhite),
+                  ),
+                  onPressed: () {
+                    if (!providerEcgDataWatch!.isLoading) {
+                      providerEcgDataWatch!.setIsEnabled();
+                    }
+                  }),
+            ),
+            Visibility(
+              visible: !providerEcgDataWatch!.isServiceStarted && providerEcgDataWatch!.tempEcgDecimalList.isNotEmpty,
               // visible: false,
               child: TextButton(
                   child: Text(
@@ -344,50 +399,59 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
                     style: TextStyle(color: clrWhite),
                   ),
                   onPressed: () {
-                    _generateCsvFile();
+                    if (!providerEcgDataWatch!.isLoading) {
+                      _generateCsvFile();
+                    }
                   }),
             ),
             Visibility(
               visible: providerEcgDataWatch!.connectedDevice != null,
               child: TextButton(
                   onPressed: () async {
-                    if (providerEcgDataWatch!.isServiceStarted) {
-                      providerEcgDataWatch!.setLoading(true);
-                      printLog("stop service");
-                      providerEcgDataWatch!.storeDataToLocal();
-                      providerEcgDataWatch!.setServiceStarted(false);
+                    if (!providerEcgDataWatch!.isLoading) {
+                      try {
+                        if (providerEcgDataWatch!.isServiceStarted) {
+                          await providerEcgDataWatch!.readCharacteristic!.setNotifyValue(false);
 
-                      //stop service
-                      //    writeCharacteristic!.write( utf8.encode("0"));
-                      //     if(sub!=null){
-                      //    sub.cancel();
-                      //  }
+                          providerEcgDataWatch!.setLoading(true);
+                          printLog("stop service");
 
-                      await providerEcgDataWatch!.readCharacteristic!.setNotifyValue(false);
-                      providerEcgDataWatch!.setLoading(false);
-                    } else {
-                      providerEcgDataWatch!.setLoading(true);
+                          //stop service
+                          providerEcgDataWatch!.writeCharacteristic!.write([0]);
+                          if (sub != null) {
+                            sub.cancel();
+                          }
+                          providerEcgDataWatch!.setServiceStarted(false);
 
-                      await providerEcgDataWatch!.clearStoreDataToLocal();
-                      // start service
-                      //  writeCharacteristic!.write(utf8.encode("1"));
-                      printLog("start service");
-                      // ignore: cancel_subscriptions
-                      if (sub != null) {
-                        sub.cancel();
+                          await providerEcgDataWatch!.storeDataToLocal();
+
+                          providerEcgDataWatch!.setLoading(false);
+                        } else {
+                          await providerEcgDataWatch!.readCharacteristic!.setNotifyValue(true);
+
+                          providerEcgDataWatch!.setLoading(true);
+
+                          await providerEcgDataWatch!.clearStoreDataToLocal();
+                          // start service
+                          providerEcgDataWatch!.writeCharacteristic!.write([1]);
+                          printLog("start service");
+                          // ignore: cancel_subscriptions
+                          if (sub != null) {
+                            sub.cancel();
+                          }
+
+                          providerEcgDataWatch!.setServiceStarted(true);
+                          providerEcgDataWatch!.setLoading(false);
+
+                          sub = providerEcgDataWatch!.readCharacteristic!.value.listen((value) {
+                            providerEcgDataWatch!.setReadValues(value);
+                          });
+
+                          await providerEcgDataWatch!.readCharacteristic!.read();
+                        }
+                      } catch (e) {
+                        print("err $e");
                       }
-
-                      providerEcgDataWatch!.setServiceStarted(true);
-
-                      await providerEcgDataWatch!.readCharacteristic!.setNotifyValue(true);
-                      await Future.delayed(Duration(milliseconds: 200));
-                      providerEcgDataWatch!.setLoading(false);
-
-                      sub = providerEcgDataWatch!.readCharacteristic!.value.listen((value) {
-                        providerEcgDataWatch!.setReadValues(value);
-                      });
-
-                      await providerEcgDataWatch!.readCharacteristic!.read();
                     }
                   },
                   child: Text(
@@ -418,9 +482,9 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
     List<List<dynamic>> rows = [];
     await providerEcgDataWatch!.getStoredLocalData();
 
-    for (int i = 0; i < providerEcgDataWatch!.savedLocalDataList.length; i++) {
+    for (int i = 0; i < providerEcgDataWatch!.savedEcgLocalDataList.length; i++) {
       List<dynamic> row = [];
-      row.add(providerEcgDataWatch!.savedLocalDataList[i]);
+      row.add(providerEcgDataWatch!.savedEcgLocalDataList[i]);
       rows.add(row);
     }
 

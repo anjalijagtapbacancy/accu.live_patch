@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
@@ -12,16 +14,34 @@ class ProviderEcgData with ChangeNotifier, Constant {
 
   bool isLoading = false;
   BluetoothCharacteristic? readCharacteristic;
+  BluetoothCharacteristic? writeCharacteristic;
+
   Map<Guid, List<int>> readValues = new Map<Guid, List<int>>();
   var isServiceStarted = false;
-  List<double> savedLocalDataList = [];
-  List<FlSpot> mainSpotsListData = [];
-  List<FlSpot> tempSpotsListData = [];
+  var isEnabled = false;
 
-  List<String> mainHexList = [];
-  List<double> mainDecimalList = [];
-  List<String> tempHexList = [];
-  List<double> tempDecimalList = [];
+  int ecgDataLength = 0;
+  int ppgDataLength = 0;
+
+  List<double> savedEcgLocalDataList = [];
+  List<FlSpot> mainEcgSpotsListData = [];
+  List<FlSpot> tempEcgSpotsListData = [];
+  List<String> mainEcgHexList = [];
+  List<double> mainEcgDecimalList = [];
+  List<String> tempEcgHexList = [];
+  List<double> tempEcgDecimalList = [];
+
+  List<double> savedPpgLocalDataList = [];
+  List<FlSpot> mainPpgSpotsListData = [];
+  List<FlSpot> tempPpgSpotsListData = [];
+  List<String> mainPpgHexList = [];
+  List<double> mainPpgDecimalList = [];
+  List<String> tempPpgHexList = [];
+  List<double> tempPpgDecimalList = [];
+
+  double lastSavedTime = 0;
+  double heartRate = 0;
+  late Timer timer;
 
   clearProviderEcgData() {
     devicesList.clear();
@@ -29,14 +49,24 @@ class ProviderEcgData with ChangeNotifier, Constant {
     services!.clear();
     readValues = new Map<Guid, List<int>>();
     isServiceStarted = false;
-    savedLocalDataList.clear();
-    mainSpotsListData.clear();
-    tempSpotsListData.clear();
 
-    mainHexList.clear();
-    mainDecimalList.clear();
-    tempHexList.clear();
-    tempDecimalList.clear();
+    savedEcgLocalDataList.clear();
+    mainEcgSpotsListData.clear();
+    tempEcgSpotsListData.clear();
+    mainEcgHexList.clear();
+    mainEcgDecimalList.clear();
+    tempEcgHexList.clear();
+    tempEcgDecimalList.clear();
+
+    savedPpgLocalDataList.clear();
+    mainPpgSpotsListData.clear();
+    tempPpgSpotsListData.clear();
+    mainPpgHexList.clear();
+    mainPpgDecimalList.clear();
+    tempPpgHexList.clear();
+    tempPpgDecimalList.clear();
+
+    lastSavedTime = 0;
   }
 
   setLoading(bool value) {
@@ -49,6 +79,11 @@ class ProviderEcgData with ChangeNotifier, Constant {
     notifyListeners();
   }
 
+  setIsEnabled() {
+    isEnabled = !isEnabled;
+    notifyListeners();
+  }
+
   setDeviceList(BluetoothDevice device) {
     if (!devicesList.contains(device)) {
       devicesList.add(device);
@@ -58,12 +93,19 @@ class ProviderEcgData with ChangeNotifier, Constant {
 
   setConnectedDevice(BluetoothDevice device) async {
     services = await device.discoverServices();
+
     connectedDevice = device;
     notifyListeners();
   }
 
-  setReadCharacteristic(BluetoothCharacteristic characteristic) {
+  setReadCharacteristic(BluetoothCharacteristic characteristic) async {
     readCharacteristic = characteristic;
+
+    // notifyListeners();
+  }
+
+  setWriteCharacteristic(BluetoothCharacteristic characteristic) {
+    writeCharacteristic = characteristic;
     // notifyListeners();
   }
 
@@ -72,16 +114,19 @@ class ProviderEcgData with ChangeNotifier, Constant {
     notifyListeners();
   }
 
-  setSpotsListData(List<double> tempDecimalList, List<double> mainDecimalList) {
-    for (int k = 0; k < tempDecimalList.length; k++) {
-      printLog("mainSpotsListData  ${mainSpotsListData.length}");
-
-      mainSpotsListData.add(FlSpot(double.tryParse((mainDecimalList.length + k).toString()) ?? 0, tempDecimalList[k]));
+  setSpotsListData(List<double> tempEcgDecimalList, List<double> mainEcgDecimalList) {
+    for (int k = 0; k < tempEcgDecimalList.length; k++) {
+      printLog("mainEcgSpotsListData  ${mainEcgSpotsListData.length}");
+      if ((k + 1) % 5 == 0) {
+        mainEcgSpotsListData
+            .add(FlSpot(double.tryParse((mainEcgDecimalList.length + k).toString()) ?? 0, tempEcgDecimalList[k]));
+      }
     }
-    if (mainSpotsListData.length > 500) {
-      tempSpotsListData = mainSpotsListData.getRange(mainSpotsListData.length - 500, mainSpotsListData.length).toList();
+    if (mainEcgSpotsListData.length > 500) {
+      tempEcgSpotsListData =
+          mainEcgSpotsListData.getRange(mainEcgSpotsListData.length - 500, mainEcgSpotsListData.length).toList();
     } else {
-      tempSpotsListData = mainSpotsListData;
+      tempEcgSpotsListData = mainEcgSpotsListData;
     }
   }
 
@@ -89,85 +134,103 @@ class ProviderEcgData with ChangeNotifier, Constant {
     var box = await Hive.openBox<List<double>>('ecg_data');
 
     List<double> localDataList = await box.get("item") ?? [];
-    localDataList.addAll(tempDecimalList);
+    localDataList.addAll(tempEcgDecimalList);
 
     await box.put("item", localDataList);
 
     printLog("local Data saved!....");
-
-    // notifyListeners();
-
-    // await box.add(localDataList);
-    // var nn =box.values.toList();
-
-    // printLog"savedLocalDataList type ${box.values.toString()}");
   }
 
   getStoredLocalData() async {
     var box = await Hive.openBox<List<double>>('ecg_data');
 
-    savedLocalDataList = await box.get("item") ?? [];
-    printLog(" savedLocalDataList  ${savedLocalDataList.toString()}");
-    printLog(" savedLocalDataList length  ${savedLocalDataList.length}");
+    savedEcgLocalDataList = await box.get("item") ?? [];
+    printLog(" savedEcgLocalDataList  ${savedEcgLocalDataList.toString()}");
+    printLog(" savedEcgLocalDataList length  ${savedEcgLocalDataList.length}");
   }
 
   clearStoreDataToLocal() async {
-    mainSpotsListData.clear();
-    tempSpotsListData.clear();
-    savedLocalDataList.clear();
+    savedEcgLocalDataList.clear();
+    mainEcgSpotsListData.clear();
+    tempEcgSpotsListData.clear();
+    mainEcgHexList.clear();
+    mainEcgDecimalList.clear();
+    tempEcgHexList.clear();
+    tempEcgDecimalList.clear();
 
-    mainHexList.clear();
-    mainDecimalList.clear();
+    savedPpgLocalDataList.clear();
+    mainPpgSpotsListData.clear();
+    tempPpgSpotsListData.clear();
+    mainPpgHexList.clear();
+    mainPpgDecimalList.clear();
+    tempPpgHexList.clear();
+    tempPpgDecimalList.clear();
 
-    tempHexList.clear();
-    tempDecimalList.clear();
+    lastSavedTime = 0;
 
     var box = await Hive.openBox<List<double>>('ecg_data');
     await box.put("item", []);
 
-    savedLocalDataList = await box.get("item") ?? [];
-    printLog(" cleared savedLocalDataList  ${savedLocalDataList.toString()}");
+    // savedEcgLocalDataList = await box.get("item") ?? [];
+    // printLog(" cleared savedEcgLocalDataList  ${savedEcgLocalDataList.toString()}");
   }
 
   void generateGraphValuesList(List<int>? valueList) async {
-    // await Future.delayed(Duration(microseconds: 200));
-
     if (valueList != null) {
+      lastSavedTime = lastSavedTime + 1;
+
       printLog("VVV valueList ${valueList.toString()}");
-
       for (int i = 0; i < valueList.length; i++) {
-        mainHexList.add(valueList[i].toRadixString(16).padLeft(2, '0'));
+        mainEcgHexList.add(valueList[i].toRadixString(16).padLeft(2, '0'));
       }
 
-      if (mainHexList.length > 1000) {
-        tempHexList = mainHexList.getRange(mainHexList.length - 1000, mainHexList.length).toList();
+      // for (int i = 0 + 2; i < valueList[0] + (0 + 2); i++) {
+      //   mainEcgHexList.add(valueList[i].toRadixString(16).padLeft(2, '0'));
+      // }
+
+      // for (int i = valueListLength + 2; i < valueList[1] + (valueListLength + 2); i++) {
+      //   mainPpgHexList.add(valueList[i].toRadixString(16).padLeft(2, '0'));
+      // }
+
+      if (mainEcgHexList.length > 1000) {
+        tempEcgHexList = mainEcgHexList.getRange(mainEcgHexList.length - 1000, mainEcgHexList.length).toList();
       } else {
-        tempHexList = mainHexList;
+        tempEcgHexList = mainEcgHexList;
       }
-      for (int h = 0; h < tempHexList.length; h++) {
+
+      for (int h = 0; h < tempEcgHexList.length; h++) {
         if (h % 2 == 0) {
-          String strHex = tempHexList[h + 1] + tempHexList[h];
-          mainDecimalList.add(double.parse(int.parse(strHex, radix: 16).toString()));
+          String strHex = tempEcgHexList[h + 1] + tempEcgHexList[h];
+          mainEcgDecimalList.add(double.parse(int.parse(strHex, radix: 16).toString()));
         }
       }
 
-      if (mainDecimalList.length > 500) {
-        tempDecimalList = mainDecimalList.getRange(mainDecimalList.length - 500, mainDecimalList.length).toList();
+      if (mainEcgDecimalList.length > 500) {
+        tempEcgDecimalList =
+            mainEcgDecimalList.getRange(mainEcgDecimalList.length - 500, mainEcgDecimalList.length).toList();
       } else {
-        tempDecimalList = mainDecimalList;
+        tempEcgDecimalList = mainEcgDecimalList;
       }
       storeDataToLocal();
-      setSpotsListData(tempDecimalList, mainDecimalList);
+      setSpotsListData(tempEcgDecimalList, mainEcgDecimalList);
 
-      // printLog"VVV valueList ${valueList.length} ${valueList.toString()} ");
-      // printLog"VVV mainHexList ${mainHexList.length} ${mainHexList.toString()}");
-      // printLog"VVV tempHexList ${tempHexList.length} ${tempHexList.toString()}");
+      printLog("VVV valueList ${valueList.length} ${valueList.toString()} ");
+      printLog("VVV mainEcgHexList ${mainEcgHexList.length} ${mainEcgHexList.toString()}");
+      printLog("VVV tempEcgHexList ${tempEcgHexList.length} ${tempEcgHexList.toString()}");
 
-      // printLog"VVV mainDecimalList ${mainDecimalList.length} ${mainDecimalList.toString()}");
-      // printLog"VVV tempDecimalList ${tempDecimalList.length} ${tempDecimalList.toString()}");
+      // printLog("VVV mainEcgDecimalList ${mainEcgDecimalList.length} ${mainEcgDecimalList.toString()}");
+      // printLog("VVV tempEcgDecimalList ${tempEcgDecimalList.length} ${tempEcgDecimalList.toString()}");
 
       printLog(
-          "VVV tempSpotsListData length: ${tempSpotsListData.length} spotsListData: ${tempSpotsListData.toList()}");
+          "VVV tempEcgSpotsListData length: ${tempEcgSpotsListData.length} spotsListData: ${tempEcgSpotsListData.toList()}");
     }
+  }
+
+  void countHeartRate() {
+    timer = Timer(Duration(seconds: 10), () {
+      timer.cancel();
+
+      notifyListeners();
+    });
   }
 }
