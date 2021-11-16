@@ -143,22 +143,30 @@ class ProviderGraphData with ChangeNotifier, Constant {
   }
 
   storedDataToLocal() async {
-    var box = await Hive.openBox<List<double>>('ecg_data');
+    var box = await Hive.openBox<List<double>>('graph_data');
 
-    List<double> localDataList = await box.get("item") ?? [];
-    localDataList.addAll(tempEcgDecimalList);
+    List<double> localEcgDataList = await box.get("ecg_graph_data") ?? [];
+    localEcgDataList.addAll(tempEcgDecimalList);
+    await box.put("ecg_graph_data", localEcgDataList);
 
-    await box.put("item", localDataList);
+    List<double> localPpgDataList = await box.get("ppg_graph_data") ?? [];
+    localPpgDataList.addAll(tempPpgDecimalList);
+    await box.put("ppg_graph_data", localPpgDataList);
 
     printLog("local Data saved!....");
   }
 
   getStoredLocalData() async {
-    var box = await Hive.openBox<List<double>>('ecg_data');
+    var box = await Hive.openBox<List<double>>('graph_data');
 
-    savedEcgLocalDataList = await box.get("item") ?? [];
-    printLog(" savedEcgLocalDataList  ${savedEcgLocalDataList.toString()}");
-    printLog(" savedEcgLocalDataList length  ${savedEcgLocalDataList.length}");
+    savedEcgLocalDataList = await box.get("ecg_graph_data") ?? [];
+    savedPpgLocalDataList = await box.get("ppg_graph_data") ?? [];
+
+    printLog("BBB savedEcgLocalDataList length  ${savedEcgLocalDataList.length}");
+    printLog("BBB savedPpgLocalDataList length  ${savedPpgLocalDataList.length}");
+
+    printLog("BBB savedEcgLocalDataList  ${savedEcgLocalDataList.toString()}");
+    printLog("BBB savedPpgLocalDataList  ${savedPpgLocalDataList.toString()}");
   }
 
   clearStoreDataToLocal() async {
@@ -180,7 +188,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
     lastSavedTime = 0;
 
-    var box = await Hive.openBox<List<double>>('ecg_data');
+    var box = await Hive.openBox<List<double>>('graph_data');
     await box.put("item", []);
 
     // savedEcgLocalDataList = await box.get("item") ?? [];

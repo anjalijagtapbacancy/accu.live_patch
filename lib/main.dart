@@ -294,7 +294,9 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
         // graph data
         leftTitles: SideTitles(
           showTitles: true,
-          interval: yAxisInterval,
+          interval: tempDecimalList.isNotEmpty
+              ? (tempDecimalList.reduce(max) - tempDecimalList.reduce(min)) / 4
+              : yAxisInterval,
           getTextStyles: (context, value) => TextStyle(
             color: clrLeftTitles,
             fontWeight: FontWeight.bold,
@@ -368,7 +370,6 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
             Visibility(
               visible:
                   !providerGraphDataWatch!.isServiceStarted && providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
-              // visible: false,
               child: TextButton(
                   child: Text(
                     "Export",
@@ -460,17 +461,26 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
     // ].request();
     providerGraphDataWatch!.setLoading(true);
     List<List<dynamic>> rows = [];
+    List<dynamic> row = [];
+
+    row.add("ecg");
+    row.add("ppg");
+    rows.add(row);
+
     await providerGraphDataWatch!.getStoredLocalData();
 
+    List<dynamic> rowLocal = [];
     for (int i = 0; i < providerGraphDataWatch!.savedEcgLocalDataList.length; i++) {
-      List<dynamic> row = [];
-      row.add(providerGraphDataWatch!.savedEcgLocalDataList[i]);
-      rows.add(row);
+      rowLocal.add(providerGraphDataWatch!.savedEcgLocalDataList[i]);
+      rows.add(rowLocal);
     }
-
+    for (int i = 0; i < providerGraphDataWatch!.savedPpgLocalDataList.length; i++) {
+      rowLocal.add(providerGraphDataWatch!.savedPpgLocalDataList[i]);
+      rows.add(rowLocal);
+    }
     String csvData = ListToCsvConverter().convert(rows);
     final String directory = (await getApplicationSupportDirectory()).path;
-    final path = "$directory/csv_ecg_data.csv";
+    final path = "$directory/csv_graph_data.csv";
     printLog(path);
     final File file = File(path);
     await file.writeAsString(csvData);
