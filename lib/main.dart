@@ -7,7 +7,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bluetooth_connection/constant.dart';
 import 'package:flutter_bluetooth_connection/progressbar.dart';
-import 'package:flutter_bluetooth_connection/provider_ecg_data.dart';
+import 'package:flutter_bluetooth_connection/provider_graph_data.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget with Constant {
   @override
   Widget build(BuildContext context) => MultiProvider(
         providers: [
-          ChangeNotifierProvider(create: (context) => ProviderEcgData()),
+          ChangeNotifierProvider(create: (context) => ProviderGraphData()),
         ],
         child: MaterialApp(
           title: appName,
@@ -60,11 +60,11 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> with Constant {
   var sub;
 
-  ProviderEcgData? providerEcgDataRead;
-  ProviderEcgData? providerEcgDataWatch;
+  ProviderGraphData? providerGraphDataRead;
+  ProviderGraphData? providerGraphDataWatch;
 
   _addDeviceTolist(final BluetoothDevice device) {
-    providerEcgDataWatch!.setDeviceList(device);
+    providerGraphDataWatch!.setDeviceList(device);
   }
 
   @override
@@ -72,7 +72,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
     super.initState();
 
     SchedulerBinding.instance!.addPostFrameCallback((_) {
-      providerEcgDataRead = context.read<ProviderEcgData>();
+      providerGraphDataRead = context.read<ProviderGraphData>();
 
       widget.flutterBlue.isOn.then((value) {
         printLog("  isOn ${value.toString()}");
@@ -107,14 +107,14 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
 
   @override
   void dispose() {
-    providerEcgDataWatch!.clearProviderEcgData();
+    providerGraphDataWatch!.clearProviderGraphData();
 
     super.dispose();
   }
 
   ListView _buildListViewOfDevices() {
     List<Container> containers = [];
-    for (BluetoothDevice device in providerEcgDataWatch!.devicesList) {
+    for (BluetoothDevice device in providerGraphDataWatch!.devicesList) {
       containers.add(
         Container(
           margin: EdgeInsets.only(bottom: 4),
@@ -145,7 +145,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
                     style: TextStyle(color: clrPrimary, fontWeight: FontWeight.w500),
                   ),
                   onPressed: () async {
-                    providerEcgDataWatch!.setLoading(true);
+                    providerGraphDataWatch!.setLoading(true);
                     widget.flutterBlue.stopScan();
 
                     try {
@@ -156,8 +156,8 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
                       // }
                       printLog(e.toString());
                     } finally {
-                      providerEcgDataWatch!.setConnectedDevice(device);
-                      providerEcgDataWatch!.setLoading(false);
+                      providerGraphDataWatch!.setConnectedDevice(device);
+                      providerGraphDataWatch!.setLoading(false);
                     }
                   },
                 ),
@@ -177,11 +177,11 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
   }
 
   ListView _buildConnectDeviceView() {
-    for (BluetoothService service in providerEcgDataWatch!.services!) {
+    for (BluetoothService service in providerGraphDataWatch!.services!) {
       for (BluetoothCharacteristic characteristic in service.characteristics) {
         if (characteristic.uuid.toString() == writeUuid) {
           try {
-            providerEcgDataWatch!.setWriteCharacteristic(characteristic);
+            providerGraphDataWatch!.setWriteCharacteristic(characteristic);
           } catch (err) {
             printLog("setWriteCharacteristic caught err ${err.toString()}");
           }
@@ -189,9 +189,9 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
         if (characteristic.uuid.toString() == readUuid) {
           printLog("readUUid matched ! ${readUuid.toString()}");
           try {
-            providerEcgDataWatch!.setReadCharacteristic(characteristic);
-            if (providerEcgDataWatch!.isServiceStarted) {
-              providerEcgDataWatch!.generateGraphValuesList(providerEcgDataWatch!.readValues[characteristic.uuid]);
+            providerGraphDataWatch!.setReadCharacteristic(characteristic);
+            if (providerGraphDataWatch!.isServiceStarted) {
+              providerGraphDataWatch!.generateGraphValuesList(providerGraphDataWatch!.readValues[characteristic.uuid]);
             }
           } catch (err) {
             printLog(" caught err ${err.toString()}");
@@ -202,46 +202,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
 
     return ListView(
       padding: const EdgeInsets.all(8),
-      children: <Widget>[
-        // rowTitle(
-        //   "PPG",
-        // ),
-        AspectRatio(
-          aspectRatio: 6 / (1.2),
-          child: Container(
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.all(
-                  Radius.circular(18),
-                ),
-                color: clrDarkBg),
-            child: Padding(
-              padding: const EdgeInsets.only(right: 18.0, left: 12.0, top: 24, bottom: 12),
-              child: LineChart(
-                mainData(),
-              ),
-            ),
-          ),
-        ),
-        // rowTitle(
-        //   "ECG",
-        // ),
-        // AspectRatio(
-        //   aspectRatio: 14 / (2.4),
-        //   child: Container(
-        //     decoration: BoxDecoration(
-        //         borderRadius: BorderRadius.all(
-        //           Radius.circular(18),
-        //         ),
-        //         color: clrDarkBg),
-        //     child: Padding(
-        //       padding: const EdgeInsets.only(right: 18.0, left: 12.0, top: 24, bottom: 12),
-        //       child: LineChart(
-        //         mainData(),
-        //       ),
-        //     ),
-        //   ),
-        // ),
-      ],
+      children: <Widget>[rowTitle(ppg), graphWidget(ppg), rowTitle(ecg), graphWidget(ecg)],
     );
   }
 
@@ -262,11 +223,11 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
           ),
           Expanded(
             child: Visibility(
-              visible: title != "ECG" && providerEcgDataWatch!.heartRate != 0,
+              visible: title != "ECG" && providerGraphDataWatch!.heartRate != 0,
               child: Align(
                 alignment: Alignment.centerRight,
                 child: Text(
-                  "Heart Rate: " + providerEcgDataWatch!.heartRate.toString(),
+                  "Heart Rate: " + providerGraphDataWatch!.heartRate.toString(),
                   style: TextStyle(fontSize: 12),
                 ),
               ),
@@ -277,7 +238,26 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
     );
   }
 
-  LineChartData mainData() {
+  Widget graphWidget(String title) {
+    return AspectRatio(
+      aspectRatio: 6 / (1.12),
+      child: Container(
+        decoration: BoxDecoration(
+            borderRadius: BorderRadius.all(
+              Radius.circular(18),
+            ),
+            color: clrDarkBg),
+        child: Padding(
+          padding: const EdgeInsets.only(right: 18.0, left: 12.0, top: 24, bottom: 12),
+          child: LineChart(title == ecg
+              ? mainData(providerGraphDataWatch!.tempEcgSpotsListData, providerGraphDataWatch!.tempEcgDecimalList)
+              : mainData(providerGraphDataWatch!.tempPpgSpotsListData, providerGraphDataWatch!.tempPpgDecimalList)),
+        ),
+      ),
+    );
+  }
+
+  LineChartData mainData(List<FlSpot> tempSpotsList, List<double> tempDecimalList) {
     return LineChartData(
       gridData: FlGridData(
         show: true,
@@ -303,10 +283,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
         bottomTitles: SideTitles(
           showTitles: true,
           // reservedSize: 22,
-          // interval: providerEcgDataWatch!.savedEcgLocalDataList.isNotEmpty
-          //     ? providerEcgDataWatch!.savedEcgLocalDataList.length / 100
-          //     : 100,
-          interval: 100,
+          interval: xAxisInterval,
           getTextStyles: (context, value) =>
               TextStyle(color: clrBottomTitles, fontWeight: FontWeight.bold, fontSize: 13),
           getTitles: (value) {
@@ -317,7 +294,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
         // graph data
         leftTitles: SideTitles(
           showTitles: true,
-          interval: 1000,
+          interval: yAxisInterval,
           getTextStyles: (context, value) => TextStyle(
             color: clrLeftTitles,
             fontWeight: FontWeight.bold,
@@ -331,21 +308,13 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
         ),
       ),
       borderData: FlBorderData(show: true, border: Border.all(color: clrGraphLine, width: 1)),
-      minX: providerEcgDataWatch!.tempEcgSpotsListData.isNotEmpty
-          ? providerEcgDataWatch!.tempEcgSpotsListData.first.x
-          : 0,
-      maxX: providerEcgDataWatch!.tempEcgSpotsListData.isNotEmpty
-          ? providerEcgDataWatch!.tempEcgSpotsListData.last.x + 1
-          : 0,
-      minY: providerEcgDataWatch!.tempEcgDecimalList.isNotEmpty
-          ? providerEcgDataWatch!.tempEcgDecimalList.reduce(min)
-          : 0,
-      maxY: providerEcgDataWatch!.tempEcgDecimalList.isNotEmpty
-          ? providerEcgDataWatch!.tempEcgDecimalList.reduce(max)
-          : 0,
+      minX: tempSpotsList.isNotEmpty ? tempSpotsList.first.x : 0,
+      maxX: tempSpotsList.isNotEmpty ? tempSpotsList.last.x + 1 : 0,
+      minY: tempDecimalList.isNotEmpty ? tempDecimalList.reduce(min) : 0,
+      maxY: tempDecimalList.isNotEmpty ? tempDecimalList.reduce(max) : 0,
       lineBarsData: [
         LineChartBarData(
-          spots: providerEcgDataWatch!.tempEcgSpotsListData,
+          spots: tempSpotsList,
           isCurved: true, // graph shape
           colors: [clrPrimary, clrSecondary],
           barWidth: 1, //curve border width
@@ -363,7 +332,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
   }
 
   ListView _buildView() {
-    if (providerEcgDataWatch!.connectedDevice != null) {
+    if (providerGraphDataWatch!.connectedDevice != null) {
       return _buildConnectDeviceView();
     }
     return _buildListViewOfDevices();
@@ -371,7 +340,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
 
   @override
   Widget build(BuildContext context) {
-    providerEcgDataWatch = context.watch<ProviderEcgData>();
+    providerGraphDataWatch = context.watch<ProviderGraphData>();
 
     return Scaffold(
         backgroundColor: clrDarkBg,
@@ -382,21 +351,23 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
           ),
           actions: [
             Visibility(
-              visible: !providerEcgDataWatch!.isServiceStarted && providerEcgDataWatch!.tempEcgDecimalList.isNotEmpty,
+              visible:
+                  !providerGraphDataWatch!.isServiceStarted && providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
               // visible: false,
               child: TextButton(
                   child: Text(
-                    providerEcgDataWatch!.isEnabled ? "Disabled" : "Enabled",
+                    providerGraphDataWatch!.isEnabled ? "Disabled" : "Enabled",
                     style: TextStyle(color: clrWhite),
                   ),
                   onPressed: () {
-                    if (!providerEcgDataWatch!.isLoading) {
-                      providerEcgDataWatch!.setIsEnabled();
+                    if (!providerGraphDataWatch!.isLoading) {
+                      providerGraphDataWatch!.setIsEnabled();
                     }
                   }),
             ),
             Visibility(
-              visible: !providerEcgDataWatch!.isServiceStarted && providerEcgDataWatch!.tempEcgDecimalList.isNotEmpty,
+              visible:
+                  !providerGraphDataWatch!.isServiceStarted && providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
               // visible: false,
               child: TextButton(
                   child: Text(
@@ -404,55 +375,59 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
                     style: TextStyle(color: clrWhite),
                   ),
                   onPressed: () {
-                    if (!providerEcgDataWatch!.isLoading) {
+                    if (!providerGraphDataWatch!.isLoading) {
                       _generateCsvFile();
                     }
                   }),
             ),
             Visibility(
-              visible: providerEcgDataWatch!.connectedDevice != null,
+              visible: providerGraphDataWatch!.connectedDevice != null,
               child: TextButton(
                   onPressed: () async {
-                    if (!providerEcgDataWatch!.isLoading) {
+                    if (!providerGraphDataWatch!.isLoading) {
                       try {
-                        if (providerEcgDataWatch!.isServiceStarted) {
-                          await providerEcgDataWatch!.readCharacteristic!.setNotifyValue(false);
+                        if (providerGraphDataWatch!.isServiceStarted) {
+                          try {
+                            await providerGraphDataWatch!.readCharacteristic!.setNotifyValue(false);
+                          } catch (err) {
+                            printLog("notfy err ${err.toString()}");
+                          }
 
-                          providerEcgDataWatch!.setLoading(true);
+                          providerGraphDataWatch!.setLoading(true);
                           printLog("stop service");
 
                           //stop service
-                          providerEcgDataWatch!.writeCharacteristic!.write([0]);
+                          providerGraphDataWatch!.writeCharacteristic!.write([0]);
                           if (sub != null) {
                             sub.cancel();
                           }
-                          providerEcgDataWatch!.setServiceStarted(false);
+                          providerGraphDataWatch!.setServiceStarted(false);
 
-                          await providerEcgDataWatch!.storeDataToLocal();
+                          await providerGraphDataWatch!.storedDataToLocal();
 
-                          providerEcgDataWatch!.setLoading(false);
+                          providerGraphDataWatch!.setLoading(false);
                         } else {
-                          await providerEcgDataWatch!.readCharacteristic!.setNotifyValue(true);
+                          await providerGraphDataWatch!.readCharacteristic!.setNotifyValue(true);
 
-                          providerEcgDataWatch!.setLoading(true);
+                          providerGraphDataWatch!.setLoading(true);
 
-                          await providerEcgDataWatch!.clearStoreDataToLocal();
+                          await providerGraphDataWatch!.clearStoreDataToLocal();
                           // start service
-                          providerEcgDataWatch!.writeCharacteristic!.write([1]);
+                          providerGraphDataWatch!.writeCharacteristic!.write([1]);
                           printLog("start service");
                           // ignore: cancel_subscriptions
                           if (sub != null) {
                             sub.cancel();
                           }
 
-                          providerEcgDataWatch!.setServiceStarted(true);
-                          providerEcgDataWatch!.setLoading(false);
+                          providerGraphDataWatch!.setServiceStarted(true);
+                          providerGraphDataWatch!.setLoading(false);
 
-                          sub = providerEcgDataWatch!.readCharacteristic!.value.listen((value) {
-                            providerEcgDataWatch!.setReadValues(value);
+                          sub = providerGraphDataWatch!.readCharacteristic!.value.listen((value) {
+                            providerGraphDataWatch!.setReadValues(value);
                           });
 
-                          await providerEcgDataWatch!.readCharacteristic!.read();
+                          await providerGraphDataWatch!.readCharacteristic!.read();
                         }
                       } catch (e) {
                         print("err $e");
@@ -460,7 +435,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
                     }
                   },
                   child: Text(
-                    providerEcgDataWatch!.isServiceStarted ? "Stop" : "Start",
+                    providerGraphDataWatch!.isServiceStarted ? "Stop" : "Start",
                     style: TextStyle(color: clrWhite),
                   )),
             )
@@ -469,7 +444,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
         body: Stack(
           children: [
             _buildView(),
-            providerEcgDataWatch!.isLoading ? ProgressBar() : Offstage(),
+            providerGraphDataWatch!.isLoading ? ProgressBar() : Offstage(),
           ],
         ));
   }
@@ -483,13 +458,13 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
     // Map<Permission, PermissionStatus> statuses = await [
     //   Permission.storage,
     // ].request();
-    providerEcgDataWatch!.setLoading(true);
+    providerGraphDataWatch!.setLoading(true);
     List<List<dynamic>> rows = [];
-    await providerEcgDataWatch!.getStoredLocalData();
+    await providerGraphDataWatch!.getStoredLocalData();
 
-    for (int i = 0; i < providerEcgDataWatch!.savedEcgLocalDataList.length; i++) {
+    for (int i = 0; i < providerGraphDataWatch!.savedEcgLocalDataList.length; i++) {
       List<dynamic> row = [];
-      row.add(providerEcgDataWatch!.savedEcgLocalDataList[i]);
+      row.add(providerGraphDataWatch!.savedEcgLocalDataList[i]);
       rows.add(row);
     }
 
@@ -499,7 +474,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
     printLog(path);
     final File file = File(path);
     await file.writeAsString(csvData);
-    providerEcgDataWatch!.setLoading(false);
+    providerGraphDataWatch!.setLoading(false);
 
     Share.shareFiles(['${file.path}'], text: 'Exported csv');
   }

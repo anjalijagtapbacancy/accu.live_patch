@@ -6,8 +6,13 @@ class Constant {
   String appName = "BLE Connection";
   String readUuid = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
   String writeUuid = "00001525-1212-efde-1523-785feabcd123";
-  int valueListLength = 100;
+  int valueListLength = 200;
   int yAxisGraphData = 500;
+  double xAxisInterval = 100; //bottom data
+  double yAxisInterval = 1000; //left data
+
+  String ppg = "PPG";
+  String ecg = "ECG";
 
   static Map<int, Color> color = {
     50: Color.fromRGBO(35, 182, 230, .1),

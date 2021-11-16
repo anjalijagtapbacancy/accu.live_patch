@@ -6,7 +6,7 @@ import 'package:flutter_blue/flutter_blue.dart';
 import 'package:flutter_bluetooth_connection/constant.dart';
 import 'package:hive/hive.dart';
 
-class ProviderEcgData with ChangeNotifier, Constant {
+class ProviderGraphData with ChangeNotifier, Constant {
   List<BluetoothDevice> devicesList = [];
 
   BluetoothDevice? connectedDevice;
@@ -43,7 +43,7 @@ class ProviderEcgData with ChangeNotifier, Constant {
   double heartRate = 0;
   late Timer timer;
 
-  clearProviderEcgData() {
+  clearProviderGraphData() {
     devicesList.clear();
     isLoading = false;
     services!.clear();
@@ -142,7 +142,7 @@ class ProviderEcgData with ChangeNotifier, Constant {
     }
   }
 
-  storeDataToLocal() async {
+  storedDataToLocal() async {
     var box = await Hive.openBox<List<double>>('ecg_data');
 
     List<double> localDataList = await box.get("item") ?? [];
@@ -196,7 +196,7 @@ class ProviderEcgData with ChangeNotifier, Constant {
       // }
 
       for (int i = 0; i < valueList.length; i++) {
-        if (i < 100) {
+        if (i < (valueListLength / 2)) {
           mainEcgHexList.add(valueList[i].toRadixString(16).padLeft(2, '0'));
         } else {
           mainPpgHexList.add(valueList[i].toRadixString(16).padLeft(2, '0'));
@@ -240,7 +240,6 @@ class ProviderEcgData with ChangeNotifier, Constant {
       } else {
         tempPpgDecimalList = mainPpgDecimalList;
       }
-      storeDataToLocal();
       setSpotsListData();
 
       printLog("VVV valueList ${valueList.length} ${valueList.toString()} ");
