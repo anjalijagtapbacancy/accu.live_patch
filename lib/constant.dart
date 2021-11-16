@@ -7,6 +7,7 @@ class Constant {
   String readUuid = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
   String writeUuid = "00001525-1212-efde-1523-785feabcd123";
   int valueListLength = 100;
+  int yAxisGraphData = 500;
 
   static Map<int, Color> color = {
     50: Color.fromRGBO(35, 182, 230, .1),

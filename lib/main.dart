@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+
 import 'package:csv/csv.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -316,7 +317,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
         // graph data
         leftTitles: SideTitles(
           showTitles: true,
-          interval: 4000,
+          interval: 1000,
           getTextStyles: (context, value) => TextStyle(
             color: clrLeftTitles,
             fontWeight: FontWeight.bold,
@@ -336,8 +337,12 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
       maxX: providerEcgDataWatch!.tempEcgSpotsListData.isNotEmpty
           ? providerEcgDataWatch!.tempEcgSpotsListData.last.x + 1
           : 0,
-      minY: 4000,
-      maxY: 16000,
+      minY: providerEcgDataWatch!.tempEcgDecimalList.isNotEmpty
+          ? providerEcgDataWatch!.tempEcgDecimalList.reduce(min)
+          : 0,
+      maxY: providerEcgDataWatch!.tempEcgDecimalList.isNotEmpty
+          ? providerEcgDataWatch!.tempEcgDecimalList.reduce(max)
+          : 0,
       lineBarsData: [
         LineChartBarData(
           spots: providerEcgDataWatch!.tempEcgSpotsListData,

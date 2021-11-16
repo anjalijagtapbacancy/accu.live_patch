@@ -117,14 +117,13 @@ class ProviderEcgData with ChangeNotifier, Constant {
   setSpotsListData(List<double> tempEcgDecimalList, List<double> mainEcgDecimalList) {
     for (int k = 0; k < tempEcgDecimalList.length; k++) {
       printLog("mainEcgSpotsListData  ${mainEcgSpotsListData.length}");
-      if ((k + 1) % 5 == 0) {
-        mainEcgSpotsListData
-            .add(FlSpot(double.tryParse((mainEcgDecimalList.length + k).toString()) ?? 0, tempEcgDecimalList[k]));
-      }
+      mainEcgSpotsListData
+          .add(FlSpot(double.tryParse(((mainEcgDecimalList.length + k)).toString()) ?? 0, tempEcgDecimalList[k]));
     }
-    if (mainEcgSpotsListData.length > 500) {
-      tempEcgSpotsListData =
-          mainEcgSpotsListData.getRange(mainEcgSpotsListData.length - 500, mainEcgSpotsListData.length).toList();
+    if (mainEcgSpotsListData.length > yAxisGraphData) {
+      tempEcgSpotsListData = mainEcgSpotsListData
+          .getRange(mainEcgSpotsListData.length - yAxisGraphData, mainEcgSpotsListData.length)
+          .toList();
     } else {
       tempEcgSpotsListData = mainEcgSpotsListData;
     }
@@ -192,8 +191,9 @@ class ProviderEcgData with ChangeNotifier, Constant {
       //   mainPpgHexList.add(valueList[i].toRadixString(16).padLeft(2, '0'));
       // }
 
-      if (mainEcgHexList.length > 1000) {
-        tempEcgHexList = mainEcgHexList.getRange(mainEcgHexList.length - 1000, mainEcgHexList.length).toList();
+      if (mainEcgHexList.length > (yAxisGraphData * 2)) {
+        tempEcgHexList =
+            mainEcgHexList.getRange(mainEcgHexList.length - (yAxisGraphData * 2), mainEcgHexList.length).toList();
       } else {
         tempEcgHexList = mainEcgHexList;
       }
@@ -205,9 +205,9 @@ class ProviderEcgData with ChangeNotifier, Constant {
         }
       }
 
-      if (mainEcgDecimalList.length > 500) {
+      if (mainEcgDecimalList.length > yAxisGraphData) {
         tempEcgDecimalList =
-            mainEcgDecimalList.getRange(mainEcgDecimalList.length - 500, mainEcgDecimalList.length).toList();
+            mainEcgDecimalList.getRange(mainEcgDecimalList.length - yAxisGraphData, mainEcgDecimalList.length).toList();
       } else {
         tempEcgDecimalList = mainEcgDecimalList;
       }
@@ -215,10 +215,10 @@ class ProviderEcgData with ChangeNotifier, Constant {
       setSpotsListData(tempEcgDecimalList, mainEcgDecimalList);
 
       printLog("VVV valueList ${valueList.length} ${valueList.toString()} ");
-      printLog("VVV mainEcgHexList ${mainEcgHexList.length} ${mainEcgHexList.toString()}");
-      printLog("VVV tempEcgHexList ${tempEcgHexList.length} ${tempEcgHexList.toString()}");
+      // printLog("VVV mainEcgHexList ${mainEcgHexList.length} ${mainEcgHexList.toString()}");
+      // printLog("VVV tempEcgHexList ${tempEcgHexList.length} ${tempEcgHexList.toString()}");
 
-      // printLog("VVV mainEcgDecimalList ${mainEcgDecimalList.length} ${mainEcgDecimalList.toString()}");
+      printLog("VVV mainEcgDecimalList ${mainEcgDecimalList.length} ${mainEcgDecimalList.toString()}");
       // printLog("VVV tempEcgDecimalList ${tempEcgDecimalList.length} ${tempEcgDecimalList.toString()}");
 
       printLog(
