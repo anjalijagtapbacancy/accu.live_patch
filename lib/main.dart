@@ -305,7 +305,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
           // interval: providerEcgDataWatch!.savedEcgLocalDataList.isNotEmpty
           //     ? providerEcgDataWatch!.savedEcgLocalDataList.length / 100
           //     : 100,
-          interval: 50,
+          interval: 100,
           getTextStyles: (context, value) =>
               TextStyle(color: clrBottomTitles, fontWeight: FontWeight.bold, fontSize: 13),
           getTitles: (value) {

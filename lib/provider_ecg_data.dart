@@ -184,11 +184,11 @@ class ProviderEcgData with ChangeNotifier, Constant {
         mainEcgHexList.add(valueList[i].toRadixString(16).padLeft(2, '0'));
       }
 
-      // for (int i = 0 + 2; i < valueList[0] + (0 + 2); i++) {
+      // for (int i = 0 + 2; i < valueListLength; i++) {
       //   mainEcgHexList.add(valueList[i].toRadixString(16).padLeft(2, '0'));
       // }
 
-      // for (int i = valueListLength + 2; i < valueList[1] + (valueListLength + 2); i++) {
+      // for (int i = valueListLength ; i < valueList.length; i++) {
       //   mainPpgHexList.add(valueList[i].toRadixString(16).padLeft(2, '0'));
       // }
 
