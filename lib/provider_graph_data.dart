@@ -60,6 +60,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
     services!.clear();
     readValues = new Map<Guid, List<int>>();
     isServiceStarted = false;
+    heartRate = 0;
 
     savedEcgLocalDataList.clear();
     mainEcgSpotsListData.clear();
@@ -211,6 +212,8 @@ class ProviderGraphData with ChangeNotifier, Constant {
     // printLog(" cleared savedEcgLocalDataList  ${savedEcgLocalDataList.toString()}");
   }
 
+  List<int>? finalList = [];
+
   void generateGraphValuesList(List<int>? valueList) async {
     if (valueList != null) {
       lastSavedTime = lastSavedTime + 1;
@@ -226,7 +229,6 @@ class ProviderGraphData with ChangeNotifier, Constant {
           mainPpgHexList.add(valueList[i].toRadixString(16).padLeft(2, '0'));
         }
       }
-
       if (mainEcgHexList.length > (yAxisGraphData * 2) && mainPpgHexList.length > (yAxisGraphData * 2)) {
         tempEcgHexList =
             mainEcgHexList.getRange(mainEcgHexList.length - (yAxisGraphData * 2), mainEcgHexList.length).toList();
@@ -237,16 +239,20 @@ class ProviderGraphData with ChangeNotifier, Constant {
         tempPpgHexList = mainPpgHexList;
       }
 
-      for (int h = 0; h < tempEcgHexList.length; h++) {
+      mainEcgDecimalList.clear();
+      for (int h = 0; h < mainEcgHexList.length; h++) {
         if (h % 2 == 0) {
-          String strHex = tempEcgHexList[h + 1] + tempEcgHexList[h];
+          String strHex = mainEcgHexList[h + 1] + mainEcgHexList[h];
           mainEcgDecimalList.add(double.parse(int.parse(strHex, radix: 16).toString()));
         }
       }
+      print("sss mainEcgHexList ${mainEcgHexList.length} mainEcgDecimalList ${mainEcgDecimalList.length}");
 
-      for (int h = 0; h < tempPpgHexList.length; h++) {
+      // print("yyyy ${mainEcgHexList.length} ${mainEcgDecimalList.toList()}");
+      mainPpgDecimalList.clear();
+      for (int h = 0; h < mainPpgHexList.length; h++) {
         if (h % 2 == 0) {
-          String strHex = tempPpgHexList[h + 1] + tempPpgHexList[h];
+          String strHex = mainPpgHexList[h + 1] + mainPpgHexList[h];
           mainPpgDecimalList.add(double.parse(int.parse(strHex, radix: 16).toString()));
         }
       }
@@ -272,7 +278,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
       printLog("VVV mainPpgHexList ${mainPpgHexList.length} ${mainPpgHexList.toString()}");
       printLog("VVV tempPpgHexList ${tempPpgHexList.length} ${tempPpgHexList.toString()}");
 
-      // printLog("VVV mainEcgDecimalList ${mainEcgDecimalList.length} ${mainEcgDecimalList.toString()}");
+      printLog("VVV mainEcgDecimalList ${mainEcgDecimalList.length} ${mainEcgDecimalList.toString()}");
       // printLog("VVV tempEcgDecimalList ${tempEcgDecimalList.length} ${tempEcgDecimalList.toString()}");
 
       printLog(
@@ -283,13 +289,14 @@ class ProviderGraphData with ChangeNotifier, Constant {
   }
 
   void periodicTask() {
-    // if ((h + 1) % 5 == 0) {
     try {
-      if (mainEcgSpotsListData.length > 0 && (mainEcgSpotsListData.length) % periodicTimeInSec == 0) {
-        printLog("periodicTask ifff  ecg ............... ${mainEcgSpotsListData.length}");
+      if (mainEcgDecimalList.length > filterDataListLength &&
+          mainEcgHexList.length > 0 &&
+          (mainEcgHexList.length) % periodicTimeInSec == 0) {
+        printLog("periodicTask ifff  ecg ............... ${mainEcgHexList.length}");
         countHeartRate();
       } else {
-        printLog("periodicTask elsee  ecg ............... ${mainEcgSpotsListData.length}");
+        printLog("periodicTask elsee  ecg ............... ${mainEcgHexList.length}");
       }
     } catch (err) {
       printLog("periodicTask err ${err.toString()}");
@@ -303,6 +310,15 @@ class ProviderGraphData with ChangeNotifier, Constant {
     //   notifyListeners();
     // });
 
+    sgFiltered = Array([]);
+    filterOP = Array([]);
+
+    peaksArrayFirst = [];
+    avgOfPeaks = 0;
+    totalOfPeaksFirst = 0;
+
+    // heartRate = 0;
+
     var fs = 120;
     var nyq = 0.5 * fs; // design filter
     var cutOff = 20;
@@ -311,8 +327,16 @@ class ProviderGraphData with ChangeNotifier, Constant {
     double _threshold = 0;
 
     var b = firwin(numtaps, Array([normalFc]));
-    sgFiltered = lfilter(b, Array([1.0]), Array(tempEcgDecimalList.toList())); // filter the signal
+    sgFiltered = lfilter(
+        b,
+        Array([1.0]),
+        Array(mainEcgDecimalList
+            .getRange(mainEcgDecimalList.length - filterDataListLength, mainEcgDecimalList.length)
+            .toList())); // filter the signal
 
+    // sgFiltered = lfilter(b, Array([1.0]), Array(ecgData.getRange(0, 500).toList())); // filter the signal
+
+    print("TTT ${tempEcgDecimalList.length} ");
     //final filter output
     var fs1 = 25;
     var nyq1 = 0.5 * fs1; // design filter
@@ -353,6 +377,8 @@ class ProviderGraphData with ChangeNotifier, Constant {
         " avg " +
         (totalOfPeaksFirst / (peaksArrayFirst[0].length)).toString());
     heartRate = (60 / (totalOfPeaksFirst / (peaksArrayFirst[0].length))).round();
+    // heartRate = ((60 * peaksArrayFirst[0].length) / 2.5).round();
+
     printLog("heartRate:  " + heartRate.toString());
     // notifyListeners();
   }

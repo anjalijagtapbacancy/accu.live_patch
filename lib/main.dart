@@ -223,10 +223,11 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
           ),
           Expanded(
             child: Visibility(
-              visible: title == ppg &&
-                  providerGraphDataWatch!.isEnabled &&
-                  providerGraphDataWatch!.heartRate < 150 &&
-                  providerGraphDataWatch!.heartRate > 60,
+              visible: title == ppg && providerGraphDataWatch!.isEnabled
+              // &&
+              // providerGraphDataWatch!.heartRate < 150 &&
+              // providerGraphDataWatch!.heartRate > 60
+              ,
               child: Align(
                 alignment: Alignment.centerRight,
                 child: Text(
@@ -371,8 +372,9 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
                   }),
             ),
             Visibility(
-              visible:
-                  !providerGraphDataWatch!.isServiceStarted && providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
+              // visible:
+              //     !providerGraphDataWatch!.isServiceStarted && providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
+
               child: TextButton(
                   child: Text(
                     "Export",
@@ -463,25 +465,23 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
     //   Permission.storage,
     // ].request();
     providerGraphDataWatch!.setLoading(true);
-    List<List<dynamic>> rows = [];
+    List<List<dynamic>> column = [];
     List<dynamic> row = [];
 
     row.add("ecg");
     row.add("ppg");
-    rows.add(row);
+    column.add(row);
 
     await providerGraphDataWatch!.getStoredLocalData();
 
-    List<dynamic> rowLocal = [];
     for (int i = 0; i < providerGraphDataWatch!.savedEcgLocalDataList.length; i++) {
-      rowLocal.add(providerGraphDataWatch!.savedEcgLocalDataList[i]);
-      rows.add(rowLocal);
+      row = [];
+      row.add(providerGraphDataWatch!.savedEcgLocalDataList[i]);
+      row.add(providerGraphDataWatch!.savedPpgLocalDataList[i]);
+      column.add(row);
     }
-    for (int i = 0; i < providerGraphDataWatch!.savedPpgLocalDataList.length; i++) {
-      rowLocal.add(providerGraphDataWatch!.savedPpgLocalDataList[i]);
-      rows.add(rowLocal);
-    }
-    String csvData = ListToCsvConverter().convert(rows);
+
+    String csvData = ListToCsvConverter().convert(column);
     final String directory = (await getApplicationSupportDirectory()).path;
     final path = "$directory/csv_graph_data.csv";
     printLog(path);
