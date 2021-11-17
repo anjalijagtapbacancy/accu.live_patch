@@ -230,6 +230,12 @@
       "languageVersion": "2.12"
     },
     {
+      "name": "scidart",
+      "rootUri": "file:///Volumes/Development/flutter/.pub-cache/hosted/pub.dartlang.org/scidart-0.0.2-dev.6",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
       "name": "share",
       "rootUri": "file:///Volumes/Development/flutter/.pub-cache/hosted/pub.dartlang.org/share-2.0.4",
       "packageUri": "lib/",
@@ -308,7 +314,7 @@
       "languageVersion": "2.12"
     }
   ],
-  "generated": "2021-11-15T11:31:12.118726Z",
+  "generated": "2021-11-17T07:26:53.791165Z",
   "generator": "pub",
   "generatorVersion": "2.13.4"
 }

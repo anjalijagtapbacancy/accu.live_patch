@@ -201,7 +201,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
     }
 
     return ListView(
-      padding: const EdgeInsets.all(8),
+      padding: EdgeInsets.only(top: 8, right: 8),
       children: <Widget>[rowTitle(ppg), graphWidget(ppg), rowTitle(ecg), graphWidget(ecg)],
     );
   }
@@ -223,7 +223,10 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
           ),
           Expanded(
             child: Visibility(
-              visible: title != "ECG" && providerGraphDataWatch!.heartRate != 0,
+              visible: title == ppg &&
+                  providerGraphDataWatch!.isEnabled &&
+                  providerGraphDataWatch!.heartRate < 150 &&
+                  providerGraphDataWatch!.heartRate > 60,
               child: Align(
                 alignment: Alignment.centerRight,
                 child: Text(
@@ -240,7 +243,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
 
   Widget graphWidget(String title) {
     return AspectRatio(
-      aspectRatio: 6 / (1.12),
+      aspectRatio: 6 / (1.05),
       child: Container(
         decoration: BoxDecoration(
             borderRadius: BorderRadius.all(
@@ -354,7 +357,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
           actions: [
             Visibility(
               visible:
-                  !providerGraphDataWatch!.isServiceStarted && providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
+                  providerGraphDataWatch!.isServiceStarted && providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
               // visible: false,
               child: TextButton(
                   child: Text(
@@ -431,7 +434,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
                           await providerGraphDataWatch!.readCharacteristic!.read();
                         }
                       } catch (e) {
-                        print("err $e");
+                        printLog("err $e");
                       }
                     }
                   },

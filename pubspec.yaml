@@ -31,6 +31,7 @@ dependencies:
   path_provider: null
   permission_handler: null
   provider: ^6.0.1
+  scidart: ^0.0.2-dev.6
   share: ^2.0.4
 
 dev_dependencies:

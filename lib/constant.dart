@@ -10,6 +10,8 @@ class Constant {
   int yAxisGraphData = 500;
   double xAxisInterval = 100; //bottom data
   double yAxisInterval = 1000; //left data
+  int periodicTimeInSec = 200 * 20;
+  int filterDataListLength = 2000;
 
   String ppg = "PPG";
   String ecg = "ECG";
@@ -42,6 +44,8 @@ class Constant {
   Color clrBlack = Colors.black;
 
   printLog(String msg) {
+    // if (msg.contains("periodicTask") || msg.contains("heartRate")) {
     print(msg);
+    // }
   }
 }

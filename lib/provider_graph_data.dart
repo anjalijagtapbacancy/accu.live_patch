@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'package:flutter_bluetooth_connection/constant.dart';
 import 'package:hive/hive.dart';
+import 'package:scidart/scidart.dart';
+import 'package:scidart/numdart.dart';
+import 'dart:math' as math;
 
 class ProviderGraphData with ChangeNotifier, Constant {
   List<BluetoothDevice> devicesList = [];
@@ -18,7 +21,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
   Map<Guid, List<int>> readValues = new Map<Guid, List<int>>();
   var isServiceStarted = false;
-  var isEnabled = false;
+  var isEnabled = true;
 
   int ecgDataLength = 0;
   int ppgDataLength = 0;
@@ -40,8 +43,16 @@ class ProviderGraphData with ChangeNotifier, Constant {
   List<double> tempPpgDecimalList = [];
 
   double lastSavedTime = 0;
-  double heartRate = 0;
   late Timer timer;
+
+  Array sgFiltered = Array([]);
+  Array filterOP = Array([]);
+
+  List<dynamic> peaksArrayFirst = [];
+  double avgOfPeaks = 0;
+  double totalOfPeaksFirst = 0;
+
+  int heartRate = 0;
 
   clearProviderGraphData() {
     devicesList.clear();
@@ -116,6 +127,8 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
   setSpotsListData() {
     for (int k = 0; k < tempEcgDecimalList.length; k++) {
+      // if ((mainEcgSpotsListData.length) + 1 / periodicTimeInSec == 0) {
+
       mainEcgSpotsListData
           .add(FlSpot(double.tryParse(((mainEcgDecimalList.length + k)).toString()) ?? 0, tempEcgDecimalList[k]));
     }
@@ -123,6 +136,9 @@ class ProviderGraphData with ChangeNotifier, Constant {
     for (int k = 0; k < tempPpgDecimalList.length; k++) {
       mainPpgSpotsListData
           .add(FlSpot(double.tryParse(((mainPpgDecimalList.length + k)).toString()) ?? 0, tempPpgDecimalList[k]));
+    }
+    if (isEnabled) {
+      periodicTask();
     }
 
     if (mainEcgSpotsListData.length > yAxisGraphData) {
@@ -266,11 +282,78 @@ class ProviderGraphData with ChangeNotifier, Constant {
     }
   }
 
-  void countHeartRate() {
-    timer = Timer(Duration(seconds: 10), () {
-      timer.cancel();
+  void periodicTask() {
+    // if ((h + 1) % 5 == 0) {
+    try {
+      if (mainEcgSpotsListData.length > 0 && (mainEcgSpotsListData.length) % periodicTimeInSec == 0) {
+        printLog("periodicTask ifff  ecg ............... ${mainEcgSpotsListData.length}");
+        countHeartRate();
+      } else {
+        printLog("periodicTask elsee  ecg ............... ${mainEcgSpotsListData.length}");
+      }
+    } catch (err) {
+      printLog("periodicTask err ${err.toString()}");
+    }
+  }
 
-      notifyListeners();
-    });
+  void countHeartRate() {
+    // timer = Timer(Duration(seconds: 10), () {
+    //   timer.cancel();
+
+    //   notifyListeners();
+    // });
+
+    var fs = 120;
+    var nyq = 0.5 * fs; // design filter
+    var cutOff = 20;
+    var normalFc = cutOff / nyq;
+    var numtaps = 152;
+    double _threshold = 0;
+
+    var b = firwin(numtaps, Array([normalFc]));
+    sgFiltered = lfilter(b, Array([1.0]), Array(tempEcgDecimalList.toList())); // filter the signal
+
+    //final filter output
+    var fs1 = 25;
+    var nyq1 = 0.5 * fs1; // design filter
+    var cutOff1 = 0.5;
+    var normalFc1 = cutOff1 / nyq1;
+    var numtaps1 = 687;
+    var passZero = 'highpass';
+
+    var b1 = firwin(numtaps1, Array([normalFc1]), pass_zero: passZero);
+    filterOP = lfilter(b1, Array([1.0]), sgFiltered); // filter the signal
+
+    printLog("CCC sgFiltered " + sgFiltered.runtimeType.toString() + " " + sgFiltered.length.toString());
+
+    printLog("CCC filterOP " + filterOP.runtimeType.toString() + " " + filterOP.length.toString());
+    printLog("CCC " + filterOP.toString());
+    _threshold = ((filterOP).reduce(math.max)) * 0.3;
+    printLog("CCC _threshold " + _threshold.toString());
+    peaksArrayFirst = findPeaks(filterOP, threshold: _threshold);
+    printLog("Peaks Length " + peaksArrayFirst.length.toString());
+    printLog("Peaks " + peaksArrayFirst.toString());
+    for (int i = 0; i < peaksArrayFirst.length; i++) {
+      printLog("AAA ${i.toString()} " + peaksArrayFirst[i].length.toString());
+      if (i == 0) {
+        for (int j = 0; j < peaksArrayFirst[i].length; j++) {
+          if (j + 1 < (peaksArrayFirst[i].length)) {
+            printLog("jjjj ${j} ${peaksArrayFirst[i][j + 1]} ${peaksArrayFirst[i][j]}");
+
+            var interval = ((peaksArrayFirst[i][j + 1] - peaksArrayFirst[i][j]) / 200);
+            printLog("jjjj interval ${interval}");
+
+            totalOfPeaksFirst += ((peaksArrayFirst[i][j + 1] - peaksArrayFirst[i][j]) / 200);
+          }
+        }
+      }
+    }
+    printLog("totalOfPeaksFirst  " +
+        totalOfPeaksFirst.toString() +
+        " avg " +
+        (totalOfPeaksFirst / (peaksArrayFirst[0].length)).toString());
+    heartRate = (60 / (totalOfPeaksFirst / (peaksArrayFirst[0].length))).round();
+    printLog("heartRate:  " + heartRate.toString());
+    // notifyListeners();
   }
 }
