@@ -372,9 +372,8 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
                   }),
             ),
             Visibility(
-              // visible:
-              //     !providerGraphDataWatch!.isServiceStarted && providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
-
+              visible:
+                  !providerGraphDataWatch!.isServiceStarted && providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
               child: TextButton(
                   child: Text(
                     "Export",
