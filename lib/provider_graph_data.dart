@@ -47,12 +47,18 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
   Array sgFiltered = Array([]);
   Array filterOP = Array([]);
-
   List<dynamic> peaksArrayFirst = [];
   double avgOfPeaks = 0;
   double totalOfPeaksFirst = 0;
 
+  Array sgFilteredPpg = Array([]);
+  Array filterOPPpg = Array([]);
+  List<dynamic> peaksArrayPpg = [];
+  double avgOfPeaksPpg = 0;
+  double totalOfPeaksPpg = 0;
+
   int heartRate = 0;
+  int heartRatePPG = 0;
 
   clearProviderGraphData() {
     devicesList.clear();
@@ -61,6 +67,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
     readValues = new Map<Guid, List<int>>();
     isServiceStarted = false;
     heartRate = 0;
+    heartRatePPG = 0;
 
     savedEcgLocalDataList.clear();
     mainEcgSpotsListData.clear();
@@ -294,7 +301,8 @@ class ProviderGraphData with ChangeNotifier, Constant {
           mainEcgHexList.length > 0 &&
           (mainEcgHexList.length) % periodicTimeInSec == 0) {
         printLog("periodicTask ifff  ecg ............... ${mainEcgHexList.length}");
-        countHeartRate();
+        countEcgHeartRate();
+        countPpgHeartRate();
       } else {
         printLog("periodicTask elsee  ecg ............... ${mainEcgHexList.length}");
       }
@@ -303,21 +311,13 @@ class ProviderGraphData with ChangeNotifier, Constant {
     }
   }
 
-  void countHeartRate() {
-    // timer = Timer(Duration(seconds: 10), () {
-    //   timer.cancel();
-
-    //   notifyListeners();
-    // });
-
+  void countEcgHeartRate() {
     sgFiltered = Array([]);
     filterOP = Array([]);
 
     peaksArrayFirst = [];
     avgOfPeaks = 0;
     totalOfPeaksFirst = 0;
-
-    // heartRate = 0;
 
     var fs = 120;
     var nyq = 0.5 * fs; // design filter
@@ -381,5 +381,77 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
     printLog("heartRate:  " + heartRate.toString());
     // notifyListeners();
+  }
+
+  void countPpgHeartRate() {
+    sgFilteredPpg = Array([]);
+    filterOPPpg = Array([]);
+
+    peaksArrayPpg = [];
+    avgOfPeaksPpg = 0;
+    totalOfPeaksPpg = 0;
+
+    var fs = 120;
+    var nyq = 0.5 * fs; // design filter
+    var cutOff = 10;
+    var normalFc = cutOff / nyq;
+    var numtaps = 304;
+    double _threshold = 0;
+
+    var b = firwin(numtaps, Array([normalFc]));
+    sgFilteredPpg = lfilter(
+        b,
+        Array([1.0]),
+        Array(mainPpgDecimalList
+            .getRange(mainPpgDecimalList.length - filterDataListLength, mainPpgDecimalList.length)
+            .toList())); // filter the signal
+
+    // sgFilteredPpg = lfilter(b, Array([1.0]), Array(ecgData.getRange(0, 500).toList())); // filter the signal
+
+    //final filter output
+    var fs1 = 25;
+    var nyq1 = 0.5 * fs1; // design filter
+    var cutOff1 = 0.5;
+    var normalFc1 = cutOff1 / nyq1;
+    var numtaps1 = 687;
+    var passZero = 'highpass';
+
+    var b1 = firwin(numtaps1, Array([normalFc1]), pass_zero: passZero);
+    filterOPPpg = lfilter(b1, Array([1.0]), sgFilteredPpg); // filter the signal
+
+    printLog("CCC sgFilteredPpg " + sgFilteredPpg.runtimeType.toString() + " " + sgFilteredPpg.length.toString());
+
+    printLog("CCC filterOPPpg " + filterOPPpg.runtimeType.toString() + " " + filterOPPpg.length.toString());
+    printLog("CCC " + filterOPPpg.toString());
+    _threshold = ((filterOPPpg).reduce(math.max)) * 0.35;
+    // _threshold = (filterOPPpg).reduce((a, b) => a + b) / filterOPPpg.length;
+
+    printLog("CCC _thresholdPpg max ${(filterOPPpg).reduce(math.max)} hhh " + _threshold.toString());
+    peaksArrayPpg = findPeaks(filterOPPpg, threshold: _threshold);
+    printLog("Peaks Ppg Length " + peaksArrayPpg.length.toString());
+    printLog("Peaks Ppg" + peaksArrayPpg.toString());
+    for (int i = 0; i < peaksArrayPpg.length; i++) {
+      printLog("AAA ${i.toString()} " + peaksArrayPpg[i].length.toString());
+      if (i == 0) {
+        for (int j = 0; j < peaksArrayPpg[i].length; j++) {
+          if (j + 1 < (peaksArrayPpg[i].length)) {
+            printLog("jjjj ${j} ${peaksArrayPpg[i][j + 1]} ${peaksArrayPpg[i][j]}");
+
+            var interval = ((peaksArrayPpg[i][j + 1] - peaksArrayPpg[i][j]) / 200);
+            printLog("jjjj interval ${interval}");
+
+            totalOfPeaksPpg += ((peaksArrayPpg[i][j + 1] - peaksArrayPpg[i][j]) / 200);
+          }
+        }
+      }
+    }
+    printLog("totalOfPeaksPpg  " +
+        totalOfPeaksPpg.toString() +
+        " avg " +
+        (totalOfPeaksPpg / (peaksArrayPpg[0].length)).toString());
+    heartRatePPG = (60 / (totalOfPeaksPpg / (peaksArrayPpg[0].length))).round();
+    // heartRatePPG = ((60 * peaksArrayPpg[0].length) / 2.5).round();
+
+    printLog("heartRatePPG :  " + heartRatePPG.toString());
   }
 }

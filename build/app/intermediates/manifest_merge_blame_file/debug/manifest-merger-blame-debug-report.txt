@@ -46,8 +46,8 @@
 26        android:debuggable="true"
 27        android:icon="@mipmap/ic_launcher"
 27-->/Users/apple/Desktop/Work/BLE-Connection/android/app/src/main/AndroidManifest.xml:14:9-43
-28        android:label="flutter_bluetooth_connection" >
-28-->/Users/apple/Desktop/Work/BLE-Connection/android/app/src/main/AndroidManifest.xml:13:9-53
+28        android:label="Bacancy Medical" >
+28-->/Users/apple/Desktop/Work/BLE-Connection/android/app/src/main/AndroidManifest.xml:13:9-40
 29        <activity
 29-->/Users/apple/Desktop/Work/BLE-Connection/android/app/src/main/AndroidManifest.xml:15:9-43:20
 30            android:name="com.example.flutter_bluetooth_connection.MainActivity"

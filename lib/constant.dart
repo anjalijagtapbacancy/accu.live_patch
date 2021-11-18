@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class Constant {
-  String appName = "BLE Connection";
+  String appName = "Bacancy Medical";
   String readUuid = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
   String writeUuid = "00001525-1212-efde-1523-785feabcd123";
   int valueListLength = 200;
@@ -44,8 +44,8 @@ class Constant {
   Color clrBlack = Colors.black;
 
   printLog(String msg) {
-    if (msg.contains("periodicTask") || msg.contains("heartRate")) {
-      print(msg);
-    }
+    // if (msg.contains("periodicTask") || msg.contains("heartRate")) {
+    print(msg);
+    // }
   }
 }

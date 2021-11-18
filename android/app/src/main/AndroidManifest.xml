@@ -10,7 +10,7 @@
     <uses-permission android:name="android.permission.READ_INTERNAL_STORAGE"/>
   
    <application
-        android:label="flutter_bluetooth_connection"
+        android:label="Bacancy Medical"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

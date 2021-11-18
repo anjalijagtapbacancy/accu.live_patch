@@ -202,11 +202,16 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
 
     return ListView(
       padding: EdgeInsets.only(top: 8, right: 8),
-      children: <Widget>[rowTitle(ppg), graphWidget(ppg), rowTitle(ecg), graphWidget(ecg)],
+      children: <Widget>[
+        rowTitle(ppg, providerGraphDataWatch!.heartRatePPG),
+        graphWidget(ppg),
+        rowTitle(ecg, providerGraphDataWatch!.heartRate),
+        graphWidget(ecg)
+      ],
     );
   }
 
-  Widget rowTitle(String title) {
+  Widget rowTitle(String title, int iHeartRate) {
     return Padding(
       padding: EdgeInsets.only(top: 4.0),
       child: Row(
@@ -223,7 +228,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
           ),
           Expanded(
             child: Visibility(
-              visible: title == ppg && providerGraphDataWatch!.isEnabled
+              visible: providerGraphDataWatch!.isEnabled
               // &&
               // providerGraphDataWatch!.heartRate < 150 &&
               // providerGraphDataWatch!.heartRate > 60
@@ -231,7 +236,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
               child: Align(
                 alignment: Alignment.centerRight,
                 child: Text(
-                  "Heart Rate: " + providerGraphDataWatch!.heartRate.toString(),
+                  "Heart Rate: " + iHeartRate.toString(),
                   style: TextStyle(fontSize: 12),
                 ),
               ),
