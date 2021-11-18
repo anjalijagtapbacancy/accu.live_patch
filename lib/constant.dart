@@ -21,7 +21,7 @@ class Constant {
   String heartRateUnit = "BPM";
   String strNoDeviceConnected = "No device connected";
   String strConnect = "Connect";
-  String displayDeviceString = "";
+  String displayDeviceString = "ecg";
   String strNoDevicesAvailable = "No devices are available";
   String strAvailableDevices = "Available Devices";
 

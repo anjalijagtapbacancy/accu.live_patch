@@ -89,25 +89,29 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
         for (BluetoothDevice device in devices) {
           printLog("  connectedDevices ${device}");
 
-          if (device.name.contains(displayDeviceString)) {
+          if (device.name.toLowerCase().contains(displayDeviceString)) {
             providerGraphDataWatch!.setDeviceList(device);
           }
         }
       });
 
+      // if (providerGraphDataWatch!.devicesList.length == 1) {
+      //   print("devicesList iff ${providerGraphDataWatch!.devicesList.length.toString()}");
+      //   connectDevice(providerGraphDataWatch!.devicesList.first);
+      // } else {
+      //   print("devicesList elsee ${providerGraphDataWatch!.devicesList.length.toString()}");
+      // }
+
       widget.flutterBlue.scanResults.listen((List<ScanResult> results) {
         printLog("  scan result length devices ${results.length}");
         for (ScanResult result in results) {
           printLog("  scanResults ${result.device}");
-          if (result.device.name.contains(displayDeviceString)) {
+          if (result.device.name.toLowerCase().contains(displayDeviceString)) {
             providerGraphDataWatch!.setDeviceList(result.device);
           }
         }
       });
 
-      if (providerGraphDataWatch!.devicesList.length == 1) {
-        connectDevice(providerGraphDataWatch!.devicesList.first);
-      }
       widget.flutterBlue.startScan();
     });
   }
@@ -131,14 +135,14 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
       // }
       printLog(e.toString());
     } finally {
-      providerGraphDataWatch!.setConnectedDevice(device);
+      providerGraphDataWatch!.setConnectedDevice(device, context);
       providerGraphDataWatch!.setLoading(false);
-      Navigator.pop(context);
     }
   }
 
   Widget showAvailableDevices() {
     List<Container> availableDevicesView = [];
+
     for (BluetoothDevice device in providerGraphDataWatch!.devicesList) {
       availableDevicesView.add(
         Container(

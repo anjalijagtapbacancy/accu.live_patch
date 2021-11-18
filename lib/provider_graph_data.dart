@@ -107,14 +107,17 @@ class ProviderGraphData with ChangeNotifier, Constant {
     if (!devicesList.contains(device)) {
       devicesList.add(device);
     }
+
     notifyListeners();
   }
 
-  setConnectedDevice(BluetoothDevice device) async {
+  setConnectedDevice(BluetoothDevice device, BuildContext context) async {
     services = await device.discoverServices();
 
     connectedDevice = device;
     notifyListeners();
+
+    Navigator.pop(context);
   }
 
   setReadCharacteristic(BluetoothCharacteristic characteristic) async {
