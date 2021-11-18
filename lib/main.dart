@@ -88,7 +88,8 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
 
         for (BluetoothDevice device in devices) {
           printLog("  connectedDevices ${device}");
-          if (device.name.contains("ddd")) {
+
+          if (device.name.contains(displayDeviceString)) {
             providerGraphDataWatch!.setDeviceList(device);
           }
         }
@@ -98,11 +99,15 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
         printLog("  scan result length devices ${results.length}");
         for (ScanResult result in results) {
           printLog("  scanResults ${result.device}");
-          if (result.device.name.contains("ddd")) {
+          if (result.device.name.contains(displayDeviceString)) {
             providerGraphDataWatch!.setDeviceList(result.device);
           }
         }
       });
+
+      if (providerGraphDataWatch!.devicesList.length == 1) {
+        connectDevice(providerGraphDataWatch!.devicesList.first);
+      }
       widget.flutterBlue.startScan();
     });
   }
@@ -112,6 +117,24 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
     providerGraphDataWatch!.clearProviderGraphData();
 
     super.dispose();
+  }
+
+  void connectDevice(BluetoothDevice device) async {
+    providerGraphDataWatch!.setLoading(true);
+    widget.flutterBlue.stopScan();
+
+    try {
+      await device.connect();
+    } catch (e) {
+      // if (e.code != 'already_connected') {
+      //   throw e;
+      // }
+      printLog(e.toString());
+    } finally {
+      providerGraphDataWatch!.setConnectedDevice(device);
+      providerGraphDataWatch!.setLoading(false);
+      Navigator.pop(context);
+    }
   }
 
   Widget showAvailableDevices() {
@@ -143,25 +166,11 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
                     shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(25))),
                   ),
                   child: Text(
-                    'Connect',
+                    strConnect,
                     style: TextStyle(color: clrPrimary, fontWeight: FontWeight.w500),
                   ),
                   onPressed: () async {
-                    providerGraphDataWatch!.setLoading(true);
-                    widget.flutterBlue.stopScan();
-
-                    try {
-                      await device.connect();
-                    } catch (e) {
-                      // if (e.code != 'already_connected') {
-                      //   throw e;
-                      // }
-                      printLog(e.toString());
-                    } finally {
-                      providerGraphDataWatch!.setConnectedDevice(device);
-                      providerGraphDataWatch!.setLoading(false);
-                      Navigator.pop(context);
-                    }
+                    connectDevice(device);
                   },
                 ),
               ),
@@ -327,7 +336,9 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
         leftTitles: SideTitles(
           showTitles: true,
           interval: tempDecimalList.isNotEmpty
-              ? (tempDecimalList.reduce(max) - tempDecimalList.reduce(min)) / 4
+              ? (tempDecimalList.reduce(max) - tempDecimalList.reduce(min)) / 4 != 0
+                  ? (tempDecimalList.reduce(max) - tempDecimalList.reduce(min)) / 4
+                  : yAxisInterval
               : yAxisInterval,
           getTextStyles: (context, value) => TextStyle(
             color: clrLeftTitles,
@@ -525,9 +536,9 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
     return ListView(
       padding: EdgeInsets.only(top: 8, right: 8),
       children: [
-        rowTitle(ppg, providerGraphDataWatch!.heartRatePPG),
+        rowTitle(ecg, providerGraphDataWatch!.heartRate),
         AspectRatio(
-          aspectRatio: 6 / (1.02),
+          aspectRatio: 3 / (1),
           child: Container(
             decoration: BoxDecoration(
                 borderRadius: BorderRadius.all(
@@ -549,8 +560,9 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
     return ListView(
       padding: EdgeInsets.only(top: 8, right: 8),
       children: [
+        rowTitle(ppg, providerGraphDataWatch!.heartRatePPG),
         AspectRatio(
-          aspectRatio: 1 / (1),
+          aspectRatio: 3 / (1),
           child: Container(
             decoration: BoxDecoration(
                 borderRadius: BorderRadius.all(

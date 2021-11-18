@@ -170,14 +170,16 @@ class ProviderGraphData with ChangeNotifier, Constant {
     var box = await Hive.openBox<List<double>>('graph_data');
 
     List<double> localEcgDataList = await box.get("ecg_graph_data") ?? [];
-    localEcgDataList.addAll(tempEcgDecimalList);
+    localEcgDataList.addAll(mainEcgDecimalList);
     await box.put("ecg_graph_data", localEcgDataList);
 
     List<double> localPpgDataList = await box.get("ppg_graph_data") ?? [];
-    localPpgDataList.addAll(tempPpgDecimalList);
+    localPpgDataList.addAll(mainPpgDecimalList);
     await box.put("ppg_graph_data", localPpgDataList);
 
-    printLog("local Data saved!....");
+    savedEcgLocalDataList = await box.get("ecg_graph_data") ?? [];
+    savedPpgLocalDataList = await box.get("ppg_graph_data") ?? [];
+    printLog("local Data saved!.... ecg: ${savedEcgLocalDataList.length} ppg: ${savedPpgLocalDataList.length}");
   }
 
   getStoredLocalData() async {
