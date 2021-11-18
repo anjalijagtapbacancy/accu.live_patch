@@ -15,6 +15,14 @@ class Constant {
 
   String ppg = "PPG";
   String ecg = "ECG";
+  String ecgNppg = "ECG & PPG";
+  String spo2 = "Spo2";
+  String strHeartRate = "Heart Rate:";
+  String heartRateUnit = "BPM";
+  String strNoDeviceConnected = "No device connected";
+  String displayDeviceString = "ecg";
+  String strNoDevicesAvailable = "No devices are available";
+  String strAvailableDevices = "Available Devices";
 
   static Map<int, Color> color = {
     50: Color.fromRGBO(35, 182, 230, .1),

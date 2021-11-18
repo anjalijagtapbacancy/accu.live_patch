@@ -409,11 +409,11 @@ class ProviderGraphData with ChangeNotifier, Constant {
     // sgFilteredPpg = lfilter(b, Array([1.0]), Array(ecgData.getRange(0, 500).toList())); // filter the signal
 
     //final filter output
-    var fs1 = 25;
+    var fs1 = 75;
     var nyq1 = 0.5 * fs1; // design filter
     var cutOff1 = 0.5;
     var normalFc1 = cutOff1 / nyq1;
-    var numtaps1 = 687;
+    var numtaps1 = 2061;
     var passZero = 'highpass';
 
     var b1 = firwin(numtaps1, Array([normalFc1]), pass_zero: passZero);
@@ -423,7 +423,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
     printLog("CCC filterOPPpg " + filterOPPpg.runtimeType.toString() + " " + filterOPPpg.length.toString());
     printLog("CCC " + filterOPPpg.toString());
-    _threshold = ((filterOPPpg).reduce(math.max)) * 0.35;
+    _threshold = ((filterOPPpg).reduce(math.max)) * 0.3;
     // _threshold = (filterOPPpg).reduce((a, b) => a + b) / filterOPPpg.length;
 
     printLog("CCC _thresholdPpg max ${(filterOPPpg).reduce(math.max)} hhh " + _threshold.toString());

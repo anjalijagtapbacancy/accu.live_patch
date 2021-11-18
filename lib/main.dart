@@ -19,7 +19,10 @@ import 'package:share/share.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setPreferredOrientations(
-    [DeviceOrientation.landscapeRight],
+    [
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ],
   );
   Directory directory = await getApplicationDocumentsDirectory();
   Hive.init(directory.path);
@@ -63,10 +66,6 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
   ProviderGraphData? providerGraphDataRead;
   ProviderGraphData? providerGraphDataWatch;
 
-  _addDeviceTolist(final BluetoothDevice device) {
-    providerGraphDataWatch!.setDeviceList(device);
-  }
-
   @override
   void initState() {
     super.initState();
@@ -89,16 +88,19 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
 
         for (BluetoothDevice device in devices) {
           printLog("  connectedDevices ${device}");
-
-          _addDeviceTolist(device);
+          if (device.name.contains("ddd")) {
+            providerGraphDataWatch!.setDeviceList(device);
+          }
         }
       });
+
       widget.flutterBlue.scanResults.listen((List<ScanResult> results) {
         printLog("  scan result length devices ${results.length}");
-
         for (ScanResult result in results) {
           printLog("  scanResults ${result.device}");
-          _addDeviceTolist(result.device);
+          if (result.device.name.contains("ddd")) {
+            providerGraphDataWatch!.setDeviceList(result.device);
+          }
         }
       });
       widget.flutterBlue.startScan();
@@ -112,10 +114,10 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
     super.dispose();
   }
 
-  ListView _buildListViewOfDevices() {
-    List<Container> containers = [];
+  Widget showAvailableDevices() {
+    List<Container> availableDevicesView = [];
     for (BluetoothDevice device in providerGraphDataWatch!.devicesList) {
-      containers.add(
+      availableDevicesView.add(
         Container(
           margin: EdgeInsets.only(bottom: 4),
           child: Row(
@@ -158,6 +160,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
                     } finally {
                       providerGraphDataWatch!.setConnectedDevice(device);
                       providerGraphDataWatch!.setLoading(false);
+                      Navigator.pop(context);
                     }
                   },
                 ),
@@ -168,15 +171,35 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
       );
     }
 
-    return ListView(
-      padding: EdgeInsets.all(16),
-      children: <Widget>[
-        ...containers,
-      ],
-    );
+    return StatefulBuilder(builder: (context, setState) {
+      return AlertDialog(
+        backgroundColor: clrDarkBg,
+        title: Text(
+          strAvailableDevices,
+          style: TextStyle(color: clrWhite),
+        ),
+        content: Container(
+          width: double.maxFinite,
+          color: clrDarkBg,
+          child: availableDevicesView.isNotEmpty
+              ? ListView(
+                  padding: EdgeInsets.all(16),
+                  children: <Widget>[
+                    ...availableDevicesView,
+                  ],
+                )
+              : Center(
+                  child: Text(
+                    strNoDevicesAvailable,
+                    style: TextStyle(color: clrWhite),
+                  ),
+                ),
+        ),
+      );
+    });
   }
 
-  ListView _buildConnectDeviceView() {
+  ListView _ecgPpgView() {
     for (BluetoothService service in providerGraphDataWatch!.services!) {
       for (BluetoothCharacteristic characteristic in service.characteristics) {
         if (characteristic.uuid.toString() == writeUuid) {
@@ -218,7 +241,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Expanded(
-            flex: 6,
+            flex: 5,
             child: Center(
               child: Text(
                 title,
@@ -236,7 +259,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
               child: Align(
                 alignment: Alignment.centerRight,
                 child: Text(
-                  "Heart Rate: " + iHeartRate.toString(),
+                  "$strHeartRate " + iHeartRate.toString() + " $heartRateUnit",
                   style: TextStyle(fontSize: 12),
                 ),
               ),
@@ -249,7 +272,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
 
   Widget graphWidget(String title) {
     return AspectRatio(
-      aspectRatio: 6 / (1.05),
+      aspectRatio: 6 / (1.02),
       child: Container(
         decoration: BoxDecoration(
             borderRadius: BorderRadius.all(
@@ -342,25 +365,52 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
     );
   }
 
-  ListView _buildView() {
-    if (providerGraphDataWatch!.connectedDevice != null) {
-      return _buildConnectDeviceView();
-    }
-    return _buildListViewOfDevices();
-  }
-
   @override
   Widget build(BuildContext context) {
     providerGraphDataWatch = context.watch<ProviderGraphData>();
 
-    return Scaffold(
+    return DefaultTabController(
+      length: 4,
+      child: Scaffold(
         backgroundColor: clrDarkBg,
         appBar: AppBar(
+          bottom: new PreferredSize(
+              preferredSize: new Size(200.0, 200.0),
+              child: new Container(
+                height: 32.0,
+                child: TabBar(
+                  tabs: [
+                    _tabWidget(ecgNppg),
+                    _tabWidget(ecg),
+                    _tabWidget(ppg),
+                    _tabWidget(spo2),
+                  ],
+                ),
+              )),
           title: Text(
             widget.title,
             style: TextStyle(color: clrWhite),
           ),
           actions: [
+            Visibility(
+              visible: !(providerGraphDataWatch!.connectedDevice != null),
+              // visible: false,
+              child: IconButton(
+                  icon: Icon(
+                    // providerGraphDataWatch!.isEnabled ? "Disabled" : "Enabled",
+                    Icons.bluetooth_audio,
+                    color: clrWhite,
+                  ),
+                  onPressed: () {
+                    if (!providerGraphDataWatch!.isLoading) {
+                      showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return showAvailableDevices();
+                          });
+                    }
+                  }),
+            ),
             Visibility(
               visible:
                   providerGraphDataWatch!.isServiceStarted && providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
@@ -450,24 +500,87 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
                   )),
             )
           ],
+          toolbarHeight: 78,
         ),
         body: Stack(
           children: [
-            _buildView(),
+            (providerGraphDataWatch!.connectedDevice != null)
+                ? TabBarView(
+                    children: [
+                      _ecgPpgView(),
+                      _ecgTabView(),
+                      _ppgTabView(),
+                      _spo2TabView(),
+                    ],
+                  )
+                : Center(child: Text(strNoDeviceConnected)),
             providerGraphDataWatch!.isLoading ? ProgressBar() : Offstage(),
           ],
-        ));
+        ),
+      ),
+    );
   }
 
-  // for (int k = decimalList.length; k > 0; k--) {
-  //   if (k == decimalList.length - 5) {
-  //     break;
-  //   }
+  Widget _ecgTabView() {
+    return ListView(
+      padding: EdgeInsets.only(top: 8, right: 8),
+      children: [
+        rowTitle(ppg, providerGraphDataWatch!.heartRatePPG),
+        AspectRatio(
+          aspectRatio: 6 / (1.02),
+          child: Container(
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.all(
+                  Radius.circular(18),
+                ),
+                color: clrDarkBg),
+            child: Padding(
+              padding: const EdgeInsets.only(right: 18.0, left: 12.0, top: 24, bottom: 12),
+              child: LineChart(
+                  mainData(providerGraphDataWatch!.tempEcgSpotsListData, providerGraphDataWatch!.tempEcgDecimalList)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _ppgTabView() {
+    return ListView(
+      padding: EdgeInsets.only(top: 8, right: 8),
+      children: [
+        AspectRatio(
+          aspectRatio: 1 / (1),
+          child: Container(
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.all(
+                  Radius.circular(18),
+                ),
+                color: clrDarkBg),
+            child: Padding(
+              padding: const EdgeInsets.only(right: 18.0, left: 12.0, top: 24, bottom: 12),
+              child: LineChart(
+                  mainData(providerGraphDataWatch!.tempPpgSpotsListData, providerGraphDataWatch!.tempPpgDecimalList)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _spo2TabView() {
+    return Icon(Icons.directions_transit);
+  }
+
+  Widget _tabWidget(String title) {
+    return Tab(
+        icon: Text(
+      title,
+      style: TextStyle(color: clrWhite),
+    ));
+  }
 
   void _generateCsvFile() async {
-    // Map<Permission, PermissionStatus> statuses = await [
-    //   Permission.storage,
-    // ].request();
     providerGraphDataWatch!.setLoading(true);
     List<List<dynamic>> column = [];
     List<dynamic> row = [];
