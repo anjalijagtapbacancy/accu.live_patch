@@ -38,8 +38,12 @@ class Constant {
     900: Color.fromRGBO(35, 182, 230, 1),
   };
 
-  MaterialColor clrPrimarySwatch = MaterialColor(0xFF23B6E6, color);
-  Color clrPrimary = Color(0xFF23B6E6);
+  // MaterialColor clrPrimarySwatch = MaterialColor(0xFF23B6E6, color);
+  MaterialColor clrPrimarySwatch = Colors.teal;
+
+  // Color clrPrimary = Color(0xFF23B6E6);
+  Color clrPrimary = Colors.teal;
+
   Color clrSecondary = Color(0xff02d39a);
   Color clrDarkBg = Color(0xff232d37);
 

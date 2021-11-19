@@ -123,6 +123,157 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
     super.dispose();
   }
 
+  @override
+  Widget build(BuildContext context) {
+    providerGraphDataWatch = context.watch<ProviderGraphData>();
+
+    return DefaultTabController(
+      length: 4,
+      child: Scaffold(
+        backgroundColor: clrDarkBg,
+        appBar: AppBar(
+          bottom: new PreferredSize(
+              preferredSize: new Size(200.0, 200.0),
+              child: new Container(
+                height: 32.0,
+                child: TabBar(
+                  tabs: [
+                    _tabWidget(ecgNppg),
+                    _tabWidget(ecg),
+                    _tabWidget(ppg),
+                    _tabWidget(spo2),
+                  ],
+                ),
+              )),
+          title: Text(
+            widget.title,
+            style: TextStyle(color: clrWhite),
+          ),
+          actions: [
+            Visibility(
+              visible: !(providerGraphDataWatch!.connectedDevice != null),
+              // visible: false,
+              child: IconButton(
+                  icon: Icon(
+                    // providerGraphDataWatch!.isEnabled ? "Disabled" : "Enabled",
+                    providerGraphDataWatch!.isShowAvailableDevices ? Icons.bluetooth_disabled : Icons.bluetooth_audio,
+                    color: clrWhite,
+                  ),
+                  onPressed: () {
+                    if (!providerGraphDataWatch!.isLoading) {
+                      providerGraphDataWatch!.setIsShowAvailableDevices();
+                    }
+                  }),
+            ),
+            Visibility(
+              visible:
+                  providerGraphDataWatch!.isServiceStarted && providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
+              // visible: false,
+              child: TextButton(
+                  child: Text(
+                    providerGraphDataWatch!.isEnabled ? "Disabled" : "Enabled",
+                    style: TextStyle(color: clrWhite),
+                  ),
+                  onPressed: () {
+                    if (!providerGraphDataWatch!.isLoading) {
+                      providerGraphDataWatch!.setIsEnabled();
+                    }
+                  }),
+            ),
+            Visibility(
+              visible: providerGraphDataWatch!.connectedDevice != null,
+              child: TextButton(
+                  onPressed: () async {
+                    if (!providerGraphDataWatch!.isLoading) {
+                      try {
+                        if (providerGraphDataWatch!.isServiceStarted) {
+                          try {
+                            await providerGraphDataWatch!.readCharacteristic!.setNotifyValue(false);
+                          } catch (err) {
+                            printLog("notfy err ${err.toString()}");
+                          }
+
+                          providerGraphDataWatch!.setLoading(true);
+                          printLog("stop service");
+
+                          //stop service
+                          providerGraphDataWatch!.writeCharacteristic!.write([0]);
+                          if (sub != null) {
+                            sub.cancel();
+                          }
+                          providerGraphDataWatch!.setServiceStarted(false);
+
+                          await providerGraphDataWatch!.storedDataToLocal();
+
+                          providerGraphDataWatch!.setLoading(false);
+                        } else {
+                          await providerGraphDataWatch!.readCharacteristic!.setNotifyValue(true);
+
+                          providerGraphDataWatch!.setLoading(true);
+
+                          await providerGraphDataWatch!.clearStoreDataToLocal();
+                          // start service
+                          providerGraphDataWatch!.writeCharacteristic!.write([1]);
+                          printLog("start service");
+                          // ignore: cancel_subscriptions
+                          if (sub != null) {
+                            sub.cancel();
+                          }
+
+                          providerGraphDataWatch!.setServiceStarted(true);
+                          providerGraphDataWatch!.setLoading(false);
+
+                          sub = providerGraphDataWatch!.readCharacteristic!.value.listen((value) {
+                            providerGraphDataWatch!.setReadValues(value);
+                          });
+
+                          await providerGraphDataWatch!.readCharacteristic!.read();
+                        }
+                      } catch (e) {
+                        printLog("err $e");
+                      }
+                    }
+                  },
+                  child: Text(
+                    providerGraphDataWatch!.isServiceStarted ? "Stop" : "Start",
+                    style: TextStyle(color: clrWhite),
+                  )),
+            ),
+            Visibility(
+              visible:
+                  !providerGraphDataWatch!.isServiceStarted && providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
+              child: IconButton(
+                  icon: Icon(Icons.share, color: clrWhite),
+                  onPressed: () {
+                    if (!providerGraphDataWatch!.isLoading) {
+                      _generateCsvFile();
+                    }
+                  }),
+            ),
+          ],
+          toolbarHeight: 78,
+        ),
+        body: Stack(
+          children: [
+            (providerGraphDataWatch!.connectedDevice != null)
+                ? TabBarView(
+                    children: [
+                      _ecgPpgView(),
+                      _ecgTabView(),
+                      _ppgTabView(),
+                      _spo2TabView(),
+                    ],
+                  )
+                : providerGraphDataWatch!.isShowAvailableDevices
+                    ? showAvailableDevices()
+                    : Center(child: Text(strNoDeviceConnected)),
+            providerGraphDataWatch!.isLoading ? ProgressBar() : Offstage(),
+          ],
+        ),
+      ),
+    );
+  }
+
   void connectDevice(BluetoothDevice device) async {
     providerGraphDataWatch!.setLoading(true);
     widget.flutterBlue.stopScan();
@@ -136,6 +287,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
       printLog(e.toString());
     } finally {
       providerGraphDataWatch!.setConnectedDevice(device, context);
+      providerGraphDataWatch!.setIsShowAvailableDevices();
       providerGraphDataWatch!.setLoading(false);
     }
   }
@@ -184,32 +336,26 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
       );
     }
 
-    return StatefulBuilder(builder: (context, setState) {
-      return AlertDialog(
-        backgroundColor: clrDarkBg,
-        title: Text(
-          strAvailableDevices,
-          style: TextStyle(color: clrWhite),
+    return Container(
+        width: double.maxFinite,
+        margin: EdgeInsets.all(50),
+        decoration: BoxDecoration(
+          color: Colors.black26,
+          borderRadius: BorderRadius.circular(28),
         ),
-        content: Container(
-          width: double.maxFinite,
-          color: clrDarkBg,
-          child: availableDevicesView.isNotEmpty
-              ? ListView(
-                  padding: EdgeInsets.all(16),
-                  children: <Widget>[
-                    ...availableDevicesView,
-                  ],
-                )
-              : Center(
-                  child: Text(
-                    strNoDevicesAvailable,
-                    style: TextStyle(color: clrWhite),
-                  ),
+        child: availableDevicesView.isNotEmpty
+            ? ListView(
+                padding: EdgeInsets.all(16),
+                children: <Widget>[
+                  ...availableDevicesView,
+                ],
+              )
+            : Center(
+                child: Text(
+                  strNoDevicesAvailable,
+                  style: TextStyle(color: clrWhite),
                 ),
-        ),
-      );
-    });
+              ));
   }
 
   ListView _ecgPpgView() {
@@ -247,7 +393,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
     );
   }
 
-  Widget rowTitle(String title, int iHeartRate) {
+  Widget rowTitle(String title, dynamic iHeartRate) {
     return Padding(
       padding: EdgeInsets.only(top: 4.0),
       child: Row(
@@ -377,159 +523,6 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
           // ),
         ),
       ],
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    providerGraphDataWatch = context.watch<ProviderGraphData>();
-
-    return DefaultTabController(
-      length: 4,
-      child: Scaffold(
-        backgroundColor: clrDarkBg,
-        appBar: AppBar(
-          bottom: new PreferredSize(
-              preferredSize: new Size(200.0, 200.0),
-              child: new Container(
-                height: 32.0,
-                child: TabBar(
-                  tabs: [
-                    _tabWidget(ecgNppg),
-                    _tabWidget(ecg),
-                    _tabWidget(ppg),
-                    _tabWidget(spo2),
-                  ],
-                ),
-              )),
-          title: Text(
-            widget.title,
-            style: TextStyle(color: clrWhite),
-          ),
-          actions: [
-            Visibility(
-              visible: !(providerGraphDataWatch!.connectedDevice != null),
-              // visible: false,
-              child: IconButton(
-                  icon: Icon(
-                    // providerGraphDataWatch!.isEnabled ? "Disabled" : "Enabled",
-                    Icons.bluetooth_audio,
-                    color: clrWhite,
-                  ),
-                  onPressed: () {
-                    if (!providerGraphDataWatch!.isLoading) {
-                      showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return showAvailableDevices();
-                          });
-                    }
-                  }),
-            ),
-            Visibility(
-              visible:
-                  providerGraphDataWatch!.isServiceStarted && providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
-              // visible: false,
-              child: TextButton(
-                  child: Text(
-                    providerGraphDataWatch!.isEnabled ? "Disabled" : "Enabled",
-                    style: TextStyle(color: clrWhite),
-                  ),
-                  onPressed: () {
-                    if (!providerGraphDataWatch!.isLoading) {
-                      providerGraphDataWatch!.setIsEnabled();
-                    }
-                  }),
-            ),
-            Visibility(
-              visible: providerGraphDataWatch!.connectedDevice != null,
-              child: TextButton(
-                  onPressed: () async {
-                    if (!providerGraphDataWatch!.isLoading) {
-                      try {
-                        if (providerGraphDataWatch!.isServiceStarted) {
-                          try {
-                            await providerGraphDataWatch!.readCharacteristic!.setNotifyValue(false);
-                          } catch (err) {
-                            printLog("notfy err ${err.toString()}");
-                          }
-
-                          providerGraphDataWatch!.setLoading(true);
-                          printLog("stop service");
-
-                          //stop service
-                          providerGraphDataWatch!.writeCharacteristic!.write([0]);
-                          if (sub != null) {
-                            sub.cancel();
-                          }
-                          providerGraphDataWatch!.setServiceStarted(false);
-
-                          await providerGraphDataWatch!.storedDataToLocal();
-
-                          providerGraphDataWatch!.setLoading(false);
-                        } else {
-                          await providerGraphDataWatch!.readCharacteristic!.setNotifyValue(true);
-
-                          providerGraphDataWatch!.setLoading(true);
-
-                          await providerGraphDataWatch!.clearStoreDataToLocal();
-                          // start service
-                          providerGraphDataWatch!.writeCharacteristic!.write([1]);
-                          printLog("start service");
-                          // ignore: cancel_subscriptions
-                          if (sub != null) {
-                            sub.cancel();
-                          }
-
-                          providerGraphDataWatch!.setServiceStarted(true);
-                          providerGraphDataWatch!.setLoading(false);
-
-                          sub = providerGraphDataWatch!.readCharacteristic!.value.listen((value) {
-                            providerGraphDataWatch!.setReadValues(value);
-                          });
-
-                          await providerGraphDataWatch!.readCharacteristic!.read();
-                        }
-                      } catch (e) {
-                        printLog("err $e");
-                      }
-                    }
-                  },
-                  child: Text(
-                    providerGraphDataWatch!.isServiceStarted ? "Stop" : "Start",
-                    style: TextStyle(color: clrWhite),
-                  )),
-            ),
-            Visibility(
-              visible:
-                  !providerGraphDataWatch!.isServiceStarted && providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
-              child: IconButton(
-                  icon: Icon(Icons.share, color: clrWhite),
-                  onPressed: () {
-                    if (!providerGraphDataWatch!.isLoading) {
-                      _generateCsvFile();
-                    }
-                  }),
-            ),
-          ],
-          toolbarHeight: 78,
-        ),
-        body: Stack(
-          children: [
-            (providerGraphDataWatch!.connectedDevice != null)
-                ? TabBarView(
-                    children: [
-                      _ecgPpgView(),
-                      _ecgTabView(),
-                      _ppgTabView(),
-                      _spo2TabView(),
-                    ],
-                  )
-                : Center(child: Text(strNoDeviceConnected)),
-            providerGraphDataWatch!.isLoading ? ProgressBar() : Offstage(),
-          ],
-        ),
-      ),
     );
   }
 

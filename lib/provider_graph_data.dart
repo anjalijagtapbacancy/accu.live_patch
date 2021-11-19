@@ -22,6 +22,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
   Map<Guid, List<int>> readValues = new Map<Guid, List<int>>();
   var isServiceStarted = false;
   var isEnabled = true;
+  var isShowAvailableDevices = true;
 
   int ecgDataLength = 0;
   int ppgDataLength = 0;
@@ -56,8 +57,12 @@ class ProviderGraphData with ChangeNotifier, Constant {
   double totalOfPeaksPpg = 0;
 
   int heartRate = 0;
-  int heartRatePPG = 0;
+  String heartRatePPG = "";
   List<double> pttArray = [];
+
+  double avgPTT = 0;
+  double dBp = 0;
+  double dDbp = 0;
 
   clearProviderGraphData() {
     devicesList.clear();
@@ -66,8 +71,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
     readValues = new Map<Guid, List<int>>();
     isServiceStarted = false;
     heartRate = 0;
-    heartRatePPG = 0;
-
+    heartRatePPG = "";
     savedEcgLocalDataList.clear();
     mainEcgSpotsListData.clear();
     tempEcgSpotsListData.clear();
@@ -102,6 +106,11 @@ class ProviderGraphData with ChangeNotifier, Constant {
     notifyListeners();
   }
 
+  setIsShowAvailableDevices() {
+    isShowAvailableDevices = !isShowAvailableDevices;
+    notifyListeners();
+  }
+
   setDeviceList(BluetoothDevice device) {
     if (!devicesList.contains(device)) {
       devicesList.add(device);
@@ -115,8 +124,6 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
     connectedDevice = device;
     notifyListeners();
-
-    Navigator.pop(context);
   }
 
   setReadCharacteristic(BluetoothCharacteristic characteristic) async {
@@ -451,16 +458,20 @@ class ProviderGraphData with ChangeNotifier, Constant {
         if (peaksArrayEcg[index][p] < peaksArrayPpg[index][p] &&
             peaksArrayEcg[index][p + 1] > peaksArrayPpg[index][p]) {
           pttArray.add((peaksArrayPpg[index][p] - peaksArrayEcg[index][p]) / 200);
-          totalOfPeaksPpg += (peaksArrayPpg[index][p] - peaksArrayEcg[index][p]) / 200;
+          totalOfPeaksPpg += ((peaksArrayPpg[index][p] - peaksArrayEcg[index][p]) / 200);
         }
       }
     }
     printLog("pttArray_length:  ${pttArray.length} array: ${pttArray.toString()}");
 
-    printLog(
-        "totalOfPeaksPpg  " + totalOfPeaksPpg.toString() + " avg " + (totalOfPeaksPpg / (pttArray.length)).toString());
+    avgPTT = (totalOfPeaksPpg / (pttArray.length));
 
-    heartRatePPG = (60 / (totalOfPeaksPpg / (peaksArrayPpg[0].length))).round();
+    printLog("totalOfPeaksPpg  " + totalOfPeaksPpg.toString() + " avg " + avgPTT.toString());
+
+    dBp = 134.802365863 - 83.006119783168 * avgPTT;
+    dDbp = 99.606825109447 - 96.651802662872 * avgPTT;
+    heartRatePPG = "BP: ${dBp.round().toString()} DBP: ${dDbp.round().toString()}";
+    // heartRatePPG = (60 / (totalOfPeaksPpg / (peaksArrayPpg[0].length))).round();
     // heartRatePPG = ((60 * peaksArrayPpg[0].length) / 2.5).round();
 
     printLog("heartRatePPG :  " + heartRatePPG.toString());
