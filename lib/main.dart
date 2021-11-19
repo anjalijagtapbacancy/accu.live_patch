@@ -442,20 +442,6 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
                   }),
             ),
             Visibility(
-              visible:
-                  !providerGraphDataWatch!.isServiceStarted && providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
-              child: TextButton(
-                  child: Text(
-                    "Export",
-                    style: TextStyle(color: clrWhite),
-                  ),
-                  onPressed: () {
-                    if (!providerGraphDataWatch!.isLoading) {
-                      _generateCsvFile();
-                    }
-                  }),
-            ),
-            Visibility(
               visible: providerGraphDataWatch!.connectedDevice != null,
               child: TextButton(
                   onPressed: () async {
@@ -513,7 +499,18 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
                     providerGraphDataWatch!.isServiceStarted ? "Stop" : "Start",
                     style: TextStyle(color: clrWhite),
                   )),
-            )
+            ),
+            Visibility(
+              visible:
+                  !providerGraphDataWatch!.isServiceStarted && providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
+              child: IconButton(
+                  icon: Icon(Icons.share, color: clrWhite),
+                  onPressed: () {
+                    if (!providerGraphDataWatch!.isLoading) {
+                      _generateCsvFile();
+                    }
+                  }),
+            ),
           ],
           toolbarHeight: 78,
         ),
@@ -601,27 +598,42 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
     List<List<dynamic>> column = [];
     List<dynamic> row = [];
 
-    row.add("ecg");
-    row.add("ppg");
-    column.add(row);
+    // row.add("ecg");
+    // row.add("ppg");
+    // column.add(row);
 
-    await providerGraphDataWatch!.getStoredLocalData();
+    // await providerGraphDataWatch!.getStoredLocalData();
 
-    for (int i = 0; i < providerGraphDataWatch!.savedEcgLocalDataList.length; i++) {
+    // for (int i = 0; i < providerGraphDataWatch!.savedEcgLocalDataList.length; i++) {
+    //   row = [];
+    //   row.add(providerGraphDataWatch!.savedEcgLocalDataList[i]);
+    //   row.add(providerGraphDataWatch!.savedPpgLocalDataList[i]);
+    //   column.add(row);
+    // }
+
+    // String csvData = ListToCsvConverter().convert(column);
+    // final String directory = (await getApplicationSupportDirectory()).path;
+    // final path = "$directory/csv_graph_data.csv";
+    // printLog(path);
+    // final File file = File(path);
+    // await file.writeAsString(csvData);
+    // providerGraphDataWatch!.setLoading(false);
+
+    // Share.shareFiles(['${file.path}'], text: 'Exported csv');
+
+    for (int i = 0; i < providerGraphDataWatch!.filterOPPpg.length; i++) {
       row = [];
-      row.add(providerGraphDataWatch!.savedEcgLocalDataList[i]);
-      row.add(providerGraphDataWatch!.savedPpgLocalDataList[i]);
+      row.add(providerGraphDataWatch!.filterOPPpg[i]);
       column.add(row);
     }
 
     String csvData = ListToCsvConverter().convert(column);
     final String directory = (await getApplicationSupportDirectory()).path;
-    final path = "$directory/csv_graph_data.csv";
+    final path = "$directory/filterOp_ppg_data.csv";
     printLog(path);
     final File file = File(path);
     await file.writeAsString(csvData);
     providerGraphDataWatch!.setLoading(false);
-
-    Share.shareFiles(['${file.path}'], text: 'Exported csv');
+    Share.shareFiles(['${file.path}'], text: 'Filter Op PPg csv');
   }
 }
