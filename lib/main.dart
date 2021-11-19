@@ -310,7 +310,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
                   ),
                   Text(
                     device.id.toString(),
-                    style: TextStyle(color: clrGrey),
+                    style: TextStyle(color: Colors.grey.shade400),
                   ),
                 ],
               ),
@@ -318,12 +318,12 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
                 width: 200,
                 child: OutlinedButton(
                   style: TextButton.styleFrom(
-                    side: BorderSide(color: clrPrimary, width: 1),
+                    side: BorderSide(color: clrWhite, width: 1),
                     shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(25))),
                   ),
                   child: Text(
                     strConnect,
-                    style: TextStyle(color: clrPrimary, fontWeight: FontWeight.w500),
+                    style: TextStyle(color: Colors.grey.shade200, fontWeight: FontWeight.w500),
                   ),
                   onPressed: () async {
                     connectDevice(device);
@@ -336,26 +336,49 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
       );
     }
 
-    return Container(
-        width: double.maxFinite,
-        margin: EdgeInsets.all(50),
-        decoration: BoxDecoration(
-          color: Colors.black26,
-          borderRadius: BorderRadius.circular(28),
-        ),
-        child: availableDevicesView.isNotEmpty
-            ? ListView(
-                padding: EdgeInsets.all(16),
-                children: <Widget>[
-                  ...availableDevicesView,
-                ],
-              )
-            : Center(
-                child: Text(
-                  strNoDevicesAvailable,
-                  style: TextStyle(color: clrWhite),
-                ),
-              ));
+    return Card(
+      margin: EdgeInsets.symmetric(horizontal: 50, vertical: 25),
+      color: Colors.blueGrey,
+      elevation: 18,
+      shadowColor: Colors.blueGrey,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+      child: Container(
+          width: double.maxFinite,
+          // decoration: BoxDecoration(
+          //   color: Colors.black26,
+          //   borderRadius: BorderRadius.circular(28),
+          // ),
+          // decoration: BoxDecoration(
+          //   color: Colors.black26,
+          //   borderRadius: BorderRadius.only(
+          //       topLeft: Radius.circular(10),
+          //       topRight: Radius.circular(10),
+          //       bottomLeft: Radius.circular(10),
+          //       bottomRight: Radius.circular(10)),
+          //   boxShadow: [
+          //     BoxShadow(
+          //       color: Colors.black26.withOpacity(0.5),
+          //       spreadRadius: 5,
+          //       blurRadius: 7,
+          //       offset: Offset(0, 3), // changes position of shadow
+          //     ),
+          //   ],
+          // ),
+
+          child: availableDevicesView.isNotEmpty
+              ? ListView(
+                  padding: EdgeInsets.all(16),
+                  children: <Widget>[
+                    ...availableDevicesView,
+                  ],
+                )
+              : Center(
+                  child: Text(
+                    strNoDevicesAvailable,
+                    style: TextStyle(color: clrWhite),
+                  ),
+                )),
+    );
   }
 
   ListView _ecgPpgView() {
