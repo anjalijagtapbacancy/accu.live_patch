@@ -274,9 +274,10 @@ class ProviderGraphData with ChangeNotifier, Constant {
           mainEcgDecimalList.add(double.parse(int.parse(strHex, radix: 16).toString()));
         }
       }
+      mainEcgDecimalList = filter.smooth(mainEcgDecimalList);
+
       print("sss mainEcgHexList ${mainEcgHexList.length} mainEcgDecimalList ${mainEcgDecimalList.length}");
 
-      // print("yyyy ${mainEcgHexList.length} ${mainEcgDecimalList.toList()}");
       mainPpgDecimalList.clear();
       for (int h = 0; h < mainPpgHexList.length; h++) {
         if (h % 2 == 0) {
@@ -284,6 +285,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
           mainPpgDecimalList.add(double.parse(int.parse(strHex, radix: 16).toString()));
         }
       }
+      mainPpgDecimalList = filter.smooth(mainPpgDecimalList);
 
       if (mainEcgDecimalList.length > yAxisGraphData) {
         tempEcgDecimalList =
@@ -354,9 +356,9 @@ class ProviderGraphData with ChangeNotifier, Constant {
     //         .getRange(mainEcgDecimalList.length - filterDataListLength, mainEcgDecimalList.length)
     //         .toList())); // filter the signal
 
-    List<double> result = filter.smooth(mainEcgDecimalList
+    List<double> result = mainEcgDecimalList
         .getRange(mainEcgDecimalList.length - filterDataListLength, mainEcgDecimalList.length)
-        .toList());
+        .toList();
 
     sgFilteredEcg = Array(result);
 
