@@ -60,7 +60,9 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> with Constant {
+class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProviderStateMixin {
+  TabController? _controller;
+
   var sub;
 
   ProviderGraphData? providerGraphDataRead;
@@ -69,6 +71,30 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
   @override
   void initState() {
     super.initState();
+
+    // Create TabController for getting the index of current tab
+    _controller = TabController(length: 4, vsync: this);
+
+    _controller!.addListener(() {
+      if (_controller!.index == 0) {
+        // ecg/ppg
+        providerGraphDataWatch!.writeChangeModeCharacteristic!.write([4]);
+      }
+      if (_controller!.index == 1) {
+        // ecg
+        providerGraphDataWatch!.writeChangeModeCharacteristic!.write([5]);
+      }
+      if (_controller!.index == 2) {
+        // ppg
+        providerGraphDataWatch!.writeChangeModeCharacteristic!.write([6]);
+      }
+      if (_controller!.index == 3) {
+        // spo2
+        providerGraphDataWatch!.writeChangeModeCharacteristic!.write([7]);
+      }
+
+      print("Selected Index: " + _controller!.index.toString());
+    });
 
     SchedulerBinding.instance!.addPostFrameCallback((_) {
       providerGraphDataRead = context.read<ProviderGraphData>();
@@ -257,6 +283,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
           children: [
             (providerGraphDataWatch!.connectedDevice != null)
                 ? TabBarView(
+                    controller: _controller,
                     children: [
                       _ecgPpgView(),
                       _ecgTabView(),
@@ -384,6 +411,13 @@ class _MyHomePageState extends State<MyHomePage> with Constant {
   ListView _ecgPpgView() {
     for (BluetoothService service in providerGraphDataWatch!.services!) {
       for (BluetoothCharacteristic characteristic in service.characteristics) {
+        if (characteristic.uuid.toString() == writeChangeModeUuid) {
+          try {
+            providerGraphDataWatch!.setWriteChangeModeCharacteristic(characteristic);
+          } catch (err) {
+            printLog("setWriteChangeModeCharacteristic caught err ${err.toString()}");
+          }
+        }
         if (characteristic.uuid.toString() == writeUuid) {
           try {
             providerGraphDataWatch!.setWriteCharacteristic(characteristic);

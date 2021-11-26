@@ -9,6 +9,8 @@ import 'package:scidart/scidart.dart';
 import 'package:scidart/numdart.dart';
 import 'dart:math' as math;
 
+import 'package:smoothing/smoothing.dart';
+
 class ProviderGraphData with ChangeNotifier, Constant {
   List<BluetoothDevice> devicesList = [];
 
@@ -18,6 +20,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
   bool isLoading = false;
   BluetoothCharacteristic? readCharacteristic;
   BluetoothCharacteristic? writeCharacteristic;
+  BluetoothCharacteristic? writeChangeModeCharacteristic;
 
   Map<Guid, List<int>> readValues = new Map<Guid, List<int>>();
   var isServiceStarted = false;
@@ -63,6 +66,8 @@ class ProviderGraphData with ChangeNotifier, Constant {
   double avgPTT = 0;
   double dBp = 0;
   double dDbp = 0;
+
+  SgFilter filter = new SgFilter(3, 11);
 
   clearProviderGraphData() {
     devicesList.clear();
@@ -134,6 +139,11 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
   setWriteCharacteristic(BluetoothCharacteristic characteristic) {
     writeCharacteristic = characteristic;
+    // notifyListeners();
+  }
+
+  setWriteChangeModeCharacteristic(BluetoothCharacteristic characteristic) {
+    writeChangeModeCharacteristic = characteristic;
     // notifyListeners();
   }
 
@@ -336,15 +346,19 @@ class ProviderGraphData with ChangeNotifier, Constant {
     var numtaps = 127;
     double _threshold = 0;
 
-    var b = firwin(numtaps, Array([normalFc]));
-    sgFilteredEcg = lfilter(
-        b,
-        Array([1.0]),
-        Array(mainEcgDecimalList
-            .getRange(mainEcgDecimalList.length - filterDataListLength, mainEcgDecimalList.length)
-            .toList())); // filter the signal
+    // var b = firwin(numtaps, Array([normalFc]));
+    // sgFilteredEcg = lfilter(
+    //     b,
+    //     Array([1.0]),
+    //     Array(mainEcgDecimalList
+    //         .getRange(mainEcgDecimalList.length - filterDataListLength, mainEcgDecimalList.length)
+    //         .toList())); // filter the signal
 
-    // sgFilteredEcg = lfilter(b, Array([1.0]), Array(ecgData.getRange(0, 500).toList())); // filter the signal
+    List<double> result = filter.smooth(mainEcgDecimalList
+        .getRange(mainEcgDecimalList.length - filterDataListLength, mainEcgDecimalList.length)
+        .toList());
+
+    sgFilteredEcg = Array(result);
 
     print("TTT ${tempEcgDecimalList.length} ");
     //final filter output
