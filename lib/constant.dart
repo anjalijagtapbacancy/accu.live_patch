@@ -20,6 +20,9 @@ class Constant {
   String spo2 = "Spo2";
   String strHeartRate = "Heart Rate:";
   String heartRateUnit = "BPM";
+  String bpUnit = "mmHg";
+  String rvUnit = "ms";
+
   String strNoDeviceConnected = "No device connected";
   String strConnect = "Connect";
   String displayDeviceString = "nordic";

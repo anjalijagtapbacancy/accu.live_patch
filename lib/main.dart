@@ -74,26 +74,9 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
 
     // Create TabController for getting the index of current tab
     _controller = TabController(length: 4, vsync: this);
-
     _controller!.addListener(() {
-      if (_controller!.index == 0) {
-        // ecg/ppg
-        providerGraphDataWatch!.writeChangeModeCharacteristic!.write([4]);
-      }
-      if (_controller!.index == 1) {
-        // ecg
-        providerGraphDataWatch!.writeChangeModeCharacteristic!.write([5]);
-      }
-      if (_controller!.index == 2) {
-        // ppg
-        providerGraphDataWatch!.writeChangeModeCharacteristic!.write([6]);
-      }
-      if (_controller!.index == 3) {
-        // spo2
-        providerGraphDataWatch!.writeChangeModeCharacteristic!.write([7]);
-      }
-
-      print("Selected Index: " + _controller!.index.toString());
+      providerGraphDataWatch!.setTabSelectedIndex(_controller!.index);
+      printLog("-------Selected Index: " + _controller!.index.toString());
     });
 
     SchedulerBinding.instance!.addPostFrameCallback((_) {
@@ -144,8 +127,8 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
 
   @override
   void dispose() {
+    _controller!.dispose();
     providerGraphDataWatch!.clearProviderGraphData();
-
     super.dispose();
   }
 
@@ -163,6 +146,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
               child: new Container(
                 height: 32.0,
                 child: TabBar(
+                  controller: _controller,
                   tabs: [
                     _tabWidget(ecgNppg),
                     _tabWidget(ecg),
@@ -176,6 +160,23 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
             style: TextStyle(color: clrWhite),
           ),
           actions: [
+            //       Visibility(
+            //         visible: !(providerGraphDataWatch!.connectedDevice != null),
+            //         // visible: false,
+            //         child: IconButton(
+            //             icon: Icon(
+            //               // providerGraphDataWatch!.isEnabled ? "Disabled" : "Enabled",
+            //               providerGraphDataWatch!.isShowAvailableDevices ? Icons.bluetooth_disabled : Icons.bluetooth_audio,
+            //               color: clrWhite,
+            //             ),
+            //             onPressed: () async{
+            //               if (!providerGraphDataWatch!.isLoading) {
+            // await device.disconnect();
+
+            //               }
+            //             }),
+            //       ),
+
             Visibility(
               visible: !(providerGraphDataWatch!.connectedDevice != null),
               // visible: false,
@@ -307,6 +308,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
 
     try {
       await device.connect();
+      print("IIII index  ${_controller!.index.toString()}");
     } catch (e) {
       // if (e.code != 'already_connected') {
       //   throw e;
@@ -414,6 +416,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
         if (characteristic.uuid.toString() == writeChangeModeUuid) {
           try {
             providerGraphDataWatch!.setWriteChangeModeCharacteristic(characteristic);
+            providerGraphDataWatch!.setTabSelectedIndex(_controller!.index);
           } catch (err) {
             printLog("setWriteChangeModeCharacteristic caught err ${err.toString()}");
           }
@@ -442,22 +445,22 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
     return ListView(
       padding: EdgeInsets.only(top: 8, right: 8),
       children: <Widget>[
-        rowTitle(ppg, providerGraphDataWatch!.heartRatePPG),
+        rowPpgTitle(ppg),
         graphWidget(ppg),
-        rowTitle(ecg, providerGraphDataWatch!.heartRate),
+        rowEcgTitle(ecg, providerGraphDataWatch!.heartRate),
         graphWidget(ecg)
       ],
     );
   }
 
-  Widget rowTitle(String title, dynamic iHeartRate) {
+  Widget rowPpgTitle(String title) {
     return Padding(
       padding: EdgeInsets.only(top: 4.0),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Expanded(
-            flex: 5,
+            flex: 3,
             child: Center(
               child: Text(
                 title,
@@ -466,19 +469,148 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
             ),
           ),
           Expanded(
-            child: Visibility(
-              visible: providerGraphDataWatch!.isEnabled
-              // &&
-              // providerGraphDataWatch!.heartRate < 150 &&
-              // providerGraphDataWatch!.heartRate > 60
-              ,
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  "$strHeartRate " + iHeartRate.toString() + " $heartRateUnit",
-                  style: TextStyle(fontSize: 12),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Visibility(
+                visible: providerGraphDataWatch!.isEnabled,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Column(
+                      children: [
+                        Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'HRV: ',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                              TextSpan(
+                                text: providerGraphDataWatch!.avgHrv.round().toString(),
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              ),
+                              TextSpan(
+                                text: ' $rvUnit',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'PRV: ',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                              TextSpan(
+                                text: providerGraphDataWatch!.avgPrv.round().toString(),
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              ),
+                              TextSpan(
+                                text: ' $rvUnit',
+                                style: TextStyle(fontSize: 12),
+                              )
+                            ],
+                          ),
+                        )
+                      ],
+                    ),
+                    SizedBox(
+                      width: 8,
+                    ),
+                    Column(
+                      children: [
+                        Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'BP: ',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                              TextSpan(
+                                text: providerGraphDataWatch!.dBp.round().toString(),
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              ),
+                              TextSpan(
+                                text: ' $bpUnit',
+                                style: TextStyle(fontSize: 12),
+                              )
+                            ],
+                          ),
+                        ),
+                        Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'DBP: ',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                              TextSpan(
+                                text: providerGraphDataWatch!.dDbp.round().toString(),
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              ),
+                              TextSpan(
+                                text: ' $bpUnit',
+                                style: TextStyle(fontSize: 12),
+                              )
+                            ],
+                          ),
+                        )
+                      ],
+                    ),
+                  ],
                 ),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget rowEcgTitle(String title, dynamic iHeartRate) {
+    return Padding(
+      padding: EdgeInsets.only(top: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            flex: 3,
+            child: Center(
+              child: Text(
+                title,
+                style: TextStyle(fontSize: 12),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Visibility(
+                  visible: providerGraphDataWatch!.isEnabled
+                  // &&
+                  // providerGraphDataWatch!.heartRate < 150 &&
+                  // providerGraphDataWatch!.heartRate > 60
+                  ,
+                  child: Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: '$strHeartRate ',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                        TextSpan(
+                          text: iHeartRate.round().toString(),
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        TextSpan(
+                          text: ' $heartRateUnit',
+                          style: TextStyle(fontSize: 12),
+                        )
+                      ],
+                    ),
+                  )),
             ),
           ),
         ],
@@ -587,7 +719,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
     return ListView(
       padding: EdgeInsets.only(top: 8, right: 8),
       children: [
-        rowTitle(ecg, providerGraphDataWatch!.heartRate),
+        rowEcgTitle(ecg, providerGraphDataWatch!.heartRate),
         AspectRatio(
           aspectRatio: 3 / (1),
           child: Container(
@@ -611,7 +743,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
     return ListView(
       padding: EdgeInsets.only(top: 8, right: 8),
       children: [
-        rowTitle(ppg, providerGraphDataWatch!.heartRatePPG),
+        rowPpgTitle(ppg),
         AspectRatio(
           aspectRatio: 3 / (1),
           child: Container(
@@ -648,42 +780,42 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
     List<List<dynamic>> column = [];
     List<dynamic> row = [];
 
-    // row.add("ecg");
-    // row.add("ppg");
-    // column.add(row);
+    row.add("ecg");
+    row.add("ppg");
+    column.add(row);
 
-    // await providerGraphDataWatch!.getStoredLocalData();
+    await providerGraphDataWatch!.getStoredLocalData();
 
-    // for (int i = 0; i < providerGraphDataWatch!.savedEcgLocalDataList.length; i++) {
-    //   row = [];
-    //   row.add(providerGraphDataWatch!.savedEcgLocalDataList[i]);
-    //   row.add(providerGraphDataWatch!.savedPpgLocalDataList[i]);
-    //   column.add(row);
-    // }
-
-    // String csvData = ListToCsvConverter().convert(column);
-    // final String directory = (await getApplicationSupportDirectory()).path;
-    // final path = "$directory/csv_graph_data.csv";
-    // printLog(path);
-    // final File file = File(path);
-    // await file.writeAsString(csvData);
-    // providerGraphDataWatch!.setLoading(false);
-
-    // Share.shareFiles(['${file.path}'], text: 'Exported csv');
-
-    for (int i = 0; i < providerGraphDataWatch!.filterOPPpg.length; i++) {
+    for (int i = 0; i < providerGraphDataWatch!.savedEcgLocalDataList.length; i++) {
       row = [];
-      row.add(providerGraphDataWatch!.filterOPPpg[i]);
+      row.add(providerGraphDataWatch!.savedEcgLocalDataList[i]);
+      row.add(providerGraphDataWatch!.savedPpgLocalDataList[i]);
       column.add(row);
     }
 
     String csvData = ListToCsvConverter().convert(column);
     final String directory = (await getApplicationSupportDirectory()).path;
-    final path = "$directory/filterOp_ppg_data.csv";
+    final path = "$directory/csv_graph_data.csv";
     printLog(path);
     final File file = File(path);
     await file.writeAsString(csvData);
     providerGraphDataWatch!.setLoading(false);
-    Share.shareFiles(['${file.path}'], text: 'Filter Op PPg csv');
+
+    Share.shareFiles(['${file.path}'], text: 'Exported csv');
+
+    // for (int i = 0; i < providerGraphDataWatch!.filterOPPpg.length; i++) {
+    //   row = [];
+    //   row.add(providerGraphDataWatch!.filterOPPpg[i]);
+    //   column.add(row);
+    // }
+
+    // String csvData = ListToCsvConverter().convert(column);
+    // final String directory = (await getApplicationSupportDirectory()).path;
+    // final path = "$directory/filterOp_ppg_data.csv";
+    // printLog(path);
+    // final File file = File(path);
+    // await file.writeAsString(csvData);
+    // providerGraphDataWatch!.setLoading(false);
+    // Share.shareFiles(['${file.path}'], text: 'Filter Op PPg csv');
   }
 }
