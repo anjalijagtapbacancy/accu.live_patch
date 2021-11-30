@@ -68,7 +68,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
   double dBp = 0;
   double dDbp = 0;
 
-  int noiseLength = 1500;
+  int noiseLength = 0;
   static int frameLength = 11;
 
   List<double> hrv = [];
@@ -338,9 +338,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
   void periodicTask() {
     try {
-      if (mainEcgDecimalList.length > filterDataListLength &&
-          mainEcgHexList.length > 0 &&
-          (mainEcgHexList.length) % periodicTimeInSec == 0) {
+      if (mainEcgHexList.length > 0 && (mainEcgHexList.length) % periodicTimeInSec == 0) {
         printLog("periodicTask ifff  ecg ............... ${mainEcgHexList.length}");
         countEcgHeartRate();
         countPpgHeartRate();
@@ -367,12 +365,17 @@ class ProviderGraphData with ChangeNotifier, Constant {
     double _threshold = 0;
 
     var b = firwin(numtaps, Array([normalFc]));
-    sgFilteredEcg = lfilter(
-        b,
-        Array([1.0]),
-        Array(mainEcgDecimalList
-            .getRange(mainEcgDecimalList.length - filterDataListLength, mainEcgDecimalList.length)
-            .toList())); // filter the signal
+    if (mainEcgDecimalList.length > filterDataListLength) {
+      sgFilteredEcg = lfilter(
+          b,
+          Array([1.0]),
+          Array(mainEcgDecimalList
+              .getRange(mainEcgDecimalList.length - filterDataListLength, mainEcgDecimalList.length)
+              .toList())); // filter the signal
+      print("getRange... ${mainEcgDecimalList.length - filterDataListLength} ${mainEcgDecimalList.length}");
+    } else {
+      sgFilteredEcg = lfilter(b, Array([1.0]), Array(mainEcgDecimalList)); // filter the signal
+    }
 
     // List<double> result = mainEcgDecimalList
     //     .getRange(mainEcgDecimalList.length - filterDataListLength, mainEcgDecimalList.length)
@@ -399,35 +402,69 @@ class ProviderGraphData with ChangeNotifier, Constant {
     _threshold = ((filterOPEcg).reduce(math.max)) * 0.28;
     printLog("CCC max ${(filterOPEcg).reduce(math.max)} _threshold " + _threshold.toString());
 
-    peaksArrayEcg = findPeaks(
-        Array(filterOPEcg.getRange(filterOPEcg.length - noiseLength, filterOPEcg.length).toList()),
-        threshold: _threshold);
+    // peaksArrayEcg = findPeaks(filterOPEcg,
+    //     // Array(filterOPEcg.getRange(0, filterOPEcg.length).toList()),
+    //     threshold: _threshold);
+    List<int> peaksPositionsArray = [];
+    for (int f = 1500; f < filterOPEcg.length; f++) {
+      if (f - 1 > 0 && f + 1 < filterOPEcg.length) {
+        printLog(
+            "ffffff gh ${filterOPEcg[f]}   ${0.45 * (filterOPEcg.getRange(filterOPEcg.length - 2500, filterOPEcg.length)).reduce(math.max)}");
 
-    printLog("Peaks Length " + peaksArrayEcg.length.toString());
-    printLog("Peaks " + peaksArrayEcg.toString());
-    for (int i = 0; i < peaksArrayEcg.length; i++) {
-      printLog("AAA ${i.toString()} " + peaksArrayEcg[i].length.toString());
-      if (i == 0) {
-        for (int j = 0; j < peaksArrayEcg[i].length; j++) {
-          if (j + 1 < (peaksArrayEcg[i].length)) {
-            printLog("jjjj ${j} ${peaksArrayEcg[i][j + 1]} ${peaksArrayEcg[i][j]}");
-
-            var interval = ((peaksArrayEcg[i][j + 1] - peaksArrayEcg[i][j]) / 200);
-            printLog("jjjj interval ${interval}");
-
-            totalOfPeaksEcg += ((peaksArrayEcg[i][j + 1] - peaksArrayEcg[i][j]) / 200);
-          }
+        if (filterOPEcg[f] > filterOPEcg[f - 1] &&
+            filterOPEcg[f] >= filterOPEcg[f + 1] &&
+            filterOPEcg[f] >
+                0.45 * (filterOPEcg.getRange(filterOPEcg.length - 2500, filterOPEcg.length)).reduce(math.max)) {
+          peaksArrayEcg.add(filterOPEcg[f]);
+          peaksPositionsArray.add(f);
         }
       }
     }
+
+    printLog("Peaks Length " + peaksArrayEcg.length.toString());
+    printLog("Peaks Ecg" + peaksArrayEcg.toString());
+    printLog("Peaks_position Array " + peaksPositionsArray.toString());
+
+    // for (int i = 0; i < peaksArrayEcg.length; i++) {
+    //   printLog("AAA ${i.toString()} " + peaksArrayEcg[i].length.toString());
+    //   if (i == 0) {
+    //     for (int j = 0; j < peaksArrayEcg[i].length; j++) {
+    //       if (j + 1 < (peaksArrayEcg[i].length)) {
+    //         printLog("jjjj ${j} ${peaksArrayEcg[i][j + 1]} ${peaksArrayEcg[i][j]}");
+
+    //         var interval = ((peaksArrayEcg[i][j + 1] - peaksArrayEcg[i][j]) / 200);
+    //         printLog("jjjj interval ${interval}");
+
+    //         totalOfPeaksEcg += ((peaksArrayEcg[i][j + 1] - peaksArrayEcg[i][j]) / 200);
+
+    //       }
+    //     }
+    //   }
+    // }
+
+    for (int j = 0; j < peaksPositionsArray.length; j++) {
+      if (j + 1 < peaksPositionsArray.length) {
+        printLog("jjjj ${j} ${peaksPositionsArray[j + 1]} ${peaksPositionsArray[j]}");
+
+        var interval = ((peaksPositionsArray[j + 1] - peaksPositionsArray[j]) / 200);
+        printLog("jjjj interval ${interval}");
+        if (interval < 1.2) {
+          totalOfPeaksEcg += ((peaksPositionsArray[j + 1] - peaksPositionsArray[j]) / 200);
+        }
+
+        // totalOfPeaksEcg += ((peaksArrayEcg[i][j + 1] - peaksArrayEcg[i][j]) / 200);
+      }
+    }
+
     printLog("totalOfPeaksEcg  " +
         totalOfPeaksEcg.toString() +
         " avg " +
-        (totalOfPeaksEcg / (peaksArrayEcg[0].length)).toString());
-    heartRate = (60 / (totalOfPeaksEcg / (peaksArrayEcg[0].length))).round();
-    // heartRate = ((60 * peaksArrayEcg[0].length) / 2.5).round();
-
-    printLog("heartRate:  " + heartRate.toString());
+        (totalOfPeaksEcg / (peaksPositionsArray.length)).toString());
+    double avgPeak = (totalOfPeaksEcg / (peaksPositionsArray.length));
+    // if (avgPeak.isInfinite || avgPeak.isNaN) {
+    //   avgPeak = 1;
+    // }
+    heartRate = (60 / avgPeak).round();
     // notifyListeners();
   }
 
@@ -446,12 +483,16 @@ class ProviderGraphData with ChangeNotifier, Constant {
     double _threshold = 0;
 
     var b = firwin(numtaps, Array([normalFc]));
-    sgFilteredPpg = lfilter(
-        b,
-        Array([1.0]),
-        Array(mainPpgDecimalList
-            .getRange(mainPpgDecimalList.length - filterDataListLength, mainPpgDecimalList.length)
-            .toList())); // filter the signal
+    if (mainPpgDecimalList.length > filterDataListLength) {
+      sgFilteredPpg = lfilter(
+          b,
+          Array([1.0]),
+          Array(mainPpgDecimalList
+              .getRange(mainPpgDecimalList.length - filterDataListLength, mainPpgDecimalList.length)
+              .toList())); // filter the signal
+    } else {
+      sgFilteredPpg = lfilter(b, Array([1.0]), Array(mainPpgDecimalList)); // filter the signal
+    }
 
     // sgFilteredPpg = lfilter(b, Array([1.0]), Array(ecgData.getRange(0, 500).toList())); // filter the signal
 
@@ -472,12 +513,10 @@ class ProviderGraphData with ChangeNotifier, Constant {
     printLog("CCC " + filterOPPpg.toString());
     // _threshold = ((filterOPPpg).reduce(math.max)) * 0.6;
     _threshold = 500;
-    // _threshold = (filterOPPpg).reduce((a, b) => a + b) / filterOPPpg.length;
 
     printLog("CCC _thresholdPpg max ${(filterOPPpg).reduce(math.max)} hhh " + _threshold.toString());
-    // peaksArrayPpg = findPeaks(filterOPPpg, threshold: _threshold);
-    peaksArrayPpg = findPeaks(
-        Array(filterOPPpg.getRange(filterOPPpg.length - noiseLength, filterOPPpg.length).toList()),
+    peaksArrayPpg = findPeaks(filterOPPpg,
+        // Array(filterOPPpg.getRange(filterOPPpg.length - noiseLength, filterOPPpg.length).toList()),
         threshold: _threshold);
 
     printLog("Peaks Ppg Length " + peaksArrayPpg.length.toString());
@@ -497,18 +536,13 @@ class ProviderGraphData with ChangeNotifier, Constant {
     for (int p = 0; p < peaksArrayPpg[index].length; p++) {
       if (p + 1 < peaksArrayPpg[index].length) {
         prv.add((60 * 200 / (peaksArrayPpg[index][p + 1] - peaksArrayPpg[index][p])));
-
-// hrv(hrv>2000) = 0;
-
       }
 
       for (int e = 0; e < peaksArrayEcg[index].length; e++) {
-        // if (e + 1 < peaksArrayEcg.length) {
         print("uuu ecg ${e.toString()} ${peaksArrayEcg[index][e].toString()}");
         print("uuu ppg ${p.toString()} ${peaksArrayPpg[index][p].toString()}");
         if (e + 1 < peaksArrayEcg[index].length) {
           hrv.add((60 * 200 / (peaksArrayEcg[index][e + 1] - peaksArrayEcg[index][e])));
-// hrv(hrv>2000) = 0;
         }
 
         if (peaksArrayEcg[index][e] < peaksArrayPpg[index][p]) {
@@ -518,16 +552,15 @@ class ProviderGraphData with ChangeNotifier, Constant {
             totalOfPeaksPpg += ((peaksArrayPpg[index][p] - peaksArrayEcg[index][e]) / 200);
           }
         }
-        // }
       }
     }
 
     avgPrv = mean(Array(prv.toList()));
-    if (avgPrv.isNaN || avgPrv.isInfinite) {
+    if (avgPrv.isNaN || avgPrv.isInfinite || avgPrv > 999) {
       avgPrv = 0;
     }
     avgHrv = mean(Array(hrv));
-    if (avgHrv.isNaN || avgHrv.isInfinite) {
+    if (avgHrv.isNaN || avgHrv.isInfinite || avgHrv > 999) {
       avgHrv = 0;
     }
 

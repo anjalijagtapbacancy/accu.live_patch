@@ -11,8 +11,8 @@ class Constant {
   int yAxisGraphData = 500;
   double xAxisInterval = 100; //bottom data
   double yAxisInterval = 1000; //left data
-  int periodicTimeInSec = 400 * 10;
-  int filterDataListLength = 5000;
+  int periodicTimeInSec = 800 * 10;
+  int filterDataListLength = 4000;
 
   String ppg = "PPG";
   String ecg = "ECG";
