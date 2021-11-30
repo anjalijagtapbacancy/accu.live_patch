@@ -433,7 +433,12 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
           try {
             providerGraphDataWatch!.setReadCharacteristic(characteristic);
             if (providerGraphDataWatch!.isServiceStarted) {
-              providerGraphDataWatch!.generateGraphValuesList(providerGraphDataWatch!.readValues[characteristic.uuid]);
+              if (_controller!.index != 3) {
+                providerGraphDataWatch!
+                    .generateGraphValuesList(providerGraphDataWatch!.readValues[characteristic.uuid]);
+              } else {
+                providerGraphDataWatch!.getSpo2Data(providerGraphDataWatch!.readValues[characteristic.uuid]);
+              }
             }
           } catch (err) {
             printLog(" caught err ${err.toString()}");
@@ -764,7 +769,36 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
   }
 
   Widget _spo2TabView() {
-    return Icon(Icons.directions_transit);
+    return Center(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Image.asset(
+            "assets/images/o_two_1.png",
+            width: 145,
+            // color: clrWhite,
+          ),
+          SizedBox(
+            width: 38,
+          ),
+          Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: providerGraphDataWatch!.spo2Val.toString(),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 32),
+                ),
+                TextSpan(
+                  text: ' %',
+                  style: TextStyle(fontSize: 18),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _tabWidget(String title) {

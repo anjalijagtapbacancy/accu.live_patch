@@ -27,6 +27,8 @@ class ProviderGraphData with ChangeNotifier, Constant {
   var isEnabled = true;
   var isShowAvailableDevices = true;
 
+  double spo2Val = 0;
+
   int ecgDataLength = 0;
   int ppgDataLength = 0;
   int tabSelectedIndex = 0;
@@ -108,6 +110,9 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
   setTabSelectedIndex(int index) {
     tabSelectedIndex = index;
+    //ecg ppg 4
+    // sp02 7
+
     // writeChangeModeCharacteristic!.write([index + 4]);
     // notifyListeners();
   }
@@ -254,6 +259,22 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
     // savedEcgLocalDataList = await box.get("item") ?? [];
     // printLog(" cleared savedEcgLocalDataList  ${savedEcgLocalDataList.toString()}");
+  }
+
+  void getSpo2Data(List<int>? valueList) {
+    print("getSpo2Data valueList ${valueList!.length} ${valueList.toList()}");
+    if (valueList.length > 1) {
+      for (int i = 0; i < valueList.length; i++) {
+        print(valueList[i].toRadixString(16).padLeft(2, '0').toString());
+      }
+
+      String strHex = valueList[1].toRadixString(16).padLeft(2, '0') + valueList[0].toRadixString(16).padLeft(2, '0');
+      print("strHex $strHex");
+
+      spo2Val = (double.parse(int.parse(strHex, radix: 16).toString().padLeft(1, '0'))) / 100;
+      print("spo2Val ${spo2Val.toString()}");
+    }
+    // notifyListeners();
   }
 
   List<int>? finalList = [];
