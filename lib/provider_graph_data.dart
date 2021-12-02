@@ -65,6 +65,8 @@ class ProviderGraphData with ChangeNotifier, Constant {
   int heartRate = 0;
   String heartRatePPG = "";
   List<double> pttArray = [];
+  List<int> peaksPositionsEcgArray = [];
+  List<int> peaksPositionsPpgArray = [];
 
   double avgPTT = 0;
   double dBp = 0;
@@ -426,25 +428,26 @@ class ProviderGraphData with ChangeNotifier, Constant {
     // peaksArrayEcg = findPeaks(filterOPEcg,
     //     // Array(filterOPEcg.getRange(0, filterOPEcg.length).toList()),
     //     threshold: _threshold);
-    List<int> peaksPositionsArray = [];
-    for (int f = 1500; f < filterOPEcg.length; f++) {
+    peaksPositionsEcgArray.clear();
+    peaksArrayEcg.clear();
+    for (int f = 2000; f < filterOPEcg.length; f++) {
       if (f - 1 > 0 && f + 1 < filterOPEcg.length) {
         printLog(
-            "ffffff gh ${filterOPEcg[f]}   ${0.45 * (filterOPEcg.getRange(filterOPEcg.length - 2500, filterOPEcg.length)).reduce(math.max)}");
+            "ffffff gh ${filterOPEcg[f]}   ${0.45 * (filterOPEcg.getRange(filterOPEcg.length - 2000, filterOPEcg.length)).reduce(math.max)}");
 
         if (filterOPEcg[f] > filterOPEcg[f - 1] &&
             filterOPEcg[f] >= filterOPEcg[f + 1] &&
             filterOPEcg[f] >
-                0.45 * (filterOPEcg.getRange(filterOPEcg.length - 2500, filterOPEcg.length)).reduce(math.max)) {
+                0.45 * (filterOPEcg.getRange(filterOPEcg.length - 2000, filterOPEcg.length)).reduce(math.max)) {
           peaksArrayEcg.add(filterOPEcg[f]);
-          peaksPositionsArray.add(f);
+          peaksPositionsEcgArray.add(f);
         }
       }
     }
 
     printLog("Peaks Length " + peaksArrayEcg.length.toString());
     printLog("Peaks Ecg" + peaksArrayEcg.toString());
-    printLog("Peaks_position Array " + peaksPositionsArray.toString());
+    printLog("Peaks_position Array " + peaksPositionsEcgArray.toString());
 
     // for (int i = 0; i < peaksArrayEcg.length; i++) {
     //   printLog("AAA ${i.toString()} " + peaksArrayEcg[i].length.toString());
@@ -463,14 +466,14 @@ class ProviderGraphData with ChangeNotifier, Constant {
     //   }
     // }
 
-    for (int j = 0; j < peaksPositionsArray.length; j++) {
-      if (j + 1 < peaksPositionsArray.length) {
-        printLog("jjjj ${j} ${peaksPositionsArray[j + 1]} ${peaksPositionsArray[j]}");
+    for (int j = 0; j < peaksPositionsEcgArray.length; j++) {
+      if (j + 1 < peaksPositionsEcgArray.length) {
+        printLog("jjjj ${j} ${peaksPositionsEcgArray[j + 1]} ${peaksPositionsEcgArray[j]}");
 
-        var interval = ((peaksPositionsArray[j + 1] - peaksPositionsArray[j]) / 200);
+        var interval = ((peaksPositionsEcgArray[j + 1] - peaksPositionsEcgArray[j]) / 200);
         printLog("jjjj interval ${interval}");
         if (interval < 1.2) {
-          totalOfPeaksEcg += ((peaksPositionsArray[j + 1] - peaksPositionsArray[j]) / 200);
+          totalOfPeaksEcg += ((peaksPositionsEcgArray[j + 1] - peaksPositionsEcgArray[j]) / 200);
         }
 
         // totalOfPeaksEcg += ((peaksArrayEcg[i][j + 1] - peaksArrayEcg[i][j]) / 200);
@@ -480,8 +483,8 @@ class ProviderGraphData with ChangeNotifier, Constant {
     printLog("totalOfPeaksEcg  " +
         totalOfPeaksEcg.toString() +
         " avg " +
-        (totalOfPeaksEcg / (peaksPositionsArray.length)).toString());
-    double avgPeak = (totalOfPeaksEcg / (peaksPositionsArray.length));
+        (totalOfPeaksEcg / (peaksPositionsEcgArray.length)).toString());
+    double avgPeak = (totalOfPeaksEcg / (peaksPositionsEcgArray.length));
     // if (avgPeak.isInfinite || avgPeak.isNaN) {
     //   avgPeak = 1;
     // }
@@ -496,11 +499,11 @@ class ProviderGraphData with ChangeNotifier, Constant {
     peaksArrayPpg = [];
     totalOfPeaksPpg = 0;
 
-    var fs = 200;
+    var fs = 100;
     var nyq = 0.5 * fs; // design filter
-    var cutOff = 10;
+    var cutOff = 20;
     var normalFc = cutOff / nyq;
-    var numtaps = 506;
+    var numtaps = 127;
     double _threshold = 0;
 
     var b = firwin(numtaps, Array([normalFc]));
@@ -532,20 +535,48 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
     printLog("CCC filterOPPpg " + filterOPPpg.runtimeType.toString() + " " + filterOPPpg.length.toString());
     printLog("CCC " + filterOPPpg.toString());
-    // _threshold = ((filterOPPpg).reduce(math.max)) * 0.6;
-    _threshold = 500;
+    // showSnackBar(filterOPPpg.toString());
 
-    printLog("CCC _thresholdPpg max ${(filterOPPpg).reduce(math.max)} hhh " + _threshold.toString());
-    peaksArrayPpg = findPeaks(filterOPPpg,
-        // Array(filterOPPpg.getRange(filterOPPpg.length - noiseLength, filterOPPpg.length).toList()),
-        threshold: _threshold);
+    // // _threshold = ((filterOPPpg).reduce(math.max)) * 0.6;
+    // _threshold = 500;
 
-    printLog("Peaks Ppg Length " + peaksArrayPpg.length.toString());
-    printLog("Peaks Ppg" + peaksArrayPpg.toString());
+    // printLog("CCC _thresholdPpg max ${(filterOPPpg).reduce(math.max)} hhh " + _threshold.toString());
+    // // peaksArrayPpg = findPeaks(filterOPPpg,
+    // //     // Array(filterOPPpg.getRange(filterOPPpg.length - noiseLength, filterOPPpg.length).toList()),
+    // //     threshold: _threshold);
 
-    // List<dynamic> tempPeakList = [];
-    int index = 0;
-    print("peaksArray.length ${peaksArrayEcg[index].length} ${peaksArrayPpg[index].length}");
+    // printLog("Peaks Ppg Length " + peaksArrayPpg.length.toString());
+    // printLog("Peaks Ppg" + peaksArrayPpg.toString());
+
+    // // List<dynamic> tempPeakList = [];
+    // int index = 0;
+    // print("peaksArray.length ${peaksArrayEcg[index].length} ${peaksArrayPpg[index].length}");
+
+    peaksPositionsPpgArray.clear();
+    peaksArrayPpg.clear();
+    for (int f = 2000; f < filterOPPpg.length; f++) {
+      if (f - 1 > 0 && f + 1 < filterOPPpg.length) {
+        // showSnackBar(
+        //     "ffffff ${filterOPPpg[f]}   ${0.45 * (filterOPPpg.getRange(filterOPPpg.length - 2000, filterOPPpg.length)).reduce(math.max)}");
+
+        printLog(
+            "ffffff gh ${filterOPPpg[f]}   ${0.45 * (filterOPPpg.getRange(filterOPPpg.length - 2000, filterOPPpg.length)).reduce(math.max)}");
+
+        if (filterOPPpg[f] > filterOPPpg[f - 1] &&
+            filterOPPpg[f] >= filterOPPpg[f + 1] &&
+            filterOPPpg[f] >
+                0.45 * (filterOPPpg.getRange(filterOPPpg.length - 2000, filterOPPpg.length)).reduce(math.max)) {
+          // showSnackBar("filterOPPpg for loop array inside if condition");
+
+          peaksArrayPpg.add(filterOPPpg[f]);
+          peaksPositionsPpgArray.add(f);
+        }
+      }
+    }
+
+    printLog("Peaks_position Array " + peaksPositionsPpgArray.toString());
+    showSnackBar("peaksPositionsPpgArray_length ${peaksPositionsPpgArray.length.toString()}");
+
     // if (peaksArrayEcg[index].length < peaksArrayPpg[index].length) {
     //   tempPeakList = peaksArrayEcg[index];
     // } else {
@@ -554,36 +585,42 @@ class ProviderGraphData with ChangeNotifier, Constant {
     pttArray.clear();
     prv.clear();
     hrv.clear();
-    for (int p = 0; p < peaksArrayPpg[index].length; p++) {
-      if (p + 1 < peaksArrayPpg[index].length) {
-        prv.add((60 * 200 / (peaksArrayPpg[index][p + 1] - peaksArrayPpg[index][p])));
+
+    for (int p = 0; p < peaksPositionsPpgArray.length; p++) {
+      if (p + 1 < peaksPositionsPpgArray.length) {
+        prv.add((60 * 200 / (peaksPositionsPpgArray[p + 1] - peaksPositionsPpgArray[p])));
       }
 
-      for (int e = 0; e < peaksArrayEcg[index].length; e++) {
-        print("uuu ecg ${e.toString()} ${peaksArrayEcg[index][e].toString()}");
-        print("uuu ppg ${p.toString()} ${peaksArrayPpg[index][p].toString()}");
-        if (e + 1 < peaksArrayEcg[index].length) {
-          hrv.add((60 * 200 / (peaksArrayEcg[index][e + 1] - peaksArrayEcg[index][e])));
+      for (int e = 0; e < peaksPositionsEcgArray.length; e++) {
+        print("uuu ecg ${e.toString()} ${peaksPositionsEcgArray[e].toString()}");
+        print("uuu ppg ${p.toString()} ${peaksPositionsPpgArray[p].toString()}");
+        if (e + 1 < peaksPositionsEcgArray.length) {
+          if (peaksPositionsEcgArray[e] < 500) {
+            hrv.add((60 * 200 / peaksPositionsEcgArray[e + 1] - peaksPositionsEcgArray[e]));
+          }
         }
 
-        if (peaksArrayEcg[index][e] < peaksArrayPpg[index][p]) {
-          double diff = ((peaksArrayPpg[index][p] - peaksArrayEcg[index][e]) / 200);
+        if (peaksPositionsEcgArray[e] < peaksPositionsPpgArray[p]) {
+          double diff = ((peaksPositionsPpgArray[p] - peaksPositionsEcgArray[e]) / 200);
           pttArray.add(diff);
           if (diff <= 0.8) {
-            totalOfPeaksPpg += ((peaksArrayPpg[index][p] - peaksArrayEcg[index][e]) / 200);
+            totalOfPeaksPpg += ((peaksPositionsPpgArray[p] - peaksPositionsEcgArray[e]) / 200);
           }
         }
       }
     }
 
     avgPrv = mean(Array(prv.toList()));
-    if (avgPrv.isNaN || avgPrv.isInfinite || avgPrv > 999) {
+    if (avgPrv.isNaN || avgPrv.isInfinite) {
       avgPrv = 0;
     }
+    showSnackBar("avgPrv ${avgPrv.toString()}");
+
     avgHrv = mean(Array(hrv));
-    if (avgHrv.isNaN || avgHrv.isInfinite || avgHrv > 999) {
+    if (avgHrv.isNaN || avgHrv.isInfinite) {
       avgHrv = 0;
     }
+    showSnackBar("avgHrv ${avgHrv.toString()}");
 
     printLog("rrrr prv:  ${prv.toList()} avg: ${avgPrv.toString()}");
     printLog("rrrr hrv:  ${hrv.toList()} array: ${avgHrv.toString()}");
@@ -595,6 +632,8 @@ class ProviderGraphData with ChangeNotifier, Constant {
     if (avgPTT.isNaN || avgPTT.isInfinite) {
       avgPTT = 0;
     }
+    showSnackBar("totalOfPeaksPpg  " + totalOfPeaksPpg.toString() + " avg " + avgPTT.toString());
+
     printLog("ggg totalOfPeaksPpg  " + totalOfPeaksPpg.toString() + " avg " + avgPTT.toString());
 
     // dBp = 134.802365863 - 83.006119783168 * avgPTT;
