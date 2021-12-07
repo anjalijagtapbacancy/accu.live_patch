@@ -814,42 +814,42 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
     List<List<dynamic>> column = [];
     List<dynamic> row = [];
 
-    // row.add("ecg");
-    // row.add("ppg");
-    // column.add(row);
+    row.add("ecg");
+    row.add("ppg");
+    column.add(row);
 
-    // await providerGraphDataWatch!.getStoredLocalData();
+    await providerGraphDataWatch!.getStoredLocalData();
 
-    // for (int i = 0; i < providerGraphDataWatch!.savedEcgLocalDataList.length; i++) {
-    //   row = [];
-    //   row.add(providerGraphDataWatch!.savedEcgLocalDataList[i]);
-    //   row.add(providerGraphDataWatch!.savedPpgLocalDataList[i]);
-    //   column.add(row);
-    // }
-
-    // String csvData = ListToCsvConverter().convert(column);
-    // final String directory = (await getApplicationSupportDirectory()).path;
-    // final path = "$directory/csv_graph_data.csv";
-    // printLog(path);
-    // final File file = File(path);
-    // await file.writeAsString(csvData);
-    // providerGraphDataWatch!.setLoading(false);
-
-    // Share.shareFiles(['${file.path}'], text: 'Exported csv');
-
-    for (int i = 0; i < providerGraphDataWatch!.peaksPositionsPpgArray.length; i++) {
+    for (int i = 0; i < providerGraphDataWatch!.savedEcgLocalDataList.length; i++) {
       row = [];
-      row.add(providerGraphDataWatch!.peaksPositionsPpgArray[i]);
+      row.add(providerGraphDataWatch!.savedEcgLocalDataList[i]);
+      row.add(providerGraphDataWatch!.savedPpgLocalDataList[i]);
       column.add(row);
     }
 
     String csvData = ListToCsvConverter().convert(column);
     final String directory = (await getApplicationSupportDirectory()).path;
-    final path = "$directory/peaksPositionsPpgArray.csv";
+    final path = "$directory/csv_graph_data.csv";
     printLog(path);
     final File file = File(path);
     await file.writeAsString(csvData);
     providerGraphDataWatch!.setLoading(false);
-    Share.shareFiles(['${file.path}'], text: 'peaksPositionsPpgArray csv');
+
+    Share.shareFiles(['${file.path}'], text: 'Exported csv');
+
+    // for (int i = 0; i < providerGraphDataWatch!.peaksPositionsPpgArray.length; i++) {
+    //   row = [];
+    //   row.add(providerGraphDataWatch!.peaksPositionsPpgArray[i]);
+    //   column.add(row);
+    // }
+
+    // String csvData = ListToCsvConverter().convert(column);
+    // final String directory = (await getApplicationSupportDirectory()).path;
+    // final path = "$directory/peaksPositionsPpgArray.csv";
+    // printLog(path);
+    // final File file = File(path);
+    // await file.writeAsString(csvData);
+    // providerGraphDataWatch!.setLoading(false);
+    // Share.shareFiles(['${file.path}'], text: 'peaksPositionsPpgArray csv');
   }
 }

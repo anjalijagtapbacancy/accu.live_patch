@@ -583,32 +583,63 @@ class ProviderGraphData with ChangeNotifier, Constant {
     //   tempPeakList = peaksArrayPpg[index];
     // }
     pttArray.clear();
+   
     prv.clear();
     hrv.clear();
-
+ 
     for (int p = 0; p < peaksPositionsPpgArray.length; p++) {
       if (p + 1 < peaksPositionsPpgArray.length) {
-        prv.add((60 * 200 / (peaksPositionsPpgArray[p + 1] - peaksPositionsPpgArray[p])));
+        if (((60 *
+                    200 /
+                    (peaksPositionsPpgArray[p + 1] -
+                        peaksPositionsPpgArray[p]) <
+                500)) &&
+            ((60 *
+                    200 /
+                    (peaksPositionsPpgArray[p + 1] -
+                        peaksPositionsPpgArray[p]) >
+                0))) {
+          prv.add((60 *
+              200 /
+              (peaksPositionsPpgArray[p + 1] - peaksPositionsPpgArray[p])));
+        }
       }
-
+ 
       for (int e = 0; e < peaksPositionsEcgArray.length; e++) {
-        print("uuu ecg ${e.toString()} ${peaksPositionsEcgArray[e].toString()}");
-        print("uuu ppg ${p.toString()} ${peaksPositionsPpgArray[p].toString()}");
+        print(
+            "uuu ecg ${e.toString()} ${peaksPositionsEcgArray[e].toString()}");
+        print(
+            "uuu ppg ${p.toString()} ${peaksPositionsPpgArray[p].toString()}");
         if (e + 1 < peaksPositionsEcgArray.length) {
-          if (peaksPositionsEcgArray[e] < 500) {
-            hrv.add((60 * 200 / peaksPositionsEcgArray[e + 1] - peaksPositionsEcgArray[e]));
+          if (((60 *
+                      200 /
+                      (peaksPositionsEcgArray[e + 1] -
+                          peaksPositionsEcgArray[e]) <
+                  500)) &&
+              ((60 *
+                      200 /
+                      (peaksPositionsEcgArray[e + 1] -
+                          peaksPositionsEcgArray[e]) >
+                  0))) {
+            hrv.add((60 *
+                200 /
+                (peaksPositionsEcgArray[e + 1] - peaksPositionsEcgArray[e])));
           }
         }
-
+ 
         if (peaksPositionsEcgArray[e] < peaksPositionsPpgArray[p]) {
-          double diff = ((peaksPositionsPpgArray[p] - peaksPositionsEcgArray[e]) / 200);
-          pttArray.add(diff);
+          double diff =
+              ((peaksPositionsPpgArray[p] - peaksPositionsEcgArray[e]) / 200);
+          //pttArray.add(diff);
           if (diff <= 0.8) {
-            totalOfPeaksPpg += ((peaksPositionsPpgArray[p] - peaksPositionsEcgArray[e]) / 200);
+            pttArray.add(diff);
+            totalOfPeaksPpg +=
+                ((peaksPositionsPpgArray[p] - peaksPositionsEcgArray[e]) / 200);
           }
         }
       }
     }
+
 
     avgPrv = mean(Array(prv.toList()));
     if (avgPrv.isNaN || avgPrv.isInfinite) {
