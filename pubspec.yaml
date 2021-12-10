@@ -35,6 +35,7 @@ dependencies:
   provider: ^6.0.1
   scidart: ^0.0.2-dev.6
   share: ^2.0.4
+  http: ^0.13.4
 
 flutter_icons:
   image_path: "assets/images/app_icon.jpg"

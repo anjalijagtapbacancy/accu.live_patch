@@ -1,13 +1,18 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
+import 'package:flutter_bluetooth_connection/ModelClass/TrainModel.dart';
 import 'package:flutter_bluetooth_connection/constant.dart';
 import 'package:hive/hive.dart';
 import 'package:scidart/scidart.dart';
 import 'package:scidart/numdart.dart';
 import 'dart:math' as math;
+import 'package:http/http.dart' as http;
+
+import 'ModelClass/Prediction.dart';
 
 // import 'package:smoothing/smoothing.dart';
 
@@ -16,6 +21,8 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
   BluetoothDevice? connectedDevice;
   List<BluetoothService>? services;
+
+  Future<ArrhythmiaType>? arrhythmia_type;
 
   bool isLoading = false;
   BluetoothCharacteristic? readCharacteristic;
@@ -33,6 +40,9 @@ class ProviderGraphData with ChangeNotifier, Constant {
   int ppgDataLength = 0;
   int tabSelectedIndex = 0;
 
+  List<int> rrIntervalList = [];
+
+  //List<double> HeartRateList = [];
   List<double> savedEcgLocalDataList = [];
   List<FlSpot> mainEcgSpotsListData = [];
   List<FlSpot> tempEcgSpotsListData = [];
@@ -179,13 +189,15 @@ class ProviderGraphData with ChangeNotifier, Constant {
     for (int k = 0; k < tempEcgDecimalList.length; k++) {
       // if ((mainEcgSpotsListData.length) + 1 / periodicTimeInSec == 0) {
 
-      mainEcgSpotsListData
-          .add(FlSpot(double.tryParse(((mainEcgDecimalList.length + k)).toString()) ?? 0, tempEcgDecimalList[k]));
+      mainEcgSpotsListData.add(FlSpot(
+          double.tryParse(((mainEcgDecimalList.length + k)).toString()) ?? 0,
+          tempEcgDecimalList[k]));
     }
 
     for (int k = 0; k < tempPpgDecimalList.length; k++) {
-      mainPpgSpotsListData
-          .add(FlSpot(double.tryParse(((mainPpgDecimalList.length + k)).toString()) ?? 0, tempPpgDecimalList[k]));
+      mainPpgSpotsListData.add(FlSpot(
+          double.tryParse(((mainPpgDecimalList.length + k)).toString()) ?? 0,
+          tempPpgDecimalList[k]));
     }
     if (isEnabled) {
       periodicTask();
@@ -193,7 +205,8 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
     if (mainEcgSpotsListData.length > yAxisGraphData) {
       tempEcgSpotsListData = mainEcgSpotsListData
-          .getRange(mainEcgSpotsListData.length - yAxisGraphData, mainEcgSpotsListData.length)
+          .getRange(mainEcgSpotsListData.length - yAxisGraphData,
+              mainEcgSpotsListData.length)
           .toList();
     } else {
       tempEcgSpotsListData = mainEcgSpotsListData;
@@ -201,7 +214,8 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
     if (mainPpgSpotsListData.length > yAxisGraphData) {
       tempPpgSpotsListData = mainPpgSpotsListData
-          .getRange(mainPpgSpotsListData.length - yAxisGraphData, mainPpgSpotsListData.length)
+          .getRange(mainPpgSpotsListData.length - yAxisGraphData,
+              mainPpgSpotsListData.length)
           .toList();
     } else {
       tempPpgSpotsListData = mainPpgSpotsListData;
@@ -221,7 +235,8 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
     savedEcgLocalDataList = await box.get("ecg_graph_data") ?? [];
     savedPpgLocalDataList = await box.get("ppg_graph_data") ?? [];
-    printLog("local Data saved!.... ecg: ${savedEcgLocalDataList.length} ppg: ${savedPpgLocalDataList.length}");
+    printLog(
+        "local Data saved!.... ecg: ${savedEcgLocalDataList.length} ppg: ${savedPpgLocalDataList.length}");
   }
 
   getStoredLocalData() async {
@@ -230,8 +245,10 @@ class ProviderGraphData with ChangeNotifier, Constant {
     savedEcgLocalDataList = await box.get("ecg_graph_data") ?? [];
     savedPpgLocalDataList = await box.get("ppg_graph_data") ?? [];
 
-    printLog("BBB savedEcgLocalDataList length  ${savedEcgLocalDataList.length}");
-    printLog("BBB savedPpgLocalDataList length  ${savedPpgLocalDataList.length}");
+    printLog(
+        "BBB savedEcgLocalDataList length  ${savedEcgLocalDataList.length}");
+    printLog(
+        "BBB savedPpgLocalDataList length  ${savedPpgLocalDataList.length}");
 
     printLog("BBB savedEcgLocalDataList  ${savedEcgLocalDataList.toString()}");
     printLog("BBB savedPpgLocalDataList  ${savedPpgLocalDataList.toString()}");
@@ -270,10 +287,13 @@ class ProviderGraphData with ChangeNotifier, Constant {
         print(valueList[i].toRadixString(16).padLeft(2, '0').toString());
       }
 
-      String strHex = valueList[1].toRadixString(16).padLeft(2, '0') + valueList[0].toRadixString(16).padLeft(2, '0');
+      String strHex = valueList[1].toRadixString(16).padLeft(2, '0') +
+          valueList[0].toRadixString(16).padLeft(2, '0');
       print("strHex $strHex");
 
-      spo2Val = (double.parse(int.parse(strHex, radix: 16).toString().padLeft(1, '0'))) / 100;
+      spo2Val = (double.parse(
+              int.parse(strHex, radix: 16).toString().padLeft(1, '0'))) /
+          100;
       print("spo2Val ${spo2Val.toString()}");
     }
     // notifyListeners();
@@ -296,11 +316,16 @@ class ProviderGraphData with ChangeNotifier, Constant {
           mainPpgHexList.add(valueList[i].toRadixString(16).padLeft(2, '0'));
         }
       }
-      if (mainEcgHexList.length > (yAxisGraphData * 2) && mainPpgHexList.length > (yAxisGraphData * 2)) {
-        tempEcgHexList =
-            mainEcgHexList.getRange(mainEcgHexList.length - (yAxisGraphData * 2), mainEcgHexList.length).toList();
-        tempPpgHexList =
-            mainPpgHexList.getRange(mainPpgHexList.length - (yAxisGraphData * 2), mainPpgHexList.length).toList();
+      if (mainEcgHexList.length > (yAxisGraphData * 2) &&
+          mainPpgHexList.length > (yAxisGraphData * 2)) {
+        tempEcgHexList = mainEcgHexList
+            .getRange(mainEcgHexList.length - (yAxisGraphData * 2),
+                mainEcgHexList.length)
+            .toList();
+        tempPpgHexList = mainPpgHexList
+            .getRange(mainPpgHexList.length - (yAxisGraphData * 2),
+                mainPpgHexList.length)
+            .toList();
       } else {
         tempEcgHexList = mainEcgHexList;
         tempPpgHexList = mainPpgHexList;
@@ -310,20 +335,23 @@ class ProviderGraphData with ChangeNotifier, Constant {
       for (int h = 0; h < mainEcgHexList.length; h++) {
         if (h % 2 == 0) {
           String strHex = mainEcgHexList[h + 1] + mainEcgHexList[h];
-          mainEcgDecimalList.add(double.parse(int.parse(strHex, radix: 16).toString()));
+          mainEcgDecimalList
+              .add(double.parse(int.parse(strHex, radix: 16).toString()));
         }
       }
       // if (mainEcgDecimalList.length >= frameLength) {
       //   mainEcgDecimalList = filter.smooth(mainEcgDecimalList);
       // }
 
-      print("sss mainEcgHexList ${mainEcgHexList.length} mainEcgDecimalList ${mainEcgDecimalList.length}");
+      print(
+          "sss mainEcgHexList ${mainEcgHexList.length} mainEcgDecimalList ${mainEcgDecimalList.length}");
 
       mainPpgDecimalList.clear();
       for (int h = 0; h < mainPpgHexList.length; h++) {
         if (h % 2 == 0) {
           String strHex = mainPpgHexList[h + 1] + mainPpgHexList[h];
-          mainPpgDecimalList.add(double.parse(int.parse(strHex, radix: 16).toString()));
+          mainPpgDecimalList
+              .add(double.parse(int.parse(strHex, radix: 16).toString()));
         }
       }
       // if (mainPpgDecimalList.length >= frameLength) {
@@ -331,15 +359,19 @@ class ProviderGraphData with ChangeNotifier, Constant {
       // }
 
       if (mainEcgDecimalList.length > yAxisGraphData) {
-        tempEcgDecimalList =
-            mainEcgDecimalList.getRange(mainEcgDecimalList.length - yAxisGraphData, mainEcgDecimalList.length).toList();
+        tempEcgDecimalList = mainEcgDecimalList
+            .getRange(mainEcgDecimalList.length - yAxisGraphData,
+                mainEcgDecimalList.length)
+            .toList();
       } else {
         tempEcgDecimalList = mainEcgDecimalList;
       }
 
       if (mainPpgDecimalList.length > yAxisGraphData) {
-        tempPpgDecimalList =
-            mainPpgDecimalList.getRange(mainPpgDecimalList.length - yAxisGraphData, mainPpgDecimalList.length).toList();
+        tempPpgDecimalList = mainPpgDecimalList
+            .getRange(mainPpgDecimalList.length - yAxisGraphData,
+                mainPpgDecimalList.length)
+            .toList();
       } else {
         tempPpgDecimalList = mainPpgDecimalList;
       }
@@ -361,12 +393,15 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
   void periodicTask() {
     try {
-      if (mainEcgHexList.length > 0 && (mainEcgHexList.length) % periodicTimeInSec == 0) {
-        printLog("periodicTask ifff  ecg ............... ${mainEcgHexList.length}");
+      if (mainEcgHexList.length > 0 &&
+          (mainEcgHexList.length) % periodicTimeInSec == 0) {
+        printLog(
+            "periodicTask ifff  ecg ............... ${mainEcgHexList.length}");
         countEcgHeartRate();
         countPpgHeartRate();
       } else {
-        printLog("periodicTask elsee  ecg ............... ${mainEcgHexList.length}");
+        printLog(
+            "periodicTask elsee  ecg ............... ${mainEcgHexList.length}");
       }
     } catch (err) {
       printLog("periodicTask err ${err.toString()}");
@@ -393,11 +428,14 @@ class ProviderGraphData with ChangeNotifier, Constant {
           b,
           Array([1.0]),
           Array(mainEcgDecimalList
-              .getRange(mainEcgDecimalList.length - filterDataListLength, mainEcgDecimalList.length)
+              .getRange(mainEcgDecimalList.length - filterDataListLength,
+                  mainEcgDecimalList.length)
               .toList())); // filter the signal
-      print("getRange... ${mainEcgDecimalList.length - filterDataListLength} ${mainEcgDecimalList.length}");
+      print(
+          "getRange... ${mainEcgDecimalList.length - filterDataListLength} ${mainEcgDecimalList.length}");
     } else {
-      sgFilteredEcg = lfilter(b, Array([1.0]), Array(mainEcgDecimalList)); // filter the signal
+      sgFilteredEcg = lfilter(
+          b, Array([1.0]), Array(mainEcgDecimalList)); // filter the signal
     }
 
     // List<double> result = mainEcgDecimalList
@@ -418,12 +456,19 @@ class ProviderGraphData with ChangeNotifier, Constant {
     var b1 = firwin(numtaps1, Array([normalFc1]), pass_zero: passZero);
     filterOPEcg = lfilter(b1, Array([1.0]), sgFilteredEcg); // filter the signal
 
-    printLog("CCC sgFilteredEcg " + sgFilteredEcg.runtimeType.toString() + " " + sgFilteredEcg.length.toString());
+    printLog("CCC sgFilteredEcg " +
+        sgFilteredEcg.runtimeType.toString() +
+        " " +
+        sgFilteredEcg.length.toString());
 
-    printLog("CCC filterOPEcg " + filterOPEcg.runtimeType.toString() + " " + filterOPEcg.length.toString());
+    printLog("CCC filterOPEcg " +
+        filterOPEcg.runtimeType.toString() +
+        " " +
+        filterOPEcg.length.toString());
     printLog("CCC " + filterOPEcg.toString());
     _threshold = ((filterOPEcg).reduce(math.max)) * 0.28;
-    printLog("CCC max ${(filterOPEcg).reduce(math.max)} _threshold " + _threshold.toString());
+    printLog("CCC max ${(filterOPEcg).reduce(math.max)} _threshold " +
+        _threshold.toString());
 
     // peaksArrayEcg = findPeaks(filterOPEcg,
     //     // Array(filterOPEcg.getRange(0, filterOPEcg.length).toList()),
@@ -438,7 +483,10 @@ class ProviderGraphData with ChangeNotifier, Constant {
         if (filterOPEcg[f] > filterOPEcg[f - 1] &&
             filterOPEcg[f] >= filterOPEcg[f + 1] &&
             filterOPEcg[f] >
-                0.45 * (filterOPEcg.getRange(filterOPEcg.length - 2000, filterOPEcg.length)).reduce(math.max)) {
+                0.45 *
+                    (filterOPEcg.getRange(
+                            filterOPEcg.length - 2000, filterOPEcg.length))
+                        .reduce(math.max)) {
           peaksArrayEcg.add(filterOPEcg[f]);
           peaksPositionsEcgArray.add(f);
         }
@@ -466,20 +514,38 @@ class ProviderGraphData with ChangeNotifier, Constant {
     //   }
     // }
 
+    //HeartRateList.clear();
+    rrIntervalList.clear();
+
     for (int j = 0; j < peaksPositionsEcgArray.length; j++) {
       if (j + 1 < peaksPositionsEcgArray.length) {
-        printLog("jjjj ${j} ${peaksPositionsEcgArray[j + 1]} ${peaksPositionsEcgArray[j]}");
-
-        var interval = ((peaksPositionsEcgArray[j + 1] - peaksPositionsEcgArray[j]) / 200);
-        printLog("jjjj interval ${interval}");
-        if (interval < 1.2) {
-          totalOfPeaksEcg += ((peaksPositionsEcgArray[j + 1] - peaksPositionsEcgArray[j]) / 200);
-        }
+        printLog(
+            "jjjj ${j} ${peaksPositionsEcgArray[j + 1]} ${peaksPositionsEcgArray[j]}");
+        rrIntervalList
+            .add((peaksPositionsEcgArray[j + 1] - peaksPositionsEcgArray[j]));
+        /* double interval = double.parse(
+            ((peaksPositionsEcgArray[j + 1] - peaksPositionsEcgArray[j]) / 200)
+                .toStringAsFixed(2));
+        rrIntervalList.add(interval);
+        double speed = double.parse((60 / (interval * 100)).toStringAsFixed(2));
+        HeartRateList.add(speed);
+        printLog("jjjj interval ${interval}");*/
+        //  if (interval < 1.2) {
+        totalOfPeaksEcg +=
+            ((peaksPositionsEcgArray[j + 1] - peaksPositionsEcgArray[j]) / 200);
+        // }
 
         // totalOfPeaksEcg += ((peaksArrayEcg[i][j + 1] - peaksArrayEcg[i][j]) / 200);
       }
     }
-
+     print("rrIntervalList $rrIntervalList");
+    // print("HeartRateList $HeartRateList");
+    if(rrIntervalList!=null) {
+      if (rrIntervalList == []) {
+        rrIntervalList.add(0);
+      }
+      arrhythmia_type = GetArrthmiaType(rrIntervalList);
+    }
     printLog("totalOfPeaksEcg  " +
         totalOfPeaksEcg.toString() +
         " avg " +
@@ -512,10 +578,12 @@ class ProviderGraphData with ChangeNotifier, Constant {
           b,
           Array([1.0]),
           Array(mainPpgDecimalList
-              .getRange(mainPpgDecimalList.length - filterDataListLength, mainPpgDecimalList.length)
+              .getRange(mainPpgDecimalList.length - filterDataListLength,
+                  mainPpgDecimalList.length)
               .toList())); // filter the signal
     } else {
-      sgFilteredPpg = lfilter(b, Array([1.0]), Array(mainPpgDecimalList)); // filter the signal
+      sgFilteredPpg = lfilter(
+          b, Array([1.0]), Array(mainPpgDecimalList)); // filter the signal
     }
 
     // sgFilteredPpg = lfilter(b, Array([1.0]), Array(ecgData.getRange(0, 500).toList())); // filter the signal
@@ -531,9 +599,15 @@ class ProviderGraphData with ChangeNotifier, Constant {
     var b1 = firwin(numtaps1, Array([normalFc1]), pass_zero: passZero);
     filterOPPpg = lfilter(b1, Array([1.0]), sgFilteredPpg); // filter the signal
 
-    printLog("CCC sgFilteredPpg " + sgFilteredPpg.runtimeType.toString() + " " + sgFilteredPpg.length.toString());
+    printLog("CCC sgFilteredPpg " +
+        sgFilteredPpg.runtimeType.toString() +
+        " " +
+        sgFilteredPpg.length.toString());
 
-    printLog("CCC filterOPPpg " + filterOPPpg.runtimeType.toString() + " " + filterOPPpg.length.toString());
+    printLog("CCC filterOPPpg " +
+        filterOPPpg.runtimeType.toString() +
+        " " +
+        filterOPPpg.length.toString());
     printLog("CCC " + filterOPPpg.toString());
     // showSnackBar(filterOPPpg.toString());
 
@@ -565,7 +639,10 @@ class ProviderGraphData with ChangeNotifier, Constant {
         if (filterOPPpg[f] > filterOPPpg[f - 1] &&
             filterOPPpg[f] >= filterOPPpg[f + 1] &&
             filterOPPpg[f] >
-                0.45 * (filterOPPpg.getRange(filterOPPpg.length - 2000, filterOPPpg.length)).reduce(math.max)) {
+                0.45 *
+                    (filterOPPpg.getRange(
+                            filterOPPpg.length - 2000, filterOPPpg.length))
+                        .reduce(math.max)) {
           // showSnackBar("filterOPPpg for loop array inside if condition");
 
           peaksArrayPpg.add(filterOPPpg[f]);
@@ -575,7 +652,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
     }
 
     printLog("Peaks_position Array " + peaksPositionsPpgArray.toString());
-    showSnackBar("peaksPositionsPpgArray_length ${peaksPositionsPpgArray.length.toString()}");
+    // showSnackBar("peaksPositionsPpgArray_length ${peaksPositionsPpgArray.length.toString()}");
 
     // if (peaksArrayEcg[index].length < peaksArrayPpg[index].length) {
     //   tempPeakList = peaksArrayEcg[index];
@@ -588,23 +665,54 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
     for (int p = 0; p < peaksPositionsPpgArray.length; p++) {
       if (p + 1 < peaksPositionsPpgArray.length) {
-        prv.add((60 * 200 / (peaksPositionsPpgArray[p + 1] - peaksPositionsPpgArray[p])));
+        if (((60 *
+                    200 /
+                    (peaksPositionsPpgArray[p + 1] -
+                        peaksPositionsPpgArray[p]) <
+                500)) &&
+            ((60 *
+                    200 /
+                    (peaksPositionsPpgArray[p + 1] -
+                        peaksPositionsPpgArray[p]) >
+                0))) {
+          prv.add((60 *
+              200 /
+              (peaksPositionsPpgArray[p + 1] - peaksPositionsPpgArray[p])));
+        }
       }
 
+      print("uuu ecg");
+
       for (int e = 0; e < peaksPositionsEcgArray.length; e++) {
-        print("uuu ecg ${e.toString()} ${peaksPositionsEcgArray[e].toString()}");
-        print("uuu ppg ${p.toString()} ${peaksPositionsPpgArray[p].toString()}");
+        print(
+            "uuu ecg ${e.toString()} ${peaksPositionsEcgArray[e].toString()}");
+        print(
+            "uuu ppg ${p.toString()} ${peaksPositionsPpgArray[p].toString()}");
         if (e + 1 < peaksPositionsEcgArray.length) {
-          if (peaksPositionsEcgArray[e] < 500) {
-            hrv.add((60 * 200 / peaksPositionsEcgArray[e + 1] - peaksPositionsEcgArray[e]));
+          if (((60 *
+                      200 /
+                      (peaksPositionsEcgArray[e + 1] -
+                          peaksPositionsEcgArray[e]) <
+                  500)) &&
+              ((60 *
+                      200 /
+                      (peaksPositionsEcgArray[e + 1] -
+                          peaksPositionsEcgArray[e]) >
+                  0))) {
+            hrv.add((60 *
+                200 /
+                (peaksPositionsEcgArray[e + 1] - peaksPositionsEcgArray[e])));
           }
         }
 
         if (peaksPositionsEcgArray[e] < peaksPositionsPpgArray[p]) {
-          double diff = ((peaksPositionsPpgArray[p] - peaksPositionsEcgArray[e]) / 200);
-          pttArray.add(diff);
+          double diff =
+              ((peaksPositionsPpgArray[p] - peaksPositionsEcgArray[e]) / 200);
+          //pttArray.add(diff);
           if (diff <= 0.8) {
-            totalOfPeaksPpg += ((peaksPositionsPpgArray[p] - peaksPositionsEcgArray[e]) / 200);
+            pttArray.add(diff);
+            totalOfPeaksPpg +=
+                ((peaksPositionsPpgArray[p] - peaksPositionsEcgArray[e]) / 200);
           }
         }
       }
@@ -614,37 +722,83 @@ class ProviderGraphData with ChangeNotifier, Constant {
     if (avgPrv.isNaN || avgPrv.isInfinite) {
       avgPrv = 0;
     }
-    showSnackBar("avgPrv ${avgPrv.toString()}");
+    // showSnackBar("avgPrv ${avgPrv.toString()}");
 
-    avgHrv = mean(Array(hrv));
+    avgHrv = mean(Array(hrv.toList()));
     if (avgHrv.isNaN || avgHrv.isInfinite) {
       avgHrv = 0;
     }
-    showSnackBar("avgHrv ${avgHrv.toString()}");
+    //showSnackBar("avgHrv ${avgHrv.toString()}");
 
     printLog("rrrr prv:  ${prv.toList()} avg: ${avgPrv.toString()}");
     printLog("rrrr hrv:  ${hrv.toList()} array: ${avgHrv.toString()}");
 
-    printLog("ggg pttArray_length:  ${pttArray.length} array: ${pttArray.toString()}");
+    printLog(
+        "ggg pttArray_length:  ${pttArray.length} array: ${pttArray.toString()}");
 
     avgPTT = (totalOfPeaksPpg / (pttArray.length));
 
     if (avgPTT.isNaN || avgPTT.isInfinite) {
       avgPTT = 0;
     }
-    showSnackBar("totalOfPeaksPpg  " + totalOfPeaksPpg.toString() + " avg " + avgPTT.toString());
+    //  showSnackBar("totalOfPeaksPpg  " + totalOfPeaksPpg.toString() + " avg " + avgPTT.toString());
 
-    printLog("ggg totalOfPeaksPpg  " + totalOfPeaksPpg.toString() + " avg " + avgPTT.toString());
+    printLog("ggg totalOfPeaksPpg  " +
+        totalOfPeaksPpg.toString() +
+        " avg " +
+        avgPTT.toString());
 
     // dBp = 134.802365863 - 83.006119783168 * avgPTT;
     // dDbp = 99.606825109447 - 96.651802662872 * avgPTT;
     dBp = 145.802365863 - 83.006119783168 * avgPTT;
     dDbp = 110.606825109447 - 96.651802662872 * avgPTT;
 
-    heartRatePPG = "BP: ${dBp.round().toString()} $bpUnit\n DBP: ${dDbp.round().toString()} $bpUnit";
+    heartRatePPG =
+        "BP: ${dBp.round().toString()} $bpUnit\n DBP: ${dDbp.round().toString()} $bpUnit";
     // heartRatePPG = (60 / (totalOfPeaksPpg / (peaksArrayPpg[0].length))).round();
     // heartRatePPG = ((60 * peaksArrayPpg[0].length) / 2.5).round();
 
     printLog("heartRatePPG :  " + heartRatePPG.toString());
+  }
+
+  Future<ArrhythmiaType> GetArrthmiaType(List<int> rrHeartList) async {
+    print("GetArrthmiaType");
+    final response = await http.post(
+      Uri.parse('http://99eb-34-73-95-82.ngrok.io/prediction'),
+      headers:  {
+        'Content-type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({
+               'data': rrHeartList
+             }),
+    );
+    //jsonEncode(<String, List<int>>{
+    //         'RR': rrHeartList,
+    //       }),
+    print("send response ${response.statusCode}");
+    if (response.statusCode == 200) {
+      print("success ArrhythmiaType");
+      return ArrhythmiaType.fromJson(jsonDecode(response.body));
+    } else {
+      // If the server did not return a 201 CREATED response,
+      // then throw an exception.
+      throw Exception('Failed to create ArrthmiaType.');
+    }
+  }
+
+  Future<TrainModel> TrainModelForType() async {
+    final response = await http.get(
+      Uri.parse('http://99eb-34-73-95-82.ngrok.io/train_model'),
+    );
+
+    if (response.statusCode == 200) {
+      print("success TrainModel");
+      return TrainModel.fromJson(jsonDecode(response.body));
+    } else {
+      // If the server did not return a 201 CREATED response,
+      // then throw an exception.
+      throw Exception('Failed to create TrainModel.');
+    }
   }
 }

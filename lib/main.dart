@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bluetooth_connection/constant.dart';
 import 'package:flutter_bluetooth_connection/progressbar.dart';
 import 'package:flutter_bluetooth_connection/provider_graph_data.dart';
+import 'package:flutter_bluetooth_connection/widgets.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -15,6 +16,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'package:provider/provider.dart';
 import 'package:share/share.dart';
+
+import 'ModelClass/Prediction.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -60,13 +63,15 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProviderStateMixin {
+class _MyHomePageState extends State<MyHomePage>
+    with Constant, SingleTickerProviderStateMixin {
   TabController? _controller;
 
   var sub;
 
   ProviderGraphData? providerGraphDataRead;
   ProviderGraphData? providerGraphDataWatch;
+  String? type;
 
   @override
   void initState() {
@@ -91,18 +96,18 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
       widget.flutterBlue.isAvailable.then((value) {
         printLog(" isAvailable ${value.toString()}");
       });
-
-      widget.flutterBlue.connectedDevices.asStream().listen((List<BluetoothDevice> devices) {
-        printLog("  devices ${devices.length}");
-
-        for (BluetoothDevice device in devices) {
-          printLog("  connectedDevices ${device}");
-
-          if (device.name.toLowerCase().contains(displayDeviceString)) {
-            providerGraphDataWatch!.setDeviceList(device);
-          }
-        }
-      });
+      //
+      // widget.flutterBlue.connectedDevices.asStream().listen((List<BluetoothDevice> devices) {
+      //   printLog("  devices ${devices.length}");
+      //
+      //   for (BluetoothDevice device in devices) {
+      //     printLog("  connectedDevices ${device}");
+      //
+      //     if (device.name.toLowerCase().contains(displayDeviceString)) {
+      //       providerGraphDataWatch!.setDeviceList(device);
+      //     }
+      //   }
+      // });
 
       // if (providerGraphDataWatch!.devicesList.length == 1) {
       //   print("devicesList iff ${providerGraphDataWatch!.devicesList.length.toString()}");
@@ -112,9 +117,10 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
       // }
 
       widget.flutterBlue.scanResults.listen((List<ScanResult> results) {
-        printLog("  scan result length devices ${results.length}");
+        // printLog("  scan result length devices ${results.length}");
+        // Navigator.of(context).push(MaterialPageRoute(builder: (context) => ScanResultTile(result: results.first,onTap: null)));
         for (ScanResult result in results) {
-          printLog("  scanResults ${result.device}");
+          // printLog("  scanResults ${result.device}");
           if (result.device.name.toLowerCase().contains(displayDeviceString)) {
             providerGraphDataWatch!.setDeviceList(result.device);
           }
@@ -142,7 +148,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
         backgroundColor: clrDarkBg,
         appBar: AppBar(
           bottom: new PreferredSize(
-              preferredSize: new Size(200.0, 200.0),
+              preferredSize: new Size(200.0, 20.0),
               child: new Container(
                 height: 32.0,
                 child: TabBar(
@@ -183,7 +189,9 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
               child: IconButton(
                   icon: Icon(
                     // providerGraphDataWatch!.isEnabled ? "Disabled" : "Enabled",
-                    providerGraphDataWatch!.isShowAvailableDevices ? Icons.bluetooth_disabled : Icons.bluetooth_audio,
+                    providerGraphDataWatch!.isShowAvailableDevices
+                        ? Icons.bluetooth_disabled
+                        : Icons.bluetooth_audio,
                     color: clrWhite,
                   ),
                   onPressed: () {
@@ -193,8 +201,8 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
                   }),
             ),
             Visibility(
-              visible:
-                  providerGraphDataWatch!.isServiceStarted && providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
+              visible: providerGraphDataWatch!.isServiceStarted &&
+                  providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
               // visible: false,
               child: TextButton(
                   child: Text(
@@ -215,7 +223,8 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
                       try {
                         if (providerGraphDataWatch!.isServiceStarted) {
                           try {
-                            await providerGraphDataWatch!.readCharacteristic!.setNotifyValue(false);
+                            await providerGraphDataWatch!.readCharacteristic!
+                                .setNotifyValue(false);
                           } catch (err) {
                             printLog("notfy err ${err.toString()}");
                           }
@@ -224,7 +233,8 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
                           printLog("stop service");
 
                           //stop service
-                          providerGraphDataWatch!.writeCharacteristic!.write([0]);
+                          providerGraphDataWatch!.writeCharacteristic!
+                              .write([0]);
                           if (sub != null) {
                             sub.cancel();
                           }
@@ -234,13 +244,15 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
 
                           providerGraphDataWatch!.setLoading(false);
                         } else {
-                          await providerGraphDataWatch!.readCharacteristic!.setNotifyValue(true);
+                          await providerGraphDataWatch!.readCharacteristic!
+                              .setNotifyValue(true);
 
                           providerGraphDataWatch!.setLoading(true);
 
                           await providerGraphDataWatch!.clearStoreDataToLocal();
                           // start service
-                          providerGraphDataWatch!.writeCharacteristic!.write([1]);
+                          providerGraphDataWatch!.writeCharacteristic!
+                              .write([1]);
                           printLog("start service");
                           // ignore: cancel_subscriptions
                           if (sub != null) {
@@ -250,11 +262,14 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
                           providerGraphDataWatch!.setServiceStarted(true);
                           providerGraphDataWatch!.setLoading(false);
 
-                          sub = providerGraphDataWatch!.readCharacteristic!.value.listen((value) {
+                          sub = providerGraphDataWatch!
+                              .readCharacteristic!.value
+                              .listen((value) {
                             providerGraphDataWatch!.setReadValues(value);
                           });
 
-                          await providerGraphDataWatch!.readCharacteristic!.read();
+                          await providerGraphDataWatch!.readCharacteristic!
+                              .read();
                         }
                       } catch (e) {
                         printLog("err $e");
@@ -267,8 +282,8 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
                   )),
             ),
             Visibility(
-              visible:
-                  !providerGraphDataWatch!.isServiceStarted && providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
+              visible: !providerGraphDataWatch!.isServiceStarted &&
+                  providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
               child: IconButton(
                   icon: Icon(Icons.share, color: clrWhite),
                   onPressed: () {
@@ -348,14 +363,18 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
                 child: OutlinedButton(
                   style: TextButton.styleFrom(
                     side: BorderSide(color: clrWhite, width: 1),
-                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(25))),
+                    shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(25))),
                   ),
                   child: Text(
                     strConnect,
-                    style: TextStyle(color: Colors.grey.shade200, fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                        color: Colors.grey.shade200,
+                        fontWeight: FontWeight.w500),
                   ),
                   onPressed: () async {
                     connectDevice(device);
+                    providerGraphDataWatch!.TrainModelForType();
                   },
                 ),
               ),
@@ -410,15 +429,17 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
     );
   }
 
-  ListView _ecgPpgView() {
+  Stack _ecgPpgView() {
     for (BluetoothService service in providerGraphDataWatch!.services!) {
       for (BluetoothCharacteristic characteristic in service.characteristics) {
         if (characteristic.uuid.toString() == writeChangeModeUuid) {
           try {
-            providerGraphDataWatch!.setWriteChangeModeCharacteristic(characteristic);
+            providerGraphDataWatch!
+                .setWriteChangeModeCharacteristic(characteristic);
             providerGraphDataWatch!.setTabSelectedIndex(_controller!.index);
           } catch (err) {
-            printLog("setWriteChangeModeCharacteristic caught err ${err.toString()}");
+            printLog(
+                "setWriteChangeModeCharacteristic caught err ${err.toString()}");
           }
         }
         if (characteristic.uuid.toString() == writeUuid) {
@@ -434,10 +455,11 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
             providerGraphDataWatch!.setReadCharacteristic(characteristic);
             if (providerGraphDataWatch!.isServiceStarted) {
               if (_controller!.index != 3) {
-                providerGraphDataWatch!
-                    .generateGraphValuesList(providerGraphDataWatch!.readValues[characteristic.uuid]);
+                providerGraphDataWatch!.generateGraphValuesList(
+                    providerGraphDataWatch!.readValues[characteristic.uuid]);
               } else {
-                providerGraphDataWatch!.getSpo2Data(providerGraphDataWatch!.readValues[characteristic.uuid]);
+                providerGraphDataWatch!.getSpo2Data(
+                    providerGraphDataWatch!.readValues[characteristic.uuid]);
               }
             }
           } catch (err) {
@@ -447,13 +469,48 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
       }
     }
 
-    return ListView(
-      padding: EdgeInsets.only(top: 8, right: 8),
-      children: <Widget>[
-        rowPpgTitle(ppg),
-        graphWidget(ppg),
-        rowEcgTitle(ecg, providerGraphDataWatch!.heartRate),
-        graphWidget(ecg)
+    return Stack(
+      children: [
+        ListView(
+          padding: EdgeInsets.only(top: 8, right: 8),
+          children: <Widget>[
+            rowPpgTitle(ppg),
+            graphWidget(ppg),
+            rowEcgTitle(ecg, providerGraphDataWatch!.heartRate),
+            graphWidget(ecg)
+          ],
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(0, 15, 170, 0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              Text("Type: "),
+              FutureBuilder<ArrhythmiaType>(
+                future: providerGraphDataWatch!.arrhythmia_type,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    if (snapshot.data!.arrhythmiaType == "N") {
+                      type = "Normal";
+                    } else if (snapshot.data!.arrhythmiaType == "B") {
+                      type = "Bigeminy";
+                    } else if (snapshot.data!.arrhythmiaType == "VT") {
+                      type = "Ventricular Tachycardia";
+                    } else if (snapshot.data!.arrhythmiaType == "T") {
+                      type = "Trigeminy";
+                    }
+                    return Text(type ?? "");
+                  } else if (snapshot.hasError) {
+                    return Text('${snapshot.error}');
+                  }
+                  return Text("No Type Available");
+                },
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -491,8 +548,11 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
                                 style: TextStyle(fontSize: 12),
                               ),
                               TextSpan(
-                                text: providerGraphDataWatch!.avgHrv.round().toString(),
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                text: providerGraphDataWatch!.avgHrv
+                                    .round()
+                                    .toString(),
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 16),
                               ),
                               TextSpan(
                                 text: ' $rvUnit',
@@ -509,8 +569,11 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
                                 style: TextStyle(fontSize: 12),
                               ),
                               TextSpan(
-                                text: providerGraphDataWatch!.avgPrv.round().toString(),
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                text: providerGraphDataWatch!.avgPrv
+                                    .round()
+                                    .toString(),
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 16),
                               ),
                               TextSpan(
                                 text: ' $rvUnit',
@@ -534,8 +597,11 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
                                 style: TextStyle(fontSize: 12),
                               ),
                               TextSpan(
-                                text: providerGraphDataWatch!.dBp.round().toString(),
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                text: providerGraphDataWatch!.dBp
+                                    .round()
+                                    .toString(),
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 16),
                               ),
                               TextSpan(
                                 text: ' $bpUnit',
@@ -552,8 +618,11 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
                                 style: TextStyle(fontSize: 12),
                               ),
                               TextSpan(
-                                text: providerGraphDataWatch!.dDbp.round().toString(),
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                text: providerGraphDataWatch!.dDbp
+                                    .round()
+                                    .toString(),
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 16),
                               ),
                               TextSpan(
                                 text: ' $bpUnit',
@@ -607,7 +676,8 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
                         ),
                         TextSpan(
                           text: iHeartRate.round().toString(),
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16),
                         ),
                         TextSpan(
                           text: ' $heartRateUnit',
@@ -633,16 +703,20 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
             ),
             color: clrDarkBg),
         child: Padding(
-          padding: const EdgeInsets.only(right: 18.0, left: 12.0, top: 24, bottom: 12),
+          padding: const EdgeInsets.only(
+              right: 18.0, left: 12.0, top: 24, bottom: 12),
           child: LineChart(title == ecg
-              ? mainData(providerGraphDataWatch!.tempEcgSpotsListData, providerGraphDataWatch!.tempEcgDecimalList)
-              : mainData(providerGraphDataWatch!.tempPpgSpotsListData, providerGraphDataWatch!.tempPpgDecimalList)),
+              ? mainData(providerGraphDataWatch!.tempEcgSpotsListData,
+                  providerGraphDataWatch!.tempEcgDecimalList)
+              : mainData(providerGraphDataWatch!.tempPpgSpotsListData,
+                  providerGraphDataWatch!.tempPpgDecimalList)),
         ),
       ),
     );
   }
 
-  LineChartData mainData(List<FlSpot> tempSpotsList, List<double> tempDecimalList) {
+  LineChartData mainData(
+      List<FlSpot> tempSpotsList, List<double> tempDecimalList) {
     return LineChartData(
       gridData: FlGridData(
         show: true,
@@ -669,8 +743,10 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
           showTitles: true,
           // reservedSize: 22,
           interval: xAxisInterval,
-          getTextStyles: (context, value) =>
-              TextStyle(color: clrBottomTitles, fontWeight: FontWeight.bold, fontSize: 13),
+          getTextStyles: (context, value) => TextStyle(
+              color: clrBottomTitles,
+              fontWeight: FontWeight.bold,
+              fontSize: 13),
           getTitles: (value) {
             return value.toString();
           },
@@ -680,8 +756,12 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
         leftTitles: SideTitles(
           showTitles: true,
           interval: tempDecimalList.isNotEmpty
-              ? (tempDecimalList.reduce(max) - tempDecimalList.reduce(min)) / 4 != 0
-                  ? (tempDecimalList.reduce(max) - tempDecimalList.reduce(min)) / 4
+              ? (tempDecimalList.reduce(max) - tempDecimalList.reduce(min)) /
+                          4 !=
+                      0
+                  ? (tempDecimalList.reduce(max) -
+                          tempDecimalList.reduce(min)) /
+                      4
                   : yAxisInterval
               : yAxisInterval,
           getTextStyles: (context, value) => TextStyle(
@@ -696,7 +776,8 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
           margin: 8,
         ),
       ),
-      borderData: FlBorderData(show: true, border: Border.all(color: clrGraphLine, width: 1)),
+      borderData: FlBorderData(
+          show: true, border: Border.all(color: clrGraphLine, width: 1)),
       minX: tempSpotsList.isNotEmpty ? tempSpotsList.first.x : 0,
       maxX: tempSpotsList.isNotEmpty ? tempSpotsList.last.x + 1 : 0,
       minY: tempDecimalList.isNotEmpty ? tempDecimalList.reduce(min) : 0,
@@ -704,9 +785,11 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
       lineBarsData: [
         LineChartBarData(
           spots: tempSpotsList,
-          isCurved: true, // graph shape
+          isCurved: true,
+          // graph shape
           colors: [clrPrimary, clrSecondary],
-          barWidth: 1, //curve border width
+          barWidth: 1,
+          //curve border width
           isStrokeCapRound: true,
           dotData: FlDotData(
             show: false,
@@ -721,23 +804,60 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
   }
 
   Widget _ecgTabView() {
-    return ListView(
-      padding: EdgeInsets.only(top: 8, right: 8),
+    return Stack(
       children: [
-        rowEcgTitle(ecg, providerGraphDataWatch!.heartRate),
-        AspectRatio(
-          aspectRatio: 3 / (1),
-          child: Container(
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.all(
-                  Radius.circular(18),
+        ListView(
+          padding: EdgeInsets.only(top: 8, right: 8),
+          children: [
+            rowEcgTitle(ecg, providerGraphDataWatch!.heartRate),
+            AspectRatio(
+              aspectRatio: 3 / (1),
+              child: Container(
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.all(
+                      Radius.circular(18),
+                    ),
+                    color: clrDarkBg),
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                      right: 18.0, left: 12.0, top: 24, bottom: 12),
+                  child: LineChart(mainData(
+                      providerGraphDataWatch!.tempEcgSpotsListData,
+                      providerGraphDataWatch!.tempEcgDecimalList)),
                 ),
-                color: clrDarkBg),
-            child: Padding(
-              padding: const EdgeInsets.only(right: 18.0, left: 12.0, top: 24, bottom: 12),
-              child: LineChart(
-                  mainData(providerGraphDataWatch!.tempEcgSpotsListData, providerGraphDataWatch!.tempEcgDecimalList)),
+              ),
             ),
+          ],
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(0, 15, 170, 0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              Text("Type: "),
+              FutureBuilder<ArrhythmiaType>(
+                future: providerGraphDataWatch!.arrhythmia_type,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    if (snapshot.data!.arrhythmiaType == "N") {
+                      type = "Normal";
+                    } else if (snapshot.data!.arrhythmiaType == "B") {
+                      type = "Bigeminy";
+                    } else if (snapshot.data!.arrhythmiaType == "VT") {
+                      type = "Ventricular Tachycardia";
+                    } else if (snapshot.data!.arrhythmiaType == "T") {
+                      type = "Trigeminy";
+                    }
+                    return Text(type ?? "");
+                  } else if (snapshot.hasError) {
+                    return Text('${snapshot.error}');
+                  }
+                  return Text("No Type Available");
+                },
+              ),
+            ],
           ),
         ),
       ],
@@ -758,9 +878,11 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
                 ),
                 color: clrDarkBg),
             child: Padding(
-              padding: const EdgeInsets.only(right: 18.0, left: 12.0, top: 24, bottom: 12),
-              child: LineChart(
-                  mainData(providerGraphDataWatch!.tempPpgSpotsListData, providerGraphDataWatch!.tempPpgDecimalList)),
+              padding: const EdgeInsets.only(
+                  right: 18.0, left: 12.0, top: 24, bottom: 12),
+              child: LineChart(mainData(
+                  providerGraphDataWatch!.tempPpgSpotsListData,
+                  providerGraphDataWatch!.tempPpgDecimalList)),
             ),
           ),
         ),
@@ -814,30 +936,32 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
     List<List<dynamic>> column = [];
     List<dynamic> row = [];
 
-    // row.add("ecg");
-    // row.add("ppg");
-    // column.add(row);
+    row.add("ecg");
+    row.add("ppg");
+    column.add(row);
 
-    // await providerGraphDataWatch!.getStoredLocalData();
+    await providerGraphDataWatch!.getStoredLocalData();
 
-    // for (int i = 0; i < providerGraphDataWatch!.savedEcgLocalDataList.length; i++) {
-    //   row = [];
-    //   row.add(providerGraphDataWatch!.savedEcgLocalDataList[i]);
-    //   row.add(providerGraphDataWatch!.savedPpgLocalDataList[i]);
-    //   column.add(row);
-    // }
+    for (int i = 0;
+        i < providerGraphDataWatch!.savedEcgLocalDataList.length;
+        i++) {
+      row = [];
+      row.add(providerGraphDataWatch!.savedEcgLocalDataList[i]);
+      row.add(providerGraphDataWatch!.savedPpgLocalDataList[i]);
+      column.add(row);
+    }
 
-    // String csvData = ListToCsvConverter().convert(column);
-    // final String directory = (await getApplicationSupportDirectory()).path;
-    // final path = "$directory/csv_graph_data.csv";
-    // printLog(path);
-    // final File file = File(path);
-    // await file.writeAsString(csvData);
-    // providerGraphDataWatch!.setLoading(false);
+    String csvData = ListToCsvConverter().convert(column);
+    final String directory = (await getApplicationSupportDirectory()).path;
+    final path = "$directory/csv_graph_data.csv";
+    printLog(path);
+    final File file = File(path);
+    await file.writeAsString(csvData);
+    providerGraphDataWatch!.setLoading(false);
 
-    // Share.shareFiles(['${file.path}'], text: 'Exported csv');
+    Share.shareFiles(['${file.path}'], text: 'Exported csv');
 
-    for (int i = 0; i < providerGraphDataWatch!.peaksPositionsPpgArray.length; i++) {
+    /*for (int i = 0; i < providerGraphDataWatch!.peaksPositionsPpgArray.length; i++) {
       row = [];
       row.add(providerGraphDataWatch!.peaksPositionsPpgArray[i]);
       column.add(row);
@@ -850,6 +974,6 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
     final File file = File(path);
     await file.writeAsString(csvData);
     providerGraphDataWatch!.setLoading(false);
-    Share.shareFiles(['${file.path}'], text: 'peaksPositionsPpgArray csv');
+    Share.shareFiles(['${file.path}'], text: 'peaksPositionsPpgArray csv');*/
   }
 }
