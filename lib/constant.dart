@@ -24,6 +24,8 @@ class Constant {
   String bpUnit = "mmHg";
   String rvUnit = "ms";
 
+  String fastAPI="http://caad-34-125-81-93.ngrok.io";
+
   String strNoDeviceConnected = "No device connected";
   String strConnect = "Connect";
   String displayDeviceString = "nordic";

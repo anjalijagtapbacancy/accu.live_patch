@@ -225,16 +225,16 @@ class ProviderGraphData with ChangeNotifier, Constant {
   storedDataToLocal() async {
     var box = await Hive.openBox<List<double>>('graph_data');
 
-    List<double> localEcgDataList = await box.get("ecg_graph_data") ?? [];
+    List<double> localEcgDataList =  box.get("ecg_graph_data") ?? [];
     localEcgDataList.addAll(mainEcgDecimalList);
     await box.put("ecg_graph_data", localEcgDataList);
 
-    List<double> localPpgDataList = await box.get("ppg_graph_data") ?? [];
+    List<double> localPpgDataList =  box.get("ppg_graph_data") ?? [];
     localPpgDataList.addAll(mainPpgDecimalList);
     await box.put("ppg_graph_data", localPpgDataList);
 
-    savedEcgLocalDataList = await box.get("ecg_graph_data") ?? [];
-    savedPpgLocalDataList = await box.get("ppg_graph_data") ?? [];
+    savedEcgLocalDataList =  box.get("ecg_graph_data") ?? [];
+    savedPpgLocalDataList =  box.get("ppg_graph_data") ?? [];
     printLog(
         "local Data saved!.... ecg: ${savedEcgLocalDataList.length} ppg: ${savedPpgLocalDataList.length}");
   }
@@ -242,8 +242,8 @@ class ProviderGraphData with ChangeNotifier, Constant {
   getStoredLocalData() async {
     var box = await Hive.openBox<List<double>>('graph_data');
 
-    savedEcgLocalDataList = await box.get("ecg_graph_data") ?? [];
-    savedPpgLocalDataList = await box.get("ppg_graph_data") ?? [];
+    savedEcgLocalDataList = box.get("ecg_graph_data") ?? [];
+    savedPpgLocalDataList = box.get("ppg_graph_data") ?? [];
 
     printLog(
         "BBB savedEcgLocalDataList length  ${savedEcgLocalDataList.length}");
@@ -520,7 +520,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
     for (int j = 0; j < peaksPositionsEcgArray.length; j++) {
       if (j + 1 < peaksPositionsEcgArray.length) {
         printLog(
-            "jjjj ${j} ${peaksPositionsEcgArray[j + 1]} ${peaksPositionsEcgArray[j]}");
+            "jjjj $j ${peaksPositionsEcgArray[j + 1]} ${peaksPositionsEcgArray[j]}");
         rrIntervalList
             .add((peaksPositionsEcgArray[j + 1] - peaksPositionsEcgArray[j]));
         /* double interval = double.parse(
@@ -540,12 +540,12 @@ class ProviderGraphData with ChangeNotifier, Constant {
     }
      print("rrIntervalList $rrIntervalList");
     // print("HeartRateList $HeartRateList");
-    if(rrIntervalList!=null) {
+
       if (rrIntervalList == []) {
         rrIntervalList.add(0);
       }
       arrhythmia_type = GetArrthmiaType(rrIntervalList);
-    }
+
     printLog("totalOfPeaksEcg  " +
         totalOfPeaksEcg.toString() +
         " avg " +
@@ -570,7 +570,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
     var cutOff = 20;
     var normalFc = cutOff / nyq;
     var numtaps = 127;
-    double _threshold = 0;
+   // double _threshold = 0;
 
     var b = firwin(numtaps, Array([normalFc]));
     if (mainPpgDecimalList.length > filterDataListLength) {
@@ -764,7 +764,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
   Future<ArrhythmiaType> GetArrthmiaType(List<int> rrHeartList) async {
     print("GetArrthmiaType");
     final response = await http.post(
-      Uri.parse('http://99eb-34-73-95-82.ngrok.io/prediction'),
+      Uri.parse(fastAPI+'/prediction'),
       headers:  {
         'Content-type': 'application/json',
         'Accept': 'application/json',
@@ -789,7 +789,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
   Future<TrainModel> TrainModelForType() async {
     final response = await http.get(
-      Uri.parse('http://99eb-34-73-95-82.ngrok.io/train_model'),
+      Uri.parse(fastAPI+'/train_model'),
     );
 
     if (response.statusCode == 200) {

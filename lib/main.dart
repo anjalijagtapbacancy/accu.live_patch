@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
@@ -8,7 +7,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bluetooth_connection/constant.dart';
 import 'package:flutter_bluetooth_connection/progressbar.dart';
 import 'package:flutter_bluetooth_connection/provider_graph_data.dart';
-import 'package:flutter_bluetooth_connection/widgets.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -211,6 +209,7 @@ class _MyHomePageState extends State<MyHomePage>
                   ),
                   onPressed: () {
                     if (!providerGraphDataWatch!.isLoading) {
+                      widget.flutterBlue.startScan();
                       providerGraphDataWatch!.setIsEnabled();
                     }
                   }),
@@ -481,7 +480,7 @@ class _MyHomePageState extends State<MyHomePage>
           ],
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(0, 15, 170, 0),
+          padding: const EdgeInsets.fromLTRB(0, 15, 200, 0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -830,7 +829,7 @@ class _MyHomePageState extends State<MyHomePage>
           ],
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(0, 15, 170, 0),
+          padding: const EdgeInsets.fromLTRB(0, 15, 200, 0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             crossAxisAlignment: CrossAxisAlignment.start,
