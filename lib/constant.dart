@@ -24,7 +24,7 @@ class Constant {
   String bpUnit = "mmHg";
   String rvUnit = "ms";
 
-  String fastAPI="http://caad-34-125-81-93.ngrok.io";
+  String fastAPI = "http://caad-34-125-81-93.ngrok.io";
 
   String strNoDeviceConnected = "No device connected";
   String strConnect = "Connect";
@@ -67,16 +67,5 @@ class Constant {
     // if (msg.contains("periodicTask") || msg.contains("heartRate")) {
     print(msg);
     // }
-  }
-
-  showSnackBar(String msg) {
-    Fluttertoast.showToast(
-        msg: msg,
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.CENTER,
-        timeInSecForIosWeb: 2,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0);
   }
 }

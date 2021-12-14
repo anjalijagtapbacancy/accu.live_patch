@@ -7,6 +7,7 @@ import 'package:flutter_blue/flutter_blue.dart';
 import 'package:flutter_bluetooth_connection/ModelClass/TrainModel.dart';
 import 'package:flutter_bluetooth_connection/constant.dart';
 import 'package:hive/hive.dart';
+import 'package:location/location.dart';
 import 'package:scidart/scidart.dart';
 import 'package:scidart/numdart.dart';
 import 'dart:math' as math;
@@ -24,6 +25,10 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
   Future<ArrhythmiaType>? arrhythmia_type;
 
+  Location location = new Location();
+
+  bool isLocServiceEnabled = false;
+  PermissionStatus? _permissionGranted;
   bool isLoading = false;
   BluetoothCharacteristic? readCharacteristic;
   BluetoothCharacteristic? writeCharacteristic;
@@ -34,7 +39,6 @@ class ProviderGraphData with ChangeNotifier, Constant {
   var isEnabled = true;
   var isShowAvailableDevices = true;
   var isScanning = true;
-  var isBluetoothEnable = false;
 
   double spo2Val = 0;
 
@@ -62,9 +66,6 @@ class ProviderGraphData with ChangeNotifier, Constant {
   List<String> tempPpgHexList = [];
   List<double> tempPpgDecimalList = [];
 
-  double lastSavedTime = 0;
-  late Timer timer;
-
   Array sgFilteredEcg = Array([]);
   Array filterOPEcg = Array([]);
   List<dynamic> peaksArrayEcg = [];
@@ -75,6 +76,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
   List<dynamic> peaksArrayPpg = [];
   double totalOfPeaksPpg = 0;
 
+  double stepCount = 0;
   int heartRate = 0;
   String heartRatePPG = "";
   List<double> pttArray = [];
@@ -119,8 +121,6 @@ class ProviderGraphData with ChangeNotifier, Constant {
     mainPpgDecimalList.clear();
     tempPpgHexList.clear();
     tempPpgDecimalList.clear();
-
-    lastSavedTime = 0;
   }
 
   /* setTabSelectedIndex(int index) {
@@ -132,6 +132,28 @@ class ProviderGraphData with ChangeNotifier, Constant {
     // notifyListeners();
   }
 */
+
+  void enableLocation() async {
+    isLocServiceEnabled = await location.serviceEnabled();
+    if (!isLocServiceEnabled) {
+      isLocServiceEnabled = await location.requestService();
+
+      if (!isLocServiceEnabled) {
+        return;
+      }
+    }
+
+    // _permissionGranted = await location.hasPermission();
+    // if (_permissionGranted == PermissionStatus.denied) {
+    //   _permissionGranted = await location.requestPermission();
+    //   if (_permissionGranted != PermissionStatus.granted) {
+    //     return;
+    //   }
+    // }
+
+    notifyListeners();
+  }
+
   setLoading(bool value) {
     isLoading = value;
     notifyListeners();
@@ -149,11 +171,6 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
   setIsShowAvailableDevices() {
     isShowAvailableDevices = !isShowAvailableDevices;
-    notifyListeners();
-  }
-
-  setIsBluetoothEnable(bool value) {
-    isBluetoothEnable = value;
     notifyListeners();
   }
 
@@ -277,8 +294,6 @@ class ProviderGraphData with ChangeNotifier, Constant {
     tempPpgHexList.clear();
     tempPpgDecimalList.clear();
 
-    lastSavedTime = 0;
-
     var box = await Hive.openBox<List<double>>('graph_data');
     await box.put("item", []);
 
@@ -302,15 +317,21 @@ class ProviderGraphData with ChangeNotifier, Constant {
     // notifyListeners();
   }
 
-  List<int>? finalList = [];
-
   void generateGraphValuesList(List<int>? valueList) async {
     if (valueList != null) {
-      lastSavedTime = lastSavedTime + 1;
+      List<int>? stepCountList = [valueList[valueList.length - 2], valueList[valueList.length - 1]];
 
-      // for (int i = 0; i < valueList.length; i++) {
-      //   mainEcgHexList.add(valueList[i].toRadixString(16).padLeft(2, '0'));
-      // }
+      List<String> stepCountHexList = [
+        stepCountList[0].toRadixString(16).padLeft(2, '0'),
+        stepCountList[1].toRadixString(16).padLeft(2, '0')
+      ];
+
+      String strStepHex = stepCountHexList[1] + stepCountHexList[0];
+
+      stepCount = double.parse(int.parse(strStepHex, radix: 16).toString());
+      printLog("stepCount ${stepCount.toString()}");
+
+      valueList.toList().removeRange(valueList.length - 1, valueList.length);
 
       for (int i = 0; i < valueList.length; i++) {
         if (i < (valueListLength / 2)) {
