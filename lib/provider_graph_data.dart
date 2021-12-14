@@ -36,6 +36,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
   double spo2Val = 0;
 
+  int tabLength=3;
   int ecgDataLength = 0;
   int ppgDataLength = 0;
   int tabSelectedIndex = 0;
@@ -120,7 +121,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
     lastSavedTime = 0;
   }
 
-  setTabSelectedIndex(int index) {
+ /* setTabSelectedIndex(int index) {
     tabSelectedIndex = index;
     //ecg ppg 4
     // sp02 7
@@ -128,7 +129,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
     // writeChangeModeCharacteristic!.write([index + 4]);
     // notifyListeners();
   }
-
+*/
   setLoading(bool value) {
     isLoading = value;
     notifyListeners();

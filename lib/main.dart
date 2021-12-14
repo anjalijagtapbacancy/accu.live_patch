@@ -63,9 +63,10 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage>
     with Constant, SingleTickerProviderStateMixin {
-  TabController? _controller;
+  // TabController? _controller;
 
   var sub;
+  String? dropDownValue;
 
   ProviderGraphData? providerGraphDataRead;
   ProviderGraphData? providerGraphDataWatch;
@@ -76,12 +77,13 @@ class _MyHomePageState extends State<MyHomePage>
     super.initState();
 
     // Create TabController for getting the index of current tab
-    _controller = TabController(length: 4, vsync: this);
+    /*  _controller = TabController(
+        length: providerGraphDataWatch != null ? providerGraphDataWatch!.tabLength :  3, vsync: this);
     _controller!.addListener(() {
       providerGraphDataWatch!.setTabSelectedIndex(_controller!.index);
       printLog("-------Selected Index: " + _controller!.index.toString());
     });
-
+*/
     SchedulerBinding.instance!.addPostFrameCallback((_) {
       providerGraphDataRead = context.read<ProviderGraphData>();
 
@@ -131,7 +133,7 @@ class _MyHomePageState extends State<MyHomePage>
 
   @override
   void dispose() {
-    _controller!.dispose();
+    //_controller!.dispose();
     providerGraphDataWatch!.clearProviderGraphData();
     super.dispose();
   }
@@ -141,7 +143,7 @@ class _MyHomePageState extends State<MyHomePage>
     providerGraphDataWatch = context.watch<ProviderGraphData>();
 
     return DefaultTabController(
-      length: 4,
+      length: providerGraphDataWatch!.tabLength,
       child: Scaffold(
         backgroundColor: clrDarkBg,
         appBar: AppBar(
@@ -150,13 +152,7 @@ class _MyHomePageState extends State<MyHomePage>
               child: new Container(
                 height: 32.0,
                 child: TabBar(
-                  controller: _controller,
-                  tabs: [
-                    _tabWidget(ecgNppg),
-                    _tabWidget(ecg),
-                    _tabWidget(ppg),
-                    _tabWidget(spo2),
-                  ],
+                  tabs: tabsChoice(providerGraphDataWatch!.tabLength),
                 ),
               )),
           title: Text(
@@ -291,6 +287,49 @@ class _MyHomePageState extends State<MyHomePage>
                     }
                   }),
             ),
+            DropdownButton<String>(
+              hint: dropDownValue == null
+                  ? Text(
+                      ecgNppg,
+                      style: TextStyle(color: Colors.white),
+                    )
+                  : Text(
+                      dropDownValue!,
+                      style: TextStyle(color: Colors.white),
+                    ),
+              items: <String>[ecgNppg, spo2].map((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList(),
+              onChanged: (value) async {
+                providerGraphDataWatch!.setLoading(true);
+                print(providerGraphDataWatch!.isServiceStarted);
+                if (providerGraphDataWatch!.isServiceStarted) {
+                  printLog("stop service");
+                  //stop service
+                  providerGraphDataWatch!.writeCharacteristic!.write([0]);
+                  if (sub != null) {
+                    sub.cancel();
+                  }
+                  providerGraphDataWatch!.setServiceStarted(false);
+
+                  await providerGraphDataWatch!.storedDataToLocal();
+                }
+                if (value == ecgNppg) {
+                  providerGraphDataWatch!.tabLength = 3;
+                  providerGraphDataWatch!.writeCharacteristic!.write([4]);
+                } else {
+                  providerGraphDataWatch!.tabLength = 1;
+                  providerGraphDataWatch!.writeCharacteristic!.write([7]);
+                }
+                providerGraphDataWatch!.setLoading(false);
+                setState(() {
+                  dropDownValue = value;
+                });
+              },
+            ),
           ],
           toolbarHeight: 78,
         ),
@@ -298,13 +337,7 @@ class _MyHomePageState extends State<MyHomePage>
           children: [
             (providerGraphDataWatch!.connectedDevice != null)
                 ? TabBarView(
-                    controller: _controller,
-                    children: [
-                      _ecgPpgView(),
-                      _ecgTabView(),
-                      _ppgTabView(),
-                      _spo2TabView(),
-                    ],
+                    children: tabViews(providerGraphDataWatch!.tabLength),
                   )
                 : providerGraphDataWatch!.isShowAvailableDevices
                     ? showAvailableDevices()
@@ -322,7 +355,7 @@ class _MyHomePageState extends State<MyHomePage>
 
     try {
       await device.connect();
-      print("IIII index  ${_controller!.index.toString()}");
+      // print("IIII index  ${_controller!.index.toString()}");
     } catch (e) {
       // if (e.code != 'already_connected') {
       //   throw e;
@@ -332,6 +365,22 @@ class _MyHomePageState extends State<MyHomePage>
       providerGraphDataWatch!.setConnectedDevice(device, context);
       providerGraphDataWatch!.setIsShowAvailableDevices();
       providerGraphDataWatch!.setLoading(false);
+    }
+  }
+
+  List<Widget> tabsChoice(int length) {
+    if (length == 3) {
+      return [_tabWidget(ecgNppg), _tabWidget(ecg), _tabWidget(ppg)];
+    } else {
+      return [_tabWidget(spo2)];
+    }
+  }
+
+  List<Widget> tabViews(int length) {
+    if (length == 3) {
+      return [_ecgPpgView(), _ecgTabView(), _ppgTabView()];
+    } else {
+      return [_spo2TabView()];
     }
   }
 
@@ -435,7 +484,7 @@ class _MyHomePageState extends State<MyHomePage>
           try {
             providerGraphDataWatch!
                 .setWriteChangeModeCharacteristic(characteristic);
-            providerGraphDataWatch!.setTabSelectedIndex(_controller!.index);
+            // providerGraphDataWatch!.setTabSelectedIndex(_controller!.index);
           } catch (err) {
             printLog(
                 "setWriteChangeModeCharacteristic caught err ${err.toString()}");
@@ -453,7 +502,7 @@ class _MyHomePageState extends State<MyHomePage>
           try {
             providerGraphDataWatch!.setReadCharacteristic(characteristic);
             if (providerGraphDataWatch!.isServiceStarted) {
-              if (_controller!.index != 3) {
+              if (providerGraphDataWatch!.tabLength == 3) {
                 providerGraphDataWatch!.generateGraphValuesList(
                     providerGraphDataWatch!.readValues[characteristic.uuid]);
               } else {
