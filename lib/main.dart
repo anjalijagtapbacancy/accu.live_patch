@@ -66,7 +66,7 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
   // TabController? _controller;
 
   var sub;
-  String? dropDownValue;
+  String? dropDownValue = "ECG & PPG";
 
   ProviderGraphData? providerGraphDataRead;
   ProviderGraphData? providerGraphDataWatch;
@@ -278,48 +278,47 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
                     }
                   }),
             ),
-            DropdownButton<String>(
-              hint: dropDownValue == null
-                  ? Text(
-                      ecgNppg,
-                      style: TextStyle(color: Colors.white),
-                    )
-                  : Text(
-                      dropDownValue!,
-                      style: TextStyle(color: Colors.white),
+            Opacity(
+              opacity: !providerGraphDataWatch!.isServiceStarted ? 1 : 0.4,
+              child: DropdownButton<String>(
+                hint: Text(
+                  dropDownValue!,
+                  style: TextStyle(color: Colors.white),
+                ),
+                items: <String>[ecgNppg, spo2].map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Opacity(
+                      opacity: opacity(value),
+                      child: GestureDetector(
+                        child: Text(value),
+                      ),
                     ),
-              items: <String>[ecgNppg, spo2].map((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
-              onChanged: (value) async {
-                providerGraphDataWatch!.setLoading(true);
-                print(providerGraphDataWatch!.isServiceStarted);
-                if (providerGraphDataWatch!.isServiceStarted) {
-                  printLog("stop service");
-                  //stop service
-                  providerGraphDataWatch!.writeCharacteristic!.write([0]);
-                  if (sub != null) {
-                    sub.cancel();
-                  }
-                  providerGraphDataWatch!.setServiceStarted(false);
-
-                  await providerGraphDataWatch!.storedDataToLocal();
-                }
-                if (value == ecgNppg) {
-                  providerGraphDataWatch!.tabLength = 3;
-                  providerGraphDataWatch!.writeCharacteristic!.write([4]);
-                } else {
-                  providerGraphDataWatch!.tabLength = 1;
-                  providerGraphDataWatch!.writeCharacteristic!.write([7]);
-                }
-                providerGraphDataWatch!.setLoading(false);
-                setState(() {
-                  dropDownValue = value;
-                });
-              },
+                  );
+                }).toList(),
+                onChanged: !providerGraphDataWatch!.isServiceStarted
+                    ? (value) async {
+                        print(value);
+                        if (opacity(value!) == 1) {
+                          providerGraphDataWatch!.setLoading(true);
+                          print(providerGraphDataWatch!.isServiceStarted);
+                          if (value == ecgNppg) {
+                            providerGraphDataWatch!.tabLength = 3;
+                            providerGraphDataWatch!.writeCharacteristic!
+                                .write([4]);
+                          } else {
+                            providerGraphDataWatch!.tabLength = 1;
+                            providerGraphDataWatch!.writeCharacteristic!
+                                .write([7]);
+                          }
+                          providerGraphDataWatch!.setLoading(false);
+                          setState(() {
+                            dropDownValue = value;
+                          });
+                        }
+                      }
+                    : null,
+              ),
             ),
           ],
           toolbarHeight: 78,
@@ -356,6 +355,14 @@ class _MyHomePageState extends State<MyHomePage> with Constant, SingleTickerProv
       providerGraphDataWatch!.setConnectedDevice(device, context);
       providerGraphDataWatch!.setIsShowAvailableDevices();
       providerGraphDataWatch!.setLoading(false);
+    }
+  }
+
+  double opacity(String value) {
+    if (value == dropDownValue) {
+      return 0.4;
+    } else {
+      return 1;
     }
   }
 
