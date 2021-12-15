@@ -8,7 +8,6 @@ class Constant {
   String writeUuid = "00001525-1212-efde-1523-785feabcd123";
   String writeChangeModeUuid = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
 
-  int valueListLength = 200;
   int yAxisGraphData = 500;
   double xAxisInterval = 100; //bottom data
   double yAxisInterval = 1000; //left data
@@ -20,6 +19,7 @@ class Constant {
   String ecgNppg = "ECG & PPG";
   String spo2 = "Spo2";
   String strHeartRate = "Heart Rate:";
+  String strStepCount = "Step Count:";
   String heartRateUnit = "BPM";
   String bpUnit = "mmHg";
   String rvUnit = "ms";

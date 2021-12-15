@@ -18,8 +18,7 @@ import 'ModelClass/Prediction.dart';
 import 'constant.dart';
 
 class GraphScreen extends StatefulWidget {
-  GraphScreen({Key? key, required this.title, required this.dropdownValue})
-      : super(key: key);
+  GraphScreen({Key? key, required this.title, required this.dropdownValue}) : super(key: key);
 
   final String title;
   final FlutterBlue flutterBlue = FlutterBlue.instance;
@@ -29,8 +28,7 @@ class GraphScreen extends StatefulWidget {
   _GraphScreenState createState() => _GraphScreenState(dropdownValue);
 }
 
-class _GraphScreenState extends State<GraphScreen>
-    with Constant, SingleTickerProviderStateMixin {
+class _GraphScreenState extends State<GraphScreen> with Constant, SingleTickerProviderStateMixin {
   // TabController? _controller;
   _GraphScreenState(this.dropDownValue);
 
@@ -111,9 +109,7 @@ class _GraphScreenState extends State<GraphScreen>
               child: IconButton(
                   icon: Icon(
                     // providerGraphDataWatch!.isEnabled ? "Disabled" : "Enabled",
-                    providerGraphDataWatch!.isShowAvailableDevices
-                        ? Icons.bluetooth_disabled
-                        : Icons.bluetooth_audio,
+                    providerGraphDataWatch!.isShowAvailableDevices ? Icons.bluetooth_disabled : Icons.bluetooth_audio,
                     color: clrWhite,
                   ),
                   onPressed: () {
@@ -123,8 +119,8 @@ class _GraphScreenState extends State<GraphScreen>
                   }),
             ),
             Visibility(
-              visible: providerGraphDataWatch!.isServiceStarted &&
-                  providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
+              visible:
+                  providerGraphDataWatch!.isServiceStarted && providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
               // visible: false,
               child: TextButton(
                   child: Text(
@@ -145,59 +141,50 @@ class _GraphScreenState extends State<GraphScreen>
                     if (!providerGraphDataWatch!.isLoading) {
                       //try {
                       print("UUID== ${providerGraphDataWatch!.readCharacteristic!.uuid.toString()}");
-                        if (providerGraphDataWatch!.isServiceStarted) {
-                          try {
-                            await providerGraphDataWatch!.readCharacteristic!
-                                .setNotifyValue(false);
-                          } catch (err) {
-                            printLog("notfy err ${err.toString()}");
-                          }
-
-                          providerGraphDataWatch!.setLoading(true);
-                          printLog("stop service");
-
-                          //stop service
-                          providerGraphDataWatch!.writeCharacteristic!
-                              .write([0]);
-                          if (sub != null) {
-                            sub.cancel();
-                          }
-                          providerGraphDataWatch!.setServiceStarted(false);
-
-                          await providerGraphDataWatch!.storedDataToLocal();
-
-                          providerGraphDataWatch!.setLoading(false);
-                        } else {
-                          await providerGraphDataWatch!.readCharacteristic!
-                              .setNotifyValue(true);
-
-                          providerGraphDataWatch!.setLoading(true);
-
-                          await providerGraphDataWatch!.clearStoreDataToLocal();
-                          sub = providerGraphDataWatch!
-                              .readCharacteristic!.value
-                              .listen((value) {
-                                print("bbb ${value.toString()}");
-                                readCharacteristics(value);
-
-                          });
-                          // start service
-                          providerGraphDataWatch!.writeCharacteristic!
-                              .write([1]);
-                          printLog("start service");
-                          // ignore: cancel_subscriptions
-                          // if (sub != null) {
-                          //   sub.cancel();
-                          // }
-
-                          providerGraphDataWatch!.setServiceStarted(true);
-                          providerGraphDataWatch!.setLoading(false);
-
-
-
-                           // await providerGraphDataWatch!.readCharacteristic!
-                           //     .read();
+                      if (providerGraphDataWatch!.isServiceStarted) {
+                        try {
+                          await providerGraphDataWatch!.readCharacteristic!.setNotifyValue(false);
+                        } catch (err) {
+                          printLog("notfy err ${err.toString()}");
                         }
+
+                        providerGraphDataWatch!.setLoading(true);
+                        printLog("stop service");
+
+                        //stop service
+                        providerGraphDataWatch!.writeCharacteristic!.write([0]);
+                        if (sub != null) {
+                          sub.cancel();
+                        }
+                        providerGraphDataWatch!.setServiceStarted(false);
+
+                        await providerGraphDataWatch!.storedDataToLocal();
+
+                        providerGraphDataWatch!.setLoading(false);
+                      } else {
+                        await providerGraphDataWatch!.readCharacteristic!.setNotifyValue(true);
+
+                        providerGraphDataWatch!.setLoading(true);
+
+                        await providerGraphDataWatch!.clearStoreDataToLocal();
+                        sub = providerGraphDataWatch!.readCharacteristic!.value.listen((value) {
+                          print("bbb ${value.toString()}");
+                          readCharacteristics(value);
+                        });
+                        // start service
+                        providerGraphDataWatch!.writeCharacteristic!.write([1]);
+                        printLog("start service");
+                        // ignore: cancel_subscriptions
+                        // if (sub != null) {
+                        //   sub.cancel();
+                        // }
+
+                        providerGraphDataWatch!.setServiceStarted(true);
+                        providerGraphDataWatch!.setLoading(false);
+
+                        // await providerGraphDataWatch!.readCharacteristic!
+                        //     .read();
+                      }
                       // } catch (e) {
                       //   printLog("err $e");
                       // }
@@ -209,8 +196,8 @@ class _GraphScreenState extends State<GraphScreen>
                   )),
             ),
             Visibility(
-              visible: !providerGraphDataWatch!.isServiceStarted &&
-                  providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
+              visible:
+                  !providerGraphDataWatch!.isServiceStarted && providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
               child: IconButton(
                   icon: Icon(Icons.share, color: clrWhite),
                   onPressed: () {
@@ -245,12 +232,10 @@ class _GraphScreenState extends State<GraphScreen>
                           print(providerGraphDataWatch!.isServiceStarted);
                           if (value == ecgNppg) {
                             providerGraphDataWatch!.tabLength = 3;
-                            providerGraphDataWatch!.writeCharacteristic!
-                                .write([4]);
+                            providerGraphDataWatch!.writeCharacteristic!.write([4]);
                           } else {
                             providerGraphDataWatch!.tabLength = 1;
-                            providerGraphDataWatch!.writeCharacteristic!
-                                .write([7]);
+                            providerGraphDataWatch!.writeCharacteristic!.write([7]);
                           }
                           providerGraphDataWatch!.setLoading(false);
                           setState(() {
@@ -294,17 +279,17 @@ class _GraphScreenState extends State<GraphScreen>
       return [_tabWidget(spo2)];
     }
   }
-  void readCharacteristics(List<int >value) {
+
+  void readCharacteristics(List<int> value) {
     print("services ${providerGraphDataWatch!.services!.length.toString()}");
-    if (providerGraphDataWatch!.services!=null && providerGraphDataWatch!.services!.length > 0) {
+    if (providerGraphDataWatch!.services != null && providerGraphDataWatch!.services!.length > 0) {
       try {
         if (providerGraphDataWatch!.isServiceStarted) {
           print("isServiceStarted");
           if (providerGraphDataWatch!.tabLength == 3) {
             print("tabLength  iff ${value.toString()}");
 
-            providerGraphDataWatch!.generateGraphValuesList(
-                value);
+            providerGraphDataWatch!.generateGraphValuesList(value);
           } else {
             print("tabLength  else ${value}");
 
@@ -342,6 +327,7 @@ class _GraphScreenState extends State<GraphScreen>
       //}
     }
   }
+
   List<Widget> tabViews(int length) {
     if (length == 3) {
       return [_ecgPpgView(), _ecgTabView(), _ppgTabView()];
@@ -355,12 +341,7 @@ class _GraphScreenState extends State<GraphScreen>
       children: [
         ListView(
           padding: EdgeInsets.only(top: 8, right: 8),
-          children: <Widget>[
-            rowPpgTitle(ppg),
-            graphWidget(ppg),
-            rowEcgTitle(ecg, providerGraphDataWatch!.heartRate),
-            graphWidget(ecg)
-          ],
+          children: <Widget>[rowPpgTitle(ppg), graphWidget(ppg), rowEcgTitle(ecg), graphWidget(ecg)],
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(0, 15, 200, 0),
@@ -430,11 +411,8 @@ class _GraphScreenState extends State<GraphScreen>
                                 style: TextStyle(fontSize: 12),
                               ),
                               TextSpan(
-                                text: providerGraphDataWatch!.avgHrv
-                                    .round()
-                                    .toString(),
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 16),
+                                text: providerGraphDataWatch!.avgHrv.round().toString(),
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                               ),
                               TextSpan(
                                 text: ' $rvUnit',
@@ -451,11 +429,8 @@ class _GraphScreenState extends State<GraphScreen>
                                 style: TextStyle(fontSize: 12),
                               ),
                               TextSpan(
-                                text: providerGraphDataWatch!.avgPrv
-                                    .round()
-                                    .toString(),
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 16),
+                                text: providerGraphDataWatch!.avgPrv.round().toString(),
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                               ),
                               TextSpan(
                                 text: ' $rvUnit',
@@ -479,11 +454,8 @@ class _GraphScreenState extends State<GraphScreen>
                                 style: TextStyle(fontSize: 12),
                               ),
                               TextSpan(
-                                text: providerGraphDataWatch!.dBp
-                                    .round()
-                                    .toString(),
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 16),
+                                text: providerGraphDataWatch!.dBp.round().toString(),
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                               ),
                               TextSpan(
                                 text: ' $bpUnit',
@@ -500,11 +472,8 @@ class _GraphScreenState extends State<GraphScreen>
                                 style: TextStyle(fontSize: 12),
                               ),
                               TextSpan(
-                                text: providerGraphDataWatch!.dDbp
-                                    .round()
-                                    .toString(),
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 16),
+                                text: providerGraphDataWatch!.dDbp.round().toString(),
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                               ),
                               TextSpan(
                                 text: ' $bpUnit',
@@ -525,7 +494,7 @@ class _GraphScreenState extends State<GraphScreen>
     );
   }
 
-  Widget rowEcgTitle(String title, dynamic iHeartRate) {
+  Widget rowEcgTitle(String title) {
     return Padding(
       padding: EdgeInsets.only(top: 4.0),
       child: Row(
@@ -553,16 +522,15 @@ class _GraphScreenState extends State<GraphScreen>
                     TextSpan(
                       children: [
                         TextSpan(
-                          text: '$strHeartRate ',
+                          text: '$strStepCount ',
                           style: TextStyle(fontSize: 12),
                         ),
                         TextSpan(
-                          text: iHeartRate.round().toString(),
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16),
+                          text: providerGraphDataWatch!.stepCount.round().toString(),
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                         ),
                         TextSpan(
-                          text: ' $heartRateUnit',
+                          text: ' steps',
                           style: TextStyle(fontSize: 12),
                         )
                       ],
@@ -570,6 +538,30 @@ class _GraphScreenState extends State<GraphScreen>
                   )),
             ),
           ),
+          SizedBox(
+            width: 8,
+          ),
+          Visibility(
+              // visible: providerGraphDataWatch!.isEnabled,
+
+              child: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: '$strHeartRate ',
+                  style: TextStyle(fontSize: 12),
+                ),
+                TextSpan(
+                  text: providerGraphDataWatch!.heartRate.round().toString(),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                TextSpan(
+                  text: ' $heartRateUnit',
+                  style: TextStyle(fontSize: 12),
+                )
+              ],
+            ),
+          )),
         ],
       ),
     );
@@ -585,20 +577,16 @@ class _GraphScreenState extends State<GraphScreen>
             ),
             color: clrDarkBg),
         child: Padding(
-          padding: const EdgeInsets.only(
-              right: 18.0, left: 12.0, top: 24, bottom: 12),
+          padding: const EdgeInsets.only(right: 18.0, left: 12.0, top: 24, bottom: 12),
           child: LineChart(title == ecg
-              ? mainData(providerGraphDataWatch!.tempEcgSpotsListData,
-                  providerGraphDataWatch!.tempEcgDecimalList)
-              : mainData(providerGraphDataWatch!.tempPpgSpotsListData,
-                  providerGraphDataWatch!.tempPpgDecimalList)),
+              ? mainData(providerGraphDataWatch!.tempEcgSpotsListData, providerGraphDataWatch!.tempEcgDecimalList)
+              : mainData(providerGraphDataWatch!.tempPpgSpotsListData, providerGraphDataWatch!.tempPpgDecimalList)),
         ),
       ),
     );
   }
 
-  LineChartData mainData(
-      List<FlSpot> tempSpotsList, List<double> tempDecimalList) {
+  LineChartData mainData(List<FlSpot> tempSpotsList, List<double> tempDecimalList) {
     return LineChartData(
       gridData: FlGridData(
         show: true,
@@ -625,10 +613,8 @@ class _GraphScreenState extends State<GraphScreen>
           showTitles: true,
           // reservedSize: 22,
           interval: xAxisInterval,
-          getTextStyles: (context, value) => TextStyle(
-              color: clrBottomTitles,
-              fontWeight: FontWeight.bold,
-              fontSize: 13),
+          getTextStyles: (context, value) =>
+              TextStyle(color: clrBottomTitles, fontWeight: FontWeight.bold, fontSize: 13),
           getTitles: (value) {
             return value.toString();
           },
@@ -638,12 +624,8 @@ class _GraphScreenState extends State<GraphScreen>
         leftTitles: SideTitles(
           showTitles: true,
           interval: tempDecimalList.isNotEmpty
-              ? (tempDecimalList.reduce(max) - tempDecimalList.reduce(min)) /
-                          4 !=
-                      0
-                  ? (tempDecimalList.reduce(max) -
-                          tempDecimalList.reduce(min)) /
-                      4
+              ? (tempDecimalList.reduce(max) - tempDecimalList.reduce(min)) / 4 != 0
+                  ? (tempDecimalList.reduce(max) - tempDecimalList.reduce(min)) / 4
                   : yAxisInterval
               : yAxisInterval,
           getTextStyles: (context, value) => TextStyle(
@@ -658,8 +640,7 @@ class _GraphScreenState extends State<GraphScreen>
           margin: 8,
         ),
       ),
-      borderData: FlBorderData(
-          show: true, border: Border.all(color: clrGraphLine, width: 1)),
+      borderData: FlBorderData(show: true, border: Border.all(color: clrGraphLine, width: 1)),
       minX: tempSpotsList.isNotEmpty ? tempSpotsList.first.x : 0,
       maxX: tempSpotsList.isNotEmpty ? tempSpotsList.last.x + 1 : 0,
       minY: tempDecimalList.isNotEmpty ? tempDecimalList.reduce(min) : 0,
@@ -691,7 +672,7 @@ class _GraphScreenState extends State<GraphScreen>
         ListView(
           padding: EdgeInsets.only(top: 8, right: 8),
           children: [
-            rowEcgTitle(ecg, providerGraphDataWatch!.heartRate),
+            rowEcgTitle(ecg),
             AspectRatio(
               aspectRatio: 3 / (1),
               child: Container(
@@ -701,11 +682,9 @@ class _GraphScreenState extends State<GraphScreen>
                     ),
                     color: clrDarkBg),
                 child: Padding(
-                  padding: const EdgeInsets.only(
-                      right: 18.0, left: 12.0, top: 24, bottom: 12),
+                  padding: const EdgeInsets.only(right: 18.0, left: 12.0, top: 24, bottom: 12),
                   child: LineChart(mainData(
-                      providerGraphDataWatch!.tempEcgSpotsListData,
-                      providerGraphDataWatch!.tempEcgDecimalList)),
+                      providerGraphDataWatch!.tempEcgSpotsListData, providerGraphDataWatch!.tempEcgDecimalList)),
                 ),
               ),
             ),
@@ -760,11 +739,9 @@ class _GraphScreenState extends State<GraphScreen>
                 ),
                 color: clrDarkBg),
             child: Padding(
-              padding: const EdgeInsets.only(
-                  right: 18.0, left: 12.0, top: 24, bottom: 12),
-              child: LineChart(mainData(
-                  providerGraphDataWatch!.tempPpgSpotsListData,
-                  providerGraphDataWatch!.tempPpgDecimalList)),
+              padding: const EdgeInsets.only(right: 18.0, left: 12.0, top: 24, bottom: 12),
+              child: LineChart(
+                  mainData(providerGraphDataWatch!.tempPpgSpotsListData, providerGraphDataWatch!.tempPpgDecimalList)),
             ),
           ),
         ),
@@ -824,9 +801,7 @@ class _GraphScreenState extends State<GraphScreen>
 
     await providerGraphDataWatch!.getStoredLocalData();
 
-    for (int i = 0;
-        i < providerGraphDataWatch!.savedEcgLocalDataList.length;
-        i++) {
+    for (int i = 0; i < providerGraphDataWatch!.savedEcgLocalDataList.length; i++) {
       row = [];
       row.add(providerGraphDataWatch!.savedEcgLocalDataList[i]);
       row.add(providerGraphDataWatch!.savedPpgLocalDataList[i]);

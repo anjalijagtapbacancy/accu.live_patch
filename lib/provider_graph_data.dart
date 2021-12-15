@@ -187,8 +187,8 @@ class ProviderGraphData with ChangeNotifier, Constant {
     notifyListeners();
   }
 
-  setConnectedDevice(BluetoothDevice device, BuildContext context,List<BluetoothService> service) async {
-    services=service;
+  setConnectedDevice(BluetoothDevice device, BuildContext context, List<BluetoothService> service) async {
+    services = service;
     connectedDevice = device;
     notifyListeners();
   }
@@ -317,7 +317,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
   }
 
   void generateGraphValuesList(List<int>? valueList) async {
-    if (valueList != null && valueList.length>0) {
+    if (valueList != null && valueList.length > 0) {
       List<int>? stepCountList = [valueList[valueList.length - 2], valueList[valueList.length - 1]];
 
       List<String> stepCountHexList = [
@@ -330,17 +330,8 @@ class ProviderGraphData with ChangeNotifier, Constant {
       stepCount = double.parse(int.parse(strStepHex, radix: 16).toString());
       printLog("stepCount ${stepCount.toString()}");
 
-      printLog("valueListtt 00 ${valueList.length.toString()}");
-      valueList.removeLast();
-      valueList.removeLast();
-      // valueList=  valueList.toList().removeRange(valueList.length - 1, valueList.length);
-      // valueList.removeAt(valueList.length);
-      // valueList.removeAt(valueList.length);
-
-      printLog("valueListtt ${valueList.length.toString()}");
-
-      for (int i = 0; i < valueList.length; i++) {
-        if (i < (valueListLength / 2)) {
+      for (int i = 0; i < (valueList.length - 2); i++) {
+        if (i < ((valueList.length - 2) / 2)) {
           mainEcgHexList.add(valueList[i].toRadixString(16).padLeft(2, '0'));
         } else {
           mainPpgHexList.add(valueList[i].toRadixString(16).padLeft(2, '0'));
@@ -407,7 +398,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
       //     "VVV tempEcgSpotsListData length: ${tempEcgSpotsListData.length} spotsListData: ${tempEcgSpotsListData.toList()}");
       // printLog(
       //     "VVV tempPpgSpotsListData length: ${tempPpgSpotsListData.length} spotsListData: ${tempPpgSpotsListData.toList()}");
-    notifyListeners();
+      notifyListeners();
     }
   }
 
