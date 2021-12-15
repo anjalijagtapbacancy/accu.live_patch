@@ -1,4 +1,4 @@
-import 'package:bluetooth_enable/bluetooth_enable.dart';
+// import 'package:bluetooth_enable/bluetooth_enable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bluetooth_connection/constant.dart';
@@ -10,6 +10,8 @@ import 'package:flutter_bluetooth_connection/utils.dart';
 import 'package:location/location.dart';
 import 'package:provider/provider.dart';
 
+import 'GraphScreen.dart';
+
 class DiscoverDevices extends StatefulWidget {
   DiscoverDevices({Key? key}) : super(key: key);
 
@@ -17,11 +19,13 @@ class DiscoverDevices extends StatefulWidget {
   _DiscoverDevicesState createState() => _DiscoverDevicesState();
 }
 
-class _DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
+class _DiscoverDevicesState extends State<DiscoverDevices>
+    with Constant, Utils {
   ProviderGraphData? providerGraphDataRead;
   ProviderGraphData? providerGraphDataWatch;
   final FlutterBlue flutterBlue = FlutterBlue.instance;
   var sub;
+  String? choice = "ECG & PPG";
 
   @override
   void initState() {
@@ -36,7 +40,6 @@ class _DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils 
   @override
   void dispose() {
     //_controller!.dispose();
-    providerGraphDataWatch!.connectedDevice!.disconnect();
     providerGraphDataWatch!.clearProviderGraphData();
     super.dispose();
   }
@@ -111,15 +114,20 @@ class _DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils 
                                 Column(
                                   children: <Widget>[
                                     Text(
-                                      providerGraphDataWatch!.devicesList[i].name == ''
+                                      providerGraphDataWatch!
+                                                  .devicesList[i].name ==
+                                              ''
                                           ? '(unknown device)'
-                                          : providerGraphDataWatch!.devicesList[i].name,
+                                          : providerGraphDataWatch!
+                                              .devicesList[i].name,
                                       style: TextStyle(color: clrWhite),
                                     ),
                                     SizedBox(height: 8),
                                     Text(
-                                      providerGraphDataWatch!.devicesList[i].id.toString(),
-                                      style: TextStyle(color: Colors.grey.shade400),
+                                      providerGraphDataWatch!.devicesList[i].id
+                                          .toString(),
+                                      style: TextStyle(
+                                          color: Colors.grey.shade400),
                                     ),
                                   ],
                                 ),
@@ -129,18 +137,23 @@ class _DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils 
                               width: 200,
                               child: OutlinedButton(
                                 style: TextButton.styleFrom(
-                                  side: BorderSide(color: clrWhite.withOpacity(0.4), width: 1),
-                                  shape:
-                                      const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(25))),
+                                  side: BorderSide(
+                                      color: clrWhite.withOpacity(0.4),
+                                      width: 1),
+                                  shape: const RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.all(
+                                          Radius.circular(25))),
                                 ),
                                 child: Text(
                                   strConnect,
-                                  style: TextStyle(color: Colors.grey.shade200, fontWeight: FontWeight.w500),
+                                  style: TextStyle(
+                                      color: Colors.grey.shade200,
+                                      fontWeight: FontWeight.w500),
                                 ),
                                 onPressed: () async {
-                                  connectDevice(providerGraphDataWatch!.devicesList[i]);
-                                  providerGraphDataWatch!.TrainModelForType();
-                                },
+                                  connectDevice(
+                                      providerGraphDataWatch!.devicesList[i]);
+                                }
                               ),
                             ),
                           ],
@@ -162,21 +175,25 @@ class _DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils 
       printLog("  isOn ${value.toString()}");
       if (!value) {
         // Request to turn on Bluetooth within an app
-        BluetoothEnable.enableBluetooth.then((value) {
-          if (value == "true") {
-            //Bluetooth has been enabled
-            setUpBluetooth();
-          } else if (value == "false") {
-            //Bluetooth has not been enabled
-          }
-        });
+        // BluetoothEnable.enableBluetooth.then((value) {
+        //   if (value == "true") {
+        //     //Bluetooth has been enabled
+        //     setUpBluetooth();
+        //   } else if (value == "false") {
+        //     //Bluetooth has not been enabled
+        //   }
+        // });
       }
       if (value) {
         this.flutterBlue.isAvailable.then((value) {
           printLog(" isAvailable ${value.toString()}");
         });
 
-        this.flutterBlue.connectedDevices.asStream().listen((List<BluetoothDevice> devices) {
+        /*this
+            .flutterBlue
+            .connectedDevices
+            .asStream()
+            .listen((List<BluetoothDevice> devices) {
           printLog("  devices ${devices.length}");
 
           for (BluetoothDevice device in devices) {
@@ -187,21 +204,23 @@ class _DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils 
               device.state.asBroadcastStream();
             }
           }
-        });
+        });*/
 
-        // if (providerGraphDataWatch!.devicesList.length == 1) {
-        //   print("devicesList iff ${providerGraphDataWatch!.devicesList.length.toString()}");
-        //   connectDevice(providerGraphDataWatch!.devicesList.first);
-        // } else {
-        //   print("devicesList elsee ${providerGraphDataWatch!.devicesList.length.toString()}");
-        // }
-
+        /*   if (providerGraphDataWatch!.devicesList.length == 1) {
+          print("devicesList iff ${providerGraphDataWatch!.devicesList.length.toString()}");
+          connectDevice(providerGraphDataWatch!.devicesList.first);
+        } else {
+          print("devicesList elsee ${providerGraphDataWatch!.devicesList.length.toString()}");
+        }
+*/
         this.flutterBlue.scanResults.listen((List<ScanResult> results) {
-          printLog("  scan result length devices ${results.length}");
+          // printLog("  scan result length devices ${results.length}");
           // Navigator.of(context).push(MaterialPageRoute(builder: (context) => ScanResultTile(result: results.first,onTap: null)));
           for (ScanResult result in results) {
-            printLog("  scanResults ${result.device}");
-            if (result.device.name.toLowerCase().contains(displayDeviceString)) {
+            // printLog("  scanResults ${result.device}");
+            if (result.device.name
+                .toLowerCase()
+                .contains(displayDeviceString)) {
               providerGraphDataWatch!.setDeviceList(result.device);
             }
           }
@@ -221,18 +240,163 @@ class _DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils 
 
     try {
       await device.connect();
-      Navigator.push(context, MaterialPageRoute(builder: (context) => MyHomePage(title: appName)));
-
       // print("IIII index  ${_controller!.index.toString()}");
     } catch (e) {
       // if (e.code != 'already_connected') {
       //   throw e;
       // }
       printLog(e.toString());
-    } finally {
-      providerGraphDataWatch!.setConnectedDevice(device, context);
-      providerGraphDataWatch!.setIsShowAvailableDevices();
       providerGraphDataWatch!.setLoading(false);
+    } finally {
+      List<BluetoothService> services=[];
+      services = await device.discoverServices();
+
+        print("discoverd values");
+        providerGraphDataWatch!.setConnectedDevice(device, context,services);
+        Future.delayed(Duration(milliseconds: 200));
+        providerGraphDataWatch!.TrainModelForType();
+        readCharacteristics();
+        providerGraphDataWatch!.setLoading(false);
+        showDialog(
+            context: context,
+            builder: (BuildContext context) =>
+                Choice());
+
+
+
+      // providerGraphDataWatch!.setIsShowAvailableDevices();
     }
+  }
+
+  void readCharacteristics() {
+    print("services ${providerGraphDataWatch!.services!.length.toString()}");
+    if (providerGraphDataWatch!.services!=null && providerGraphDataWatch!.services!.length > 0) {
+      for (BluetoothService service in providerGraphDataWatch!.services!) {
+        for (BluetoothCharacteristic characteristic
+            in service.characteristics) {
+          if (characteristic.uuid.toString() == writeChangeModeUuid) {
+            try {
+              providerGraphDataWatch!
+                  .setWriteChangeModeCharacteristic(characteristic);
+              // providerGraphDataWatch!.setTabSelectedIndex(_controller!.index);
+            } catch (err) {
+              printLog(
+                  "setWriteChangeModeCharacteristic caught err ${err.toString()}");
+            }
+          }
+          if (characteristic.uuid.toString() == writeUuid) {
+            try {
+              providerGraphDataWatch!.setWriteCharacteristic(characteristic);
+            } catch (err) {
+              printLog("setWriteCharacteristic caught err ${err.toString()}");
+            }
+          }
+          if (characteristic.uuid.toString() == readUuid) {
+            printLog("readUUid matched ! ${readUuid.toString()}");
+            // try {
+              providerGraphDataWatch!.setReadCharacteristic(characteristic);
+            //   if (providerGraphDataWatch!.isServiceStarted) {
+            //     if (providerGraphDataWatch!.tabLength == 3) {
+            //       providerGraphDataWatch!.generateGraphValuesList(
+            //           providerGraphDataWatch!.readValues[characteristic.uuid]);
+            //     } else {
+            //       providerGraphDataWatch!.getSpo2Data(
+            //           providerGraphDataWatch!.readValues[characteristic.uuid]);
+            //     }
+            //   }
+            // } catch (err) {
+            //   printLog(" caught err ${err.toString()}");
+            // }
+          }
+        }
+      }
+    }
+  }
+
+  Dialog Choice() {
+    return Dialog(
+      child: Container(
+        height: 100,
+        width: 100,
+        child: Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              GestureDetector(
+                child: Text(
+                  ecgNppg,
+                  style: TextStyle(color: Colors.black),
+                ),
+                onTap: () {
+                  choice = ecgNppg;
+                  providerGraphDataWatch!.tabLength = 3;
+                  Navigator.pop(context);
+                  providerGraphDataWatch!.writeChangeModeCharacteristic!.write([4]);
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => GraphScreen(
+                                title: appName,
+                                dropdownValue: choice!,
+                              )));
+                },
+              ),
+              Container(
+                height: 2,
+                color: Colors.grey,
+              ),
+              GestureDetector(
+                child: Text(
+                  spo2,
+                  style: TextStyle(color: Colors.black),
+                ),
+                onTap: () {
+                  choice = spo2;
+                  providerGraphDataWatch!.tabLength = 1;
+                  Navigator.pop(context);
+                  providerGraphDataWatch!.writeChangeModeCharacteristic!.write([7]);
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => GraphScreen(
+                                title: appName,
+                                dropdownValue: choice!,
+                              )));
+                },
+              ),
+            ],
+          ),
+        ),
+      ), /* PopupMenuButton(
+            onSelected: (value) {
+              if (value == 1) {
+                choice = ecgNppg;
+                providerGraphDataWatch!.tabLength = 3;
+              } else {
+                choice = spo2;
+                providerGraphDataWatch!.tabLength = 1;
+              }
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => MyHomePage(
+                            title: appName,
+                            dropdownValue: choice!,
+                          )));
+            },
+            itemBuilder: (context) => [
+                  PopupMenuItem(
+                    child: Text(ecgNppg),
+                    value: 1,
+                  ),
+                  PopupMenuItem(
+                    child: Text(spo2),
+                    value: 2,
+                  )
+                ]),*/
+    );
   }
 }

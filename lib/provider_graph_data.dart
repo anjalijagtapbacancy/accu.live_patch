@@ -187,9 +187,8 @@ class ProviderGraphData with ChangeNotifier, Constant {
     notifyListeners();
   }
 
-  setConnectedDevice(BluetoothDevice device, BuildContext context) async {
-    services = await device.discoverServices();
-
+  setConnectedDevice(BluetoothDevice device, BuildContext context,List<BluetoothService> service) async {
+    services=service;
     connectedDevice = device;
     notifyListeners();
   }
@@ -318,7 +317,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
   }
 
   void generateGraphValuesList(List<int>? valueList) async {
-    if (valueList != null) {
+    if (valueList != null && valueList.length>0) {
       List<int>? stepCountList = [valueList[valueList.length - 2], valueList[valueList.length - 1]];
 
       List<String> stepCountHexList = [
@@ -331,7 +330,14 @@ class ProviderGraphData with ChangeNotifier, Constant {
       stepCount = double.parse(int.parse(strStepHex, radix: 16).toString());
       printLog("stepCount ${stepCount.toString()}");
 
-      valueList.toList().removeRange(valueList.length - 1, valueList.length);
+      printLog("valueListtt 00 ${valueList.length.toString()}");
+      valueList.removeLast();
+      valueList.removeLast();
+      // valueList=  valueList.toList().removeRange(valueList.length - 1, valueList.length);
+      // valueList.removeAt(valueList.length);
+      // valueList.removeAt(valueList.length);
+
+      printLog("valueListtt ${valueList.length.toString()}");
 
       for (int i = 0; i < valueList.length; i++) {
         if (i < (valueListLength / 2)) {
@@ -362,6 +368,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
       // }
 
       print("sss mainEcgHexList ${mainEcgHexList.length} mainEcgDecimalList ${mainEcgDecimalList.length}");
+      print("sss mainPpgHexList ${mainPpgHexList.length} mainPpgDecimalList ${mainPpgDecimalList.length}");
 
       mainPpgDecimalList.clear();
       for (int h = 0; h < mainPpgHexList.length; h++) {
@@ -400,6 +407,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
       //     "VVV tempEcgSpotsListData length: ${tempEcgSpotsListData.length} spotsListData: ${tempEcgSpotsListData.toList()}");
       // printLog(
       //     "VVV tempPpgSpotsListData length: ${tempPpgSpotsListData.length} spotsListData: ${tempPpgSpotsListData.toList()}");
+    notifyListeners();
     }
   }
 
