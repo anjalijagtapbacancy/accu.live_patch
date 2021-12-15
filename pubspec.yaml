@@ -21,7 +21,7 @@ environment:
   sdk: ">=2.12.0 <3.0.0"
 
 dependencies:
-#  bluetooth_enable: ^0.1.1
+  # bluetooth_enable: ^0.1.1
   csv: ^5.0.0
   cupertino_icons: ^1.0.2
   fl_chart: ^0.40.2

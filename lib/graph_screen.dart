@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'package:flutter_bluetooth_connection/provider_graph_data.dart';
@@ -8,6 +10,7 @@ import 'package:csv/csv.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bluetooth_connection/constant.dart';
 import 'package:flutter_bluetooth_connection/progressbar.dart';
+import 'package:flutter_bluetooth_connection/utils.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -28,7 +31,7 @@ class GraphScreen extends StatefulWidget {
   _GraphScreenState createState() => _GraphScreenState(dropdownValue);
 }
 
-class _GraphScreenState extends State<GraphScreen> with Constant, SingleTickerProviderStateMixin {
+class _GraphScreenState extends State<GraphScreen> with Constant, Utils, SingleTickerProviderStateMixin {
   // TabController? _controller;
   _GraphScreenState(this.dropDownValue);
 
@@ -38,6 +41,9 @@ class _GraphScreenState extends State<GraphScreen> with Constant, SingleTickerPr
   ProviderGraphData? providerGraphDataRead;
   ProviderGraphData? providerGraphDataWatch;
   String? type;
+  final FlutterBlue flutterBlue = FlutterBlue.instance;
+  StreamSubscription? bluetoothConnSub;
+  StreamSubscription? connDeviceSub;
 
   @override
   void initState() {
@@ -53,26 +59,29 @@ class _GraphScreenState extends State<GraphScreen> with Constant, SingleTickerPr
 */
     SchedulerBinding.instance!.addPostFrameCallback((_) {
       providerGraphDataRead = context.read<ProviderGraphData>();
-      providerGraphDataRead!.connectedDevice!.state.listen((event) async {
+      bluetoothConnSub = flutterBlue.state.listen((event) {
+        switch (event) {
+          case BluetoothState.on:
+            break;
+          case BluetoothState.off:
+            showToast("Bluettoth off");
+            providerGraphDataRead!.clearConnectedDevice();
+            bluetoothConnSub!.cancel();
+            connDeviceSub!.cancel();
+            Navigator.pop(context, true);
+            break;
+
+          default:
+        }
+      });
+
+      connDeviceSub = providerGraphDataRead!.connectedDevice!.state.listen((event) async {
+        showToast("device event ${event.toString()}");
         if (event == BluetoothDeviceState.disconnected) {
           providerGraphDataRead!.clearConnectedDevice();
-          await showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: Text("Device has been disconnectd"),
-                actions: [
-                  TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        Navigator.pop(context);
-                      },
-                      child: Text("Ok")),
-                ],
-              );
-            },
-          );
-          // providerGraphDataRead!.setConnectedDevice(null, context, []);
+          bluetoothConnSub!.cancel();
+          connDeviceSub!.cancel();
+          Navigator.pop(context, true);
         }
       });
     });
@@ -81,8 +90,11 @@ class _GraphScreenState extends State<GraphScreen> with Constant, SingleTickerPr
   @override
   void dispose() {
     //_controller!.dispose();
-    providerGraphDataWatch!.connectedDevice!.disconnect();
-
+    if (providerGraphDataWatch!.connectedDevice != null) {
+      providerGraphDataWatch!.connectedDevice!.disconnect();
+    }
+    bluetoothConnSub!.cancel();
+    connDeviceSub!.cancel();
     providerGraphDataWatch!.clearProviderGraphData();
     super.dispose();
   }

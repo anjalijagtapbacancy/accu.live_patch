@@ -105,6 +105,8 @@ class ProviderGraphData with ChangeNotifier, Constant {
     connectedDevice = null;
     readValues = new Map<Guid, List<int>>();
     isServiceStarted = false;
+    stepCount = 0;
+    spo2Val = 0;
     heartRate = 0;
     heartRatePPG = "";
     savedEcgLocalDataList.clear();
@@ -314,11 +316,12 @@ class ProviderGraphData with ChangeNotifier, Constant {
       spo2Val = (double.parse(int.parse(strHex, radix: 16).toString().padLeft(1, '0'))) / 100;
       print("spo2Val ${spo2Val.toString()}");
     }
-    // notifyListeners();
+    notifyListeners();
   }
 
   void generateGraphValuesList(List<int>? valueList) async {
     if (valueList != null && valueList.length > 0) {
+      print("valueList ${valueList.toString()}");
       List<int>? stepCountList = [valueList[valueList.length - 2], valueList[valueList.length - 1]];
 
       List<String> stepCountHexList = [
@@ -327,6 +330,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
       ];
 
       String strStepHex = stepCountHexList[1] + stepCountHexList[0];
+      print("sss valueList  list ${valueList.length.toString()}");
 
       stepCount = double.parse(int.parse(strStepHex, radix: 16).toString());
       printLog("stepCount ${stepCount.toString()}");
@@ -338,6 +342,9 @@ class ProviderGraphData with ChangeNotifier, Constant {
           mainPpgHexList.add(valueList[i].toRadixString(16).padLeft(2, '0'));
         }
       }
+      print("sss ecg hex list ${mainEcgHexList.length.toString()}");
+      print("sss ppg hex list ${mainPpgHexList.length.toString()}");
+
       if (mainEcgHexList.length > (yAxisGraphData * 2) && mainPpgHexList.length > (yAxisGraphData * 2)) {
         tempEcgHexList =
             mainEcgHexList.getRange(mainEcgHexList.length - (yAxisGraphData * 2), mainEcgHexList.length).toList();
