@@ -10,7 +10,7 @@ import 'package:flutter_bluetooth_connection/utils.dart';
 import 'package:location/location.dart';
 import 'package:provider/provider.dart';
 
-import 'GraphScreen.dart';
+import 'graph_screen.dart';
 
 class DiscoverDevices extends StatefulWidget {
   DiscoverDevices({Key? key}) : super(key: key);
@@ -19,8 +19,7 @@ class DiscoverDevices extends StatefulWidget {
   _DiscoverDevicesState createState() => _DiscoverDevicesState();
 }
 
-class _DiscoverDevicesState extends State<DiscoverDevices>
-    with Constant, Utils {
+class _DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
   ProviderGraphData? providerGraphDataRead;
   ProviderGraphData? providerGraphDataWatch;
   final FlutterBlue flutterBlue = FlutterBlue.instance;
@@ -114,20 +113,15 @@ class _DiscoverDevicesState extends State<DiscoverDevices>
                                 Column(
                                   children: <Widget>[
                                     Text(
-                                      providerGraphDataWatch!
-                                                  .devicesList[i].name ==
-                                              ''
+                                      providerGraphDataWatch!.devicesList[i].name == ''
                                           ? '(unknown device)'
-                                          : providerGraphDataWatch!
-                                              .devicesList[i].name,
+                                          : providerGraphDataWatch!.devicesList[i].name,
                                       style: TextStyle(color: clrWhite),
                                     ),
                                     SizedBox(height: 8),
                                     Text(
-                                      providerGraphDataWatch!.devicesList[i].id
-                                          .toString(),
-                                      style: TextStyle(
-                                          color: Colors.grey.shade400),
+                                      providerGraphDataWatch!.devicesList[i].id.toString(),
+                                      style: TextStyle(color: Colors.grey.shade400),
                                     ),
                                   ],
                                 ),
@@ -136,25 +130,18 @@ class _DiscoverDevicesState extends State<DiscoverDevices>
                             SizedBox(
                               width: 200,
                               child: OutlinedButton(
-                                style: TextButton.styleFrom(
-                                  side: BorderSide(
-                                      color: clrWhite.withOpacity(0.4),
-                                      width: 1),
-                                  shape: const RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.all(
-                                          Radius.circular(25))),
-                                ),
-                                child: Text(
-                                  strConnect,
-                                  style: TextStyle(
-                                      color: Colors.grey.shade200,
-                                      fontWeight: FontWeight.w500),
-                                ),
-                                onPressed: () async {
-                                  connectDevice(
-                                      providerGraphDataWatch!.devicesList[i]);
-                                }
-                              ),
+                                  style: TextButton.styleFrom(
+                                    side: BorderSide(color: clrWhite.withOpacity(0.4), width: 1),
+                                    shape: const RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.all(Radius.circular(25))),
+                                  ),
+                                  child: Text(
+                                    strConnect,
+                                    style: TextStyle(color: Colors.grey.shade200, fontWeight: FontWeight.w500),
+                                  ),
+                                  onPressed: () async {
+                                    connectDevice(providerGraphDataWatch!.devicesList[i]);
+                                  }),
                             ),
                           ],
                         ),
@@ -215,12 +202,9 @@ class _DiscoverDevicesState extends State<DiscoverDevices>
 */
         this.flutterBlue.scanResults.listen((List<ScanResult> results) {
           // printLog("  scan result length devices ${results.length}");
-          // Navigator.of(context).push(MaterialPageRoute(builder: (context) => ScanResultTile(result: results.first,onTap: null)));
           for (ScanResult result in results) {
             // printLog("  scanResults ${result.device}");
-            if (result.device.name
-                .toLowerCase()
-                .contains(displayDeviceString)) {
+            if (result.device.name.toLowerCase().contains(displayDeviceString)) {
               providerGraphDataWatch!.setDeviceList(result.device);
             }
           }
@@ -248,21 +232,16 @@ class _DiscoverDevicesState extends State<DiscoverDevices>
       printLog(e.toString());
       providerGraphDataWatch!.setLoading(false);
     } finally {
-      List<BluetoothService> services=[];
+      List<BluetoothService> services = [];
       services = await device.discoverServices();
 
-        print("discoverd values");
-        providerGraphDataWatch!.setConnectedDevice(device, context,services);
-        Future.delayed(Duration(milliseconds: 200));
-        providerGraphDataWatch!.TrainModelForType();
-        readCharacteristics();
-        providerGraphDataWatch!.setLoading(false);
-        showDialog(
-            context: context,
-            builder: (BuildContext context) =>
-                Choice());
-
-
+      print("discoverd values");
+      providerGraphDataWatch!.setConnectedDevice(device, context, services);
+      Future.delayed(Duration(milliseconds: 200));
+      providerGraphDataWatch!.TrainModelForType();
+      readCharacteristics();
+      providerGraphDataWatch!.setLoading(false);
+      showDialog(barrierDismissible: false, context: context, builder: (BuildContext context) => Choice());
 
       // providerGraphDataWatch!.setIsShowAvailableDevices();
     }
@@ -270,18 +249,15 @@ class _DiscoverDevicesState extends State<DiscoverDevices>
 
   void readCharacteristics() {
     print("services ${providerGraphDataWatch!.services!.length.toString()}");
-    if (providerGraphDataWatch!.services!=null && providerGraphDataWatch!.services!.length > 0) {
+    if (providerGraphDataWatch!.services != null && providerGraphDataWatch!.services!.length > 0) {
       for (BluetoothService service in providerGraphDataWatch!.services!) {
-        for (BluetoothCharacteristic characteristic
-            in service.characteristics) {
+        for (BluetoothCharacteristic characteristic in service.characteristics) {
           if (characteristic.uuid.toString() == writeChangeModeUuid) {
             try {
-              providerGraphDataWatch!
-                  .setWriteChangeModeCharacteristic(characteristic);
+              providerGraphDataWatch!.setWriteChangeModeCharacteristic(characteristic);
               // providerGraphDataWatch!.setTabSelectedIndex(_controller!.index);
             } catch (err) {
-              printLog(
-                  "setWriteChangeModeCharacteristic caught err ${err.toString()}");
+              printLog("setWriteChangeModeCharacteristic caught err ${err.toString()}");
             }
           }
           if (characteristic.uuid.toString() == writeUuid) {
@@ -294,7 +270,7 @@ class _DiscoverDevicesState extends State<DiscoverDevices>
           if (characteristic.uuid.toString() == readUuid) {
             printLog("readUUid matched ! ${readUuid.toString()}");
             // try {
-              providerGraphDataWatch!.setReadCharacteristic(characteristic);
+            providerGraphDataWatch!.setReadCharacteristic(characteristic);
             //   if (providerGraphDataWatch!.isServiceStarted) {
             //     if (providerGraphDataWatch!.tabLength == 3) {
             //       providerGraphDataWatch!.generateGraphValuesList(
@@ -335,13 +311,14 @@ class _DiscoverDevicesState extends State<DiscoverDevices>
                   providerGraphDataWatch!.tabLength = 3;
                   Navigator.pop(context);
                   providerGraphDataWatch!.writeChangeModeCharacteristic!.write([4]);
+
                   Navigator.push(
                       context,
                       MaterialPageRoute(
                           builder: (context) => GraphScreen(
                                 title: appName,
                                 dropdownValue: choice!,
-                              )));
+                              ))).then((value) => setUpBluetooth());
                 },
               ),
               Container(
@@ -364,7 +341,7 @@ class _DiscoverDevicesState extends State<DiscoverDevices>
                           builder: (context) => GraphScreen(
                                 title: appName,
                                 dropdownValue: choice!,
-                              )));
+                              ))).then((value) => setUpBluetooth());
                 },
               ),
             ],

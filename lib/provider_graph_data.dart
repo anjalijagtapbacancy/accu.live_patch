@@ -102,6 +102,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
     devicesList.clear();
     isLoading = false;
     services!.clear();
+    connectedDevice = null;
     readValues = new Map<Guid, List<int>>();
     isServiceStarted = false;
     heartRate = 0;
@@ -193,6 +194,12 @@ class ProviderGraphData with ChangeNotifier, Constant {
     notifyListeners();
   }
 
+  clearConnectedDevice() async {
+    services = [];
+    connectedDevice = null;
+    notifyListeners();
+  }
+
   setReadCharacteristic(BluetoothCharacteristic characteristic) async {
     readCharacteristic = characteristic;
 
@@ -268,12 +275,6 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
     savedEcgLocalDataList = box.get("ecg_graph_data") ?? [];
     savedPpgLocalDataList = box.get("ppg_graph_data") ?? [];
-
-    printLog("BBB savedEcgLocalDataList length  ${savedEcgLocalDataList.length}");
-    printLog("BBB savedPpgLocalDataList length  ${savedPpgLocalDataList.length}");
-
-    printLog("BBB savedEcgLocalDataList  ${savedEcgLocalDataList.toString()}");
-    printLog("BBB savedPpgLocalDataList  ${savedPpgLocalDataList.toString()}");
   }
 
   clearStoreDataToLocal() async {
@@ -357,9 +358,6 @@ class ProviderGraphData with ChangeNotifier, Constant {
       // if (mainEcgDecimalList.length >= frameLength) {
       //   mainEcgDecimalList = filter.smooth(mainEcgDecimalList);
       // }
-
-      print("sss mainEcgHexList ${mainEcgHexList.length} mainEcgDecimalList ${mainEcgDecimalList.length}");
-      print("sss mainPpgHexList ${mainPpgHexList.length} mainPpgDecimalList ${mainPpgDecimalList.length}");
 
       mainPpgDecimalList.clear();
       for (int h = 0; h < mainPpgHexList.length; h++) {

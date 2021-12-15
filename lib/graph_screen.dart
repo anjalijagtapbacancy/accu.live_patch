@@ -53,6 +53,28 @@ class _GraphScreenState extends State<GraphScreen> with Constant, SingleTickerPr
 */
     SchedulerBinding.instance!.addPostFrameCallback((_) {
       providerGraphDataRead = context.read<ProviderGraphData>();
+      providerGraphDataRead!.connectedDevice!.state.listen((event) async {
+        if (event == BluetoothDeviceState.disconnected) {
+          providerGraphDataRead!.clearConnectedDevice();
+          await showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text("Device has been disconnectd"),
+                actions: [
+                  TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.pop(context);
+                      },
+                      child: Text("Ok")),
+                ],
+              );
+            },
+          );
+          // providerGraphDataRead!.setConnectedDevice(null, context, []);
+        }
+      });
     });
   }
 
@@ -60,6 +82,7 @@ class _GraphScreenState extends State<GraphScreen> with Constant, SingleTickerPr
   void dispose() {
     //_controller!.dispose();
     providerGraphDataWatch!.connectedDevice!.disconnect();
+
     providerGraphDataWatch!.clearProviderGraphData();
     super.dispose();
   }
@@ -168,7 +191,6 @@ class _GraphScreenState extends State<GraphScreen> with Constant, SingleTickerPr
 
                         await providerGraphDataWatch!.clearStoreDataToLocal();
                         sub = providerGraphDataWatch!.readCharacteristic!.value.listen((value) {
-                          print("bbb ${value.toString()}");
                           readCharacteristics(value);
                         });
                         // start service
@@ -206,44 +228,42 @@ class _GraphScreenState extends State<GraphScreen> with Constant, SingleTickerPr
                     }
                   }),
             ),
-            Opacity(
-              opacity: !providerGraphDataWatch!.isServiceStarted ? 1 : 0.4,
-              child: DropdownButton<String>(
-                hint: Text(
-                  dropDownValue!,
-                  style: TextStyle(color: Colors.white),
-                ),
-                items: <String>[ecgNppg, spo2].map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Opacity(
-                      opacity: opacity(value),
-                      child: GestureDetector(
-                        child: Text(value),
+
+            Visibility(
+              visible: false,
+              child: Opacity(
+                opacity: !providerGraphDataWatch!.isServiceStarted ? 1 : 0.4,
+                child: DropdownButton<String>(
+                  hint: Text(
+                    dropDownValue!,
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  items: <String>[ecgNppg, spo2].map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Opacity(
+                        opacity: opacity(value),
+                        child: GestureDetector(
+                          child: Text(value),
+                        ),
                       ),
-                    ),
-                  );
-                }).toList(),
-                onChanged: !providerGraphDataWatch!.isServiceStarted
-                    ? (value) async {
-                        print(value);
-                        if (opacity(value!) == 1) {
-                          providerGraphDataWatch!.setLoading(true);
-                          print(providerGraphDataWatch!.isServiceStarted);
-                          if (value == ecgNppg) {
-                            providerGraphDataWatch!.tabLength = 3;
-                            providerGraphDataWatch!.writeCharacteristic!.write([4]);
-                          } else {
-                            providerGraphDataWatch!.tabLength = 1;
-                            providerGraphDataWatch!.writeCharacteristic!.write([7]);
+                    );
+                  }).toList(),
+                  onChanged: !providerGraphDataWatch!.isServiceStarted
+                      ? (value) async {
+                          print(value);
+                          if (opacity(value!) == 1) {
+                            providerGraphDataWatch!.setLoading(true);
+                            print(providerGraphDataWatch!.isServiceStarted);
+                            changeMode(value);
+                            providerGraphDataWatch!.setLoading(false);
+                            setState(() {
+                              dropDownValue = value;
+                            });
                           }
-                          providerGraphDataWatch!.setLoading(false);
-                          setState(() {
-                            dropDownValue = value;
-                          });
                         }
-                      }
-                    : null,
+                      : null,
+                ),
               ),
             ),
           ],
@@ -262,6 +282,16 @@ class _GraphScreenState extends State<GraphScreen> with Constant, SingleTickerPr
         ),
       ),
     );
+  }
+
+  void changeMode(String value) {
+    if (value == ecgNppg) {
+      providerGraphDataWatch!.tabLength = 3;
+      providerGraphDataWatch!.writeChangeModeCharacteristic!.write([4]);
+    } else {
+      providerGraphDataWatch!.tabLength = 1;
+      providerGraphDataWatch!.writeChangeModeCharacteristic!.write([7]);
+    }
   }
 
   double opacity(String value) {
