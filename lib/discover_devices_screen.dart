@@ -370,10 +370,11 @@ class _DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils 
                                 title: appName,
                                 dropdownValue: choice!,
                               ))).then((value) {
+                    setUpBluetooth();
                     if (value) {
                       showToast("Your device has been disconnected");
                     }
-                    setUpBluetooth();
+
                   });
                 },
               ),
@@ -400,10 +401,11 @@ class _DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils 
                                 title: appName,
                                 dropdownValue: choice!,
                               ))).then((value) {
-                    if (value) {
+                    setUpBluetooth();
+                    if (value!) {
                       showToast("Your device has been disconnected");
                     }
-                    setUpBluetooth();
+
                   });
                 },
               ),

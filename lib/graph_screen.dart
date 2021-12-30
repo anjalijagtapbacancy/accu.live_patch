@@ -21,7 +21,8 @@ import 'ModelClass/Prediction.dart';
 import 'constant.dart';
 
 class GraphScreen extends StatefulWidget {
-  GraphScreen({Key? key, required this.title, required this.dropdownValue}) : super(key: key);
+  GraphScreen({Key? key, required this.title, required this.dropdownValue})
+      : super(key: key);
 
   final String title;
   final FlutterBlue flutterBlue = FlutterBlue.instance;
@@ -31,7 +32,8 @@ class GraphScreen extends StatefulWidget {
   _GraphScreenState createState() => _GraphScreenState(dropdownValue);
 }
 
-class _GraphScreenState extends State<GraphScreen> with Constant, Utils, SingleTickerProviderStateMixin {
+class _GraphScreenState extends State<GraphScreen>
+    with Constant, Utils, SingleTickerProviderStateMixin {
   // TabController? _controller;
   _GraphScreenState(this.dropDownValue);
 
@@ -75,7 +77,8 @@ class _GraphScreenState extends State<GraphScreen> with Constant, Utils, SingleT
         }
       });
 
-      connDeviceSub = providerGraphDataRead!.connectedDevice!.state.listen((event) async {
+      connDeviceSub =
+          providerGraphDataRead!.connectedDevice!.state.listen((event) async {
         showToast("device event ${event.toString()}");
         if (event == BluetoothDeviceState.disconnected) {
           providerGraphDataRead!.clearConnectedDevice();
@@ -144,7 +147,9 @@ class _GraphScreenState extends State<GraphScreen> with Constant, Utils, SingleT
               child: IconButton(
                   icon: Icon(
                     // providerGraphDataWatch!.isEnabled ? "Disabled" : "Enabled",
-                    providerGraphDataWatch!.isShowAvailableDevices ? Icons.bluetooth_disabled : Icons.bluetooth_audio,
+                    providerGraphDataWatch!.isShowAvailableDevices
+                        ? Icons.bluetooth_disabled
+                        : Icons.bluetooth_audio,
                     color: clrWhite,
                   ),
                   onPressed: () {
@@ -154,8 +159,8 @@ class _GraphScreenState extends State<GraphScreen> with Constant, Utils, SingleT
                   }),
             ),
             Visibility(
-              visible:
-                  providerGraphDataWatch!.isServiceStarted && providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
+              visible: providerGraphDataWatch!.isServiceStarted &&
+                  providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
               // visible: false,
               child: TextButton(
                   child: Text(
@@ -175,10 +180,12 @@ class _GraphScreenState extends State<GraphScreen> with Constant, Utils, SingleT
                   onPressed: () async {
                     if (!providerGraphDataWatch!.isLoading) {
                       //try {
-                      print("UUID== ${providerGraphDataWatch!.readCharacteristic!.uuid.toString()}");
+                      print(
+                          "UUID== ${providerGraphDataWatch!.readCharacteristic!.uuid.toString()}");
                       if (providerGraphDataWatch!.isServiceStarted) {
                         try {
-                          await providerGraphDataWatch!.readCharacteristic!.setNotifyValue(false);
+                          await providerGraphDataWatch!.readCharacteristic!
+                              .setNotifyValue(false);
                         } catch (err) {
                           printLog("notfy err ${err.toString()}");
                         }
@@ -197,12 +204,18 @@ class _GraphScreenState extends State<GraphScreen> with Constant, Utils, SingleT
 
                         providerGraphDataWatch!.setLoading(false);
                       } else {
-                        await providerGraphDataWatch!.readCharacteristic!.setNotifyValue(true);
+                        await providerGraphDataWatch!.readCharacteristic!
+                            .setNotifyValue(true);
 
                         providerGraphDataWatch!.setLoading(true);
 
                         await providerGraphDataWatch!.clearStoreDataToLocal();
-                        sub = providerGraphDataWatch!.readCharacteristic!.value.listen((value) {
+                        printLog(
+                            "mainEcgDecimalList.length=== ${providerGraphDataWatch!.mainEcgDecimalList.length}");
+                        printLog(
+                            "mainPpgDecimalList.length=== ${providerGraphDataWatch!.mainPpgDecimalList.length}");
+                        sub = providerGraphDataWatch!.readCharacteristic!.value
+                            .listen((value) {
                           readCharacteristics(value);
                         });
                         // start service
@@ -230,8 +243,8 @@ class _GraphScreenState extends State<GraphScreen> with Constant, Utils, SingleT
                   )),
             ),
             Visibility(
-              visible:
-                  !providerGraphDataWatch!.isServiceStarted && providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
+              visible: !providerGraphDataWatch!.isServiceStarted &&
+                  providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
               child: IconButton(
                   icon: Icon(Icons.share, color: clrWhite),
                   onPressed: () {
@@ -324,17 +337,16 @@ class _GraphScreenState extends State<GraphScreen> with Constant, Utils, SingleT
 
   void readCharacteristics(List<int> value) {
     print("services ${providerGraphDataWatch!.services!.length.toString()}");
-    if (providerGraphDataWatch!.services != null && providerGraphDataWatch!.services!.length > 0) {
+    if (providerGraphDataWatch!.services != null &&
+        providerGraphDataWatch!.services!.length > 0) {
       try {
         if (providerGraphDataWatch!.isServiceStarted) {
           print("isServiceStarted");
           if (providerGraphDataWatch!.tabLength == 3) {
             print("tabLength  iff ${value.toString()}");
-
             providerGraphDataWatch!.generateGraphValuesList(value);
           } else {
             print("tabLength  else ${value}");
-
             providerGraphDataWatch!.getSpo2Data(value);
           }
         }
@@ -383,38 +395,12 @@ class _GraphScreenState extends State<GraphScreen> with Constant, Utils, SingleT
       children: [
         ListView(
           padding: EdgeInsets.only(top: 8, right: 8),
-          children: <Widget>[rowPpgTitle(ppg), graphWidget(ppg), rowEcgTitle(ecg), graphWidget(ecg)],
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(0, 15, 200, 0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              Text("Type: "),
-              FutureBuilder<ArrhythmiaType>(
-                future: providerGraphDataWatch!.arrhythmia_type,
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    if (snapshot.data!.arrhythmiaType == "N") {
-                      type = "Normal";
-                    } else if (snapshot.data!.arrhythmiaType == "B") {
-                      type = "Bigeminy";
-                    } else if (snapshot.data!.arrhythmiaType == "VT") {
-                      type = "Ventricular Tachycardia";
-                    } else if (snapshot.data!.arrhythmiaType == "T") {
-                      type = "Trigeminy";
-                    }
-                    return Text(type ?? "");
-                  } else if (snapshot.hasError) {
-                    return Text('${snapshot.error}');
-                  }
-                  return Text("No Type Available");
-                },
-              ),
-            ],
-          ),
+          children: <Widget>[
+            rowPpgTitle(ppg),
+            graphWidget(ppg),
+            rowEcgTitle(ecg),
+            graphWidget(ecg)
+          ],
         ),
       ],
     );
@@ -435,99 +421,147 @@ class _GraphScreenState extends State<GraphScreen> with Constant, Utils, SingleT
               ),
             ),
           ),
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: Visibility(
-                visible: providerGraphDataWatch!.isEnabled,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Column(
-                      children: [
-                        Text.rich(
-                          TextSpan(
-                            children: [
-                              TextSpan(
-                                text: 'HRV: ',
-                                style: TextStyle(fontSize: 12),
-                              ),
-                              TextSpan(
-                                text: providerGraphDataWatch!.avgHrv.round().toString(),
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                              ),
-                              TextSpan(
-                                text: ' $rvUnit',
-                                style: TextStyle(fontSize: 12),
-                              ),
-                            ],
-                          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Visibility(
+              visible: providerGraphDataWatch!.isEnabled,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Column(
+                    children: [
+                      Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'PTT: ',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                            TextSpan(
+                              text: providerGraphDataWatch!.avgPTT
+                                  .toStringAsFixed(4),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 12),
+                            ),
+                          ],
                         ),
-                        Text.rich(
-                          TextSpan(
-                            children: [
-                              TextSpan(
-                                text: 'PRV: ',
-                                style: TextStyle(fontSize: 12),
-                              ),
-                              TextSpan(
-                                text: providerGraphDataWatch!.avgPrv.round().toString(),
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                              ),
-                              TextSpan(
-                                text: ' $rvUnit',
-                                style: TextStyle(fontSize: 12),
-                              )
-                            ],
-                          ),
-                        )
-                      ],
-                    ),
-                    SizedBox(
-                      width: 8,
-                    ),
-                    Column(
-                      children: [
-                        Text.rich(
-                          TextSpan(
-                            children: [
-                              TextSpan(
-                                text: 'BP: ',
-                                style: TextStyle(fontSize: 12),
-                              ),
-                              TextSpan(
-                                text: providerGraphDataWatch!.dBp.round().toString(),
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                              ),
-                              TextSpan(
-                                text: ' $bpUnit',
-                                style: TextStyle(fontSize: 12),
-                              )
-                            ],
-                          ),
+                      ),
+                      Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: '',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                            TextSpan(
+                              text: "",
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                          ],
                         ),
-                        Text.rich(
-                          TextSpan(
-                            children: [
-                              TextSpan(
-                                text: 'DBP: ',
-                                style: TextStyle(fontSize: 12),
-                              ),
-                              TextSpan(
-                                text: providerGraphDataWatch!.dDbp.round().toString(),
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                              ),
-                              TextSpan(
-                                text: ' $bpUnit',
-                                style: TextStyle(fontSize: 12),
-                              )
-                            ],
-                          ),
-                        )
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(
+                    width: 8,
+                  ),
+                  Column(
+                    children: [
+                      Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'HRV: ',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                            TextSpan(
+                              text: providerGraphDataWatch!.avgHrv
+                                  .round()
+                                  .toString(),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                            TextSpan(
+                              text: ' $rvUnit',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'PRV: ',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                            TextSpan(
+                              text: providerGraphDataWatch!.avgPrv
+                                  .round()
+                                  .toString(),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                            TextSpan(
+                              text: ' $rvUnit',
+                              style: TextStyle(fontSize: 12),
+                            )
+                          ],
+                        ),
+                      )
+                    ],
+                  ),
+                  SizedBox(
+                    width: 8,
+                  ),
+                  Column(
+                    children: [
+                      Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'BP: ',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                            TextSpan(
+                              text: providerGraphDataWatch!.dBp
+                                  .round()
+                                  .toString(),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                            TextSpan(
+                              text: ' $bpUnit',
+                              style: TextStyle(fontSize: 12),
+                            )
+                          ],
+                        ),
+                      ),
+                      Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'DBP: ',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                            TextSpan(
+                              text: providerGraphDataWatch!.dDbp
+                                  .round()
+                                  .toString(),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                            TextSpan(
+                              text: ' $bpUnit',
+                              style: TextStyle(fontSize: 12),
+                            )
+                          ],
+                        ),
+                      )
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
@@ -551,6 +585,34 @@ class _GraphScreenState extends State<GraphScreen> with Constant, Utils, SingleT
               ),
             ),
           ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              Text("Type: "),
+              FutureBuilder<ArrhythmiaType>(
+                future: providerGraphDataWatch!.arrhythmia_type,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    if (snapshot.data!.arrhythmiaType == "N") {
+                      type = "Normal";
+                    } else if (snapshot.data!.arrhythmiaType == "B") {
+                      type = "Bigeminy";
+                    } else if (snapshot.data!.arrhythmiaType == "VT") {
+                      type = "Ventricular Tachycardia";
+                    } else if (snapshot.data!.arrhythmiaType == "T") {
+                      type = "Trigeminy";
+                    }
+                    return Text(type ?? "");
+                  } else if (snapshot.hasError) {
+                    return Text('Exception');
+                  }
+                  return Text("No Type Available");
+                },
+              ),
+            ],
+          ),
           Expanded(
             child: Align(
               alignment: Alignment.centerRight,
@@ -568,8 +630,11 @@ class _GraphScreenState extends State<GraphScreen> with Constant, Utils, SingleT
                           style: TextStyle(fontSize: 12),
                         ),
                         TextSpan(
-                          text: providerGraphDataWatch!.stepCount.round().toString(),
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          text: providerGraphDataWatch!.stepCount
+                              .round()
+                              .toString(),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16),
                         ),
                         TextSpan(
                           text: ' steps',
@@ -619,16 +684,20 @@ class _GraphScreenState extends State<GraphScreen> with Constant, Utils, SingleT
             ),
             color: clrDarkBg),
         child: Padding(
-          padding: const EdgeInsets.only(right: 18.0, left: 12.0, top: 24, bottom: 12),
+          padding: const EdgeInsets.only(
+              right: 18.0, left: 12.0, top: 24, bottom: 12),
           child: LineChart(title == ecg
-              ? mainData(providerGraphDataWatch!.tempEcgSpotsListData, providerGraphDataWatch!.tempEcgDecimalList)
-              : mainData(providerGraphDataWatch!.tempPpgSpotsListData, providerGraphDataWatch!.tempPpgDecimalList)),
+              ? mainData(providerGraphDataWatch!.tempEcgSpotsListData,
+                  providerGraphDataWatch!.tempEcgDecimalList)
+              : mainData(providerGraphDataWatch!.tempPpgSpotsListData,
+                  providerGraphDataWatch!.tempPpgDecimalList)),
         ),
       ),
     );
   }
 
-  LineChartData mainData(List<FlSpot> tempSpotsList, List<double> tempDecimalList) {
+  LineChartData mainData(
+      List<FlSpot> tempSpotsList, List<double> tempDecimalList) {
     return LineChartData(
       gridData: FlGridData(
         show: true,
@@ -655,8 +724,10 @@ class _GraphScreenState extends State<GraphScreen> with Constant, Utils, SingleT
           showTitles: true,
           // reservedSize: 22,
           interval: xAxisInterval,
-          getTextStyles: (context, value) =>
-              TextStyle(color: clrBottomTitles, fontWeight: FontWeight.bold, fontSize: 13),
+          getTextStyles: (context, value) => TextStyle(
+              color: clrBottomTitles,
+              fontWeight: FontWeight.bold,
+              fontSize: 13),
           getTitles: (value) {
             return value.toString();
           },
@@ -666,8 +737,12 @@ class _GraphScreenState extends State<GraphScreen> with Constant, Utils, SingleT
         leftTitles: SideTitles(
           showTitles: true,
           interval: tempDecimalList.isNotEmpty
-              ? (tempDecimalList.reduce(max) - tempDecimalList.reduce(min)) / 4 != 0
-                  ? (tempDecimalList.reduce(max) - tempDecimalList.reduce(min)) / 4
+              ? (tempDecimalList.reduce(max) - tempDecimalList.reduce(min)) /
+                          4 !=
+                      0
+                  ? (tempDecimalList.reduce(max) -
+                          tempDecimalList.reduce(min)) /
+                      4
                   : yAxisInterval
               : yAxisInterval,
           getTextStyles: (context, value) => TextStyle(
@@ -682,7 +757,8 @@ class _GraphScreenState extends State<GraphScreen> with Constant, Utils, SingleT
           margin: 8,
         ),
       ),
-      borderData: FlBorderData(show: true, border: Border.all(color: clrGraphLine, width: 1)),
+      borderData: FlBorderData(
+          show: true, border: Border.all(color: clrGraphLine, width: 1)),
       minX: tempSpotsList.isNotEmpty ? tempSpotsList.first.x : 0,
       maxX: tempSpotsList.isNotEmpty ? tempSpotsList.last.x + 1 : 0,
       minY: tempDecimalList.isNotEmpty ? tempDecimalList.reduce(min) : 0,
@@ -690,6 +766,7 @@ class _GraphScreenState extends State<GraphScreen> with Constant, Utils, SingleT
       lineBarsData: [
         LineChartBarData(
           spots: tempSpotsList,
+          show: true,
           isCurved: true,
           // graph shape
           colors: [clrPrimary, clrSecondary],
@@ -724,44 +801,15 @@ class _GraphScreenState extends State<GraphScreen> with Constant, Utils, SingleT
                     ),
                     color: clrDarkBg),
                 child: Padding(
-                  padding: const EdgeInsets.only(right: 18.0, left: 12.0, top: 24, bottom: 12),
+                  padding: const EdgeInsets.only(
+                      right: 18.0, left: 12.0, top: 24, bottom: 12),
                   child: LineChart(mainData(
-                      providerGraphDataWatch!.tempEcgSpotsListData, providerGraphDataWatch!.tempEcgDecimalList)),
+                      providerGraphDataWatch!.tempEcgSpotsListData,
+                      providerGraphDataWatch!.tempEcgDecimalList)),
                 ),
               ),
             ),
           ],
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(0, 15, 200, 0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              Text("Type: "),
-              FutureBuilder<ArrhythmiaType>(
-                future: providerGraphDataWatch!.arrhythmia_type,
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    if (snapshot.data!.arrhythmiaType == "N") {
-                      type = "Normal";
-                    } else if (snapshot.data!.arrhythmiaType == "B") {
-                      type = "Bigeminy";
-                    } else if (snapshot.data!.arrhythmiaType == "VT") {
-                      type = "Ventricular Tachycardia";
-                    } else if (snapshot.data!.arrhythmiaType == "T") {
-                      type = "Trigeminy";
-                    }
-                    return Text(type ?? "");
-                  } else if (snapshot.hasError) {
-                    return Text('${snapshot.error}');
-                  }
-                  return Text("No Type Available");
-                },
-              ),
-            ],
-          ),
         ),
       ],
     );
@@ -781,9 +829,11 @@ class _GraphScreenState extends State<GraphScreen> with Constant, Utils, SingleT
                 ),
                 color: clrDarkBg),
             child: Padding(
-              padding: const EdgeInsets.only(right: 18.0, left: 12.0, top: 24, bottom: 12),
-              child: LineChart(
-                  mainData(providerGraphDataWatch!.tempPpgSpotsListData, providerGraphDataWatch!.tempPpgDecimalList)),
+              padding: const EdgeInsets.only(
+                  right: 18.0, left: 12.0, top: 24, bottom: 12),
+              child: LineChart(mainData(
+                  providerGraphDataWatch!.tempPpgSpotsListData,
+                  providerGraphDataWatch!.tempPpgDecimalList)),
             ),
           ),
         ),
@@ -839,17 +889,72 @@ class _GraphScreenState extends State<GraphScreen> with Constant, Utils, SingleT
 
     row.add("ecg");
     row.add("ppg");
+    row.add("rrIntervalList");
     column.add(row);
 
     await providerGraphDataWatch!.getStoredLocalData();
 
-    for (int i = 0; i < providerGraphDataWatch!.savedEcgLocalDataList.length; i++) {
+    for (int i = 0;
+        i < providerGraphDataWatch!.savedEcgLocalDataList.length;
+        i++) {
       row = [];
       row.add(providerGraphDataWatch!.savedEcgLocalDataList[i]);
       row.add(providerGraphDataWatch!.savedPpgLocalDataList[i]);
+      if (i < providerGraphDataWatch!.savedIntervalList.length) {
+        row.add(providerGraphDataWatch!.savedIntervalList[i]);
+      }
       column.add(row);
     }
+    // if (providerGraphDataWatch!.savedIntervalList.length ==
+    //     providerGraphDataWatch!.savedEcgLocalDataList.length) {
+    //   for (int i = 0;
+    //       i < providerGraphDataWatch!.savedEcgLocalDataList.length;
+    //       i++) {
+    //     row = [];
+    //     row.add(providerGraphDataWatch!.savedEcgLocalDataList[i]);
+    //     row.add(providerGraphDataWatch!.savedPpgLocalDataList[i]);
+    //     row.add(providerGraphDataWatch!.savedIntervalList[i]);
+    //     column.add(row);
+    //   }
+    // } else if (providerGraphDataWatch!.savedIntervalList.length >
+    //     providerGraphDataWatch!.savedEcgLocalDataList.length) {
+    //   for (int i = 0;
+    //       i < providerGraphDataWatch!.savedIntervalList.length;
+    //       i++) {
+    //     row = [];
+    //     if (i <= providerGraphDataWatch!.savedEcgLocalDataList.length) {
+    //       row.add(providerGraphDataWatch!.savedEcgLocalDataList[i]);
+    //       row.add(providerGraphDataWatch!.savedPpgLocalDataList[i]);
+    //     } else {
+    //       //row.add([]);
+    //      // row.add([]);
+    //     }
+    //     row.add(providerGraphDataWatch!.savedIntervalList[i]);
+    //     column.add(row);
+    //   }
+    // } else if (providerGraphDataWatch!.savedIntervalList.length <
+    //     providerGraphDataWatch!.savedEcgLocalDataList.length) {
+    //   for (int i = 0;
+    //       i < providerGraphDataWatch!.savedEcgLocalDataList.length;
+    //       i++) {
+    //     row = [];
+    //     row.add(providerGraphDataWatch!.savedEcgLocalDataList[i]);
+    //     row.add(providerGraphDataWatch!.savedPpgLocalDataList[i]);
+    //     if (i >= providerGraphDataWatch!.savedIntervalList.length) {
+    //       //row.add([]);
+    //     } else {
+    //       row.add(providerGraphDataWatch!.savedIntervalList[i]);
+    //     }
+    //     column.add(row);
+    //   }
+    // }
 
+    // for(int i=0;i<providerGraphDataWatch!.savedIntervalList.length;i++){
+    //   row = [];
+    //   row.add(providerGraphDataWatch!.savedIntervalList[i]);
+    //   column.add(row);
+    // }
+    //column.add(row);
     String csvData = ListToCsvConverter().convert(column);
     final String directory = (await getApplicationSupportDirectory()).path;
     final path = "$directory/csv_graph_data.csv";

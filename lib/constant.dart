@@ -8,8 +8,9 @@ class Constant {
   String writeUuid = "00001525-1212-efde-1523-785feabcd123";
   String writeChangeModeUuid = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
 
-  int yAxisGraphData = 500;
-  double xAxisInterval = 100; //bottom data
+  int yAxisGraphData = 1000;
+ // int yAxisGraphInterval = 200;
+  double xAxisInterval = 200; //bottom data
   double yAxisInterval = 1000; //left data
   int periodicTimeInSec = 800 * 10;
   int filterDataListLength = 4000;
