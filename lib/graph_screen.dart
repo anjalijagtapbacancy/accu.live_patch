@@ -210,10 +210,10 @@ class _GraphScreenState extends State<GraphScreen>
                         providerGraphDataWatch!.setLoading(true);
 
                         await providerGraphDataWatch!.clearStoreDataToLocal();
-                        printLog(
-                            "mainEcgDecimalList.length=== ${providerGraphDataWatch!.mainEcgDecimalList.length}");
-                        printLog(
-                            "mainPpgDecimalList.length=== ${providerGraphDataWatch!.mainPpgDecimalList.length}");
+                        // printLog(
+                        //     "mainEcgDecimalList.length=== ${providerGraphDataWatch!.mainEcgDecimalList.length}");
+                        // printLog(
+                        //     "mainPpgDecimalList.length=== ${providerGraphDataWatch!.mainPpgDecimalList.length}");
                         sub = providerGraphDataWatch!.readCharacteristic!.value
                             .listen((value) {
                           readCharacteristics(value);
@@ -336,17 +336,17 @@ class _GraphScreenState extends State<GraphScreen>
   }
 
   void readCharacteristics(List<int> value) {
-    print("services ${providerGraphDataWatch!.services!.length.toString()}");
+    //print("services ${providerGraphDataWatch!.services!.length.toString()}");
     if (providerGraphDataWatch!.services != null &&
         providerGraphDataWatch!.services!.length > 0) {
       try {
         if (providerGraphDataWatch!.isServiceStarted) {
           print("isServiceStarted");
           if (providerGraphDataWatch!.tabLength == 3) {
-            print("tabLength  iff ${value.toString()}");
+            //print("tabLength  iff ${value.toString()}");
             providerGraphDataWatch!.generateGraphValuesList(value);
           } else {
-            print("tabLength  else ${value}");
+            //print("tabLength  else ${value}");
             providerGraphDataWatch!.getSpo2Data(value);
           }
         }
@@ -396,10 +396,10 @@ class _GraphScreenState extends State<GraphScreen>
         ListView(
           padding: EdgeInsets.only(top: 8, right: 8),
           children: <Widget>[
-            rowPpgTitle(ppg),
-            graphWidget(ppg),
             rowEcgTitle(ecg),
-            graphWidget(ecg)
+            graphWidget(ecg),
+            rowPpgTitle(ppg),
+            graphWidget(ppg)
           ],
         ),
       ],
@@ -715,6 +715,7 @@ class _GraphScreenState extends State<GraphScreen>
           );
         },
       ),
+      clipData: FlClipData.all(),
       titlesData: FlTitlesData(
         show: true,
         rightTitles: SideTitles(showTitles: false),

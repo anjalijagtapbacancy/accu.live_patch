@@ -8,12 +8,13 @@ class Constant {
   String writeUuid = "00001525-1212-efde-1523-785feabcd123";
   String writeChangeModeUuid = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
 
-  int yAxisGraphData = 1000;
+  int yAxisGraphData = 500;
  // int yAxisGraphInterval = 200;
   double xAxisInterval = 200; //bottom data
   double yAxisInterval = 1000; //left data
-  int periodicTimeInSec = 800 * 10;
+  int periodicTimeInSec = 8000;
   int filterDataListLength = 4000;
+  int filterDataListLength1 = 1600;
 
   String ppg = "PPG";
   String ecg = "ECG";
@@ -25,7 +26,7 @@ class Constant {
   String bpUnit = "mmHg";
   String rvUnit = "ms";
 
-  String fastAPI = "http://caad-34-125-81-93.ngrok.io";
+  String fastAPI = "http://66.94.110.161:8001";
 
   String strNoDeviceConnected = "No device connected";
   String strConnect = "Connect";

@@ -289,7 +289,7 @@ class _DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils 
       print("discoverd values");
       providerGraphDataWatch!.setConnectedDevice(device, context, services);
       Future.delayed(Duration(milliseconds: 200));
-      providerGraphDataWatch!.TrainModelForType();
+      //providerGraphDataWatch!.TrainModelForType();
       readCharacteristics();
       providerGraphDataWatch!.setLoading(false);
       showDialog(barrierDismissible: false, context: context, builder: (BuildContext context) => Choice());
