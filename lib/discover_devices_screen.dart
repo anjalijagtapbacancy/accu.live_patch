@@ -4,12 +4,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bluetooth_connection/constant.dart';
-import 'package:flutter_bluetooth_connection/main.dart';
+
 import 'package:flutter_bluetooth_connection/progressbar.dart';
+import 'package:bluetooth_enable_fork/bluetooth_enable_fork.dart';
 import 'package:flutter_bluetooth_connection/provider_graph_data.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'package:flutter_bluetooth_connection/utils.dart';
-import 'package:location/location.dart';
 import 'package:provider/provider.dart';
 import 'graph_screen.dart';
 
@@ -17,17 +17,18 @@ class DiscoverDevices extends StatefulWidget {
   DiscoverDevices({Key? key}) : super(key: key);
 
   @override
-  _DiscoverDevicesState createState() => _DiscoverDevicesState();
+  DiscoverDevicesState createState() => DiscoverDevicesState();
 }
 
-class _DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
+class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
   ProviderGraphData? providerGraphDataRead;
   ProviderGraphData? providerGraphDataWatch;
   final FlutterBlue flutterBlue = FlutterBlue.instance;
   var sub;
   String? choice = "ECG & PPG";
-  StreamSubscription? bluetoothConnSub;
+
   StreamSubscription? connDeviceSub;
+  StreamSubscription? bluetoothConnSub;
 
   @override
   void initState() {
@@ -35,20 +36,8 @@ class _DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils 
 
     SchedulerBinding.instance!.addPostFrameCallback((_) {
       providerGraphDataRead = context.read<ProviderGraphData>();
-      bluetoothConnSub = flutterBlue.state.listen((event) {
-        switch (event) {
-          case BluetoothState.on:
-            showToast("Bluettoth on");
-            scanDevices();
-            break;
-          case BluetoothState.off:
-            showToast("Bluettoth off");
-            setUpBluetooth();
-            break;
-
-          default:
-        }
-      });
+      chechBluetooth();
+      providerGraphDataRead!.enableLocation();
 
       connDeviceSub = providerGraphDataRead!.connectedDevice!.state.listen((event) async {
         showToast("device event ${event.toString()}");
@@ -99,7 +88,9 @@ class _DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils 
                     providerGraphDataWatch!.setLoading(true);
                     providerGraphDataWatch!.setIsScanning(true);
                     providerGraphDataWatch!.setLoading(false);
+                    chechBluetooth();
                     providerGraphDataWatch!.enableLocation();
+                    providerGraphDataWatch!.devicesList.clear();
                     await this.flutterBlue.startScan();
                   }
                 }
@@ -180,7 +171,28 @@ class _DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils 
       ),
     );
   }
+  void chechBluetooth(){
+    bluetoothConnSub = flutterBlue.state.listen((event) async {
+      switch (event) {
+        case BluetoothState.on:
+          Utils().showToast("Bluetooth on");
+         // if(providerGraphDataWatch!.isLocServiceEnabled)
+          scanDevices();
+          break;
+        case BluetoothState.off:
+          Utils().showToast("Bluetooth off");
+          enableBT();
+          break;
 
+        default:
+      }
+    });
+  }
+  Future<void> enableBT() async {
+    BluetoothEnable.enableBluetooth.then((value) {
+      print(value);
+    });
+  }
   void setUpBluetooth() {
     this.flutterBlue.isOn.then((value) {
       providerGraphDataWatch!.enableLocation();
@@ -250,21 +262,23 @@ class _DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils 
   }
 
   void scanDevices() {
-    providerGraphDataWatch!.setLoading(true);
+   // if(providerGraphDataWatch!=null) {
+      providerGraphDataWatch!.setLoading(true);
 
-    this.flutterBlue.scanResults.listen((List<ScanResult> results) {
-      // printLog("  scan result length devices ${results.length}");
-      for (ScanResult result in results) {
-        // printLog("  scanResults ${result.device}");
-        if (result.device.name.toLowerCase().contains(displayDeviceString)) {
-          providerGraphDataWatch!.setDeviceList(result.device);
+      this.flutterBlue.scanResults.listen((List<ScanResult> results) {
+        // printLog("  scan result length devices ${results.length}");
+        for (ScanResult result in results) {
+          // printLog("  scanResults ${result.device}");
+          if (result.device.name.toLowerCase().contains(displayDeviceString)) {
+            providerGraphDataWatch!.setDeviceList(result.device);
+          }
         }
-      }
-    });
-    providerGraphDataWatch!.setLoading(false);
+      });
+      providerGraphDataWatch!.setLoading(false);
 
-    this.flutterBlue.startScan();
-    providerGraphDataWatch!.setIsScanning(true);
+      this.flutterBlue.startScan();
+      providerGraphDataWatch!.setIsScanning(true);
+  //  }
   }
 
   void connectDevice(BluetoothDevice device) async {
@@ -289,7 +303,6 @@ class _DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils 
       print("discoverd values");
       providerGraphDataWatch!.setConnectedDevice(device, context, services);
       Future.delayed(Duration(milliseconds: 200));
-      //providerGraphDataWatch!.TrainModelForType();
       readCharacteristics();
       providerGraphDataWatch!.setLoading(false);
       showDialog(barrierDismissible: false, context: context, builder: (BuildContext context) => Choice());
@@ -343,7 +356,7 @@ class _DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils 
   Dialog Choice() {
     return Dialog(
       child: Container(
-        height: 100,
+        height: 200,
         width: 100,
         child: Padding(
           padding: const EdgeInsets.all(10.0),

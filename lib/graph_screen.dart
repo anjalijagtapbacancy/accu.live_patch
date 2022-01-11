@@ -450,11 +450,11 @@ class _GraphScreenState extends State<GraphScreen>
                         TextSpan(
                           children: [
                             TextSpan(
-                              text: '',
+                              text: 'BpRt:',
                               style: TextStyle(fontSize: 12),
                             ),
                             TextSpan(
-                              text: "",
+                              text: ProviderGraphData.BpFromRt.toString(),
                               style: TextStyle(
                                   fontWeight: FontWeight.bold, fontSize: 16),
                             ),
@@ -659,7 +659,7 @@ class _GraphScreenState extends State<GraphScreen>
                   style: TextStyle(fontSize: 12),
                 ),
                 TextSpan(
-                  text: providerGraphDataWatch!.heartRate.round().toString(),
+                  text: "${providerGraphDataWatch!.heartRate.round().toString()}",
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 TextSpan(

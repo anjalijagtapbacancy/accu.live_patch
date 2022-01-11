@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_bluetooth_connection/provider_graph_data.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 class Constant {
@@ -13,7 +14,7 @@ class Constant {
   double xAxisInterval = 200; //bottom data
   double yAxisInterval = 1000; //left data
   int periodicTimeInSec = 8000;
-  int filterDataListLength = 4000;
+  static int filterDataListLength = 4000;
   int filterDataListLength1 = 1600;
 
   String ppg = "PPG";
@@ -26,14 +27,14 @@ class Constant {
   String bpUnit = "mmHg";
   String rvUnit = "ms";
 
-  String fastAPI = "http://66.94.110.161:8001";
+  static String fastAPI = "http://66.94.110.161:8001";
 
   String strNoDeviceConnected = "No device connected";
   String strConnect = "Connect";
   String displayDeviceString = "nordic";
   String strNoDevicesAvailable = "No devices are available";
   String strAvailableDevices = "Available Devices";
-
+  static ProviderGraphData providerGraphData =new ProviderGraphData();
   static Map<int, Color> color = {
     50: Color.fromRGBO(35, 182, 230, .1),
     100: Color.fromRGBO(35, 182, 230, .2),
