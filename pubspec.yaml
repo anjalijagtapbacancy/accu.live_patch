@@ -21,17 +21,29 @@ environment:
   sdk: ">=2.12.0 <3.0.0"
 
 dependencies:
+  # bluetooth_enable: ^0.1.1
   csv: ^5.0.0
   cupertino_icons: ^1.0.2
   fl_chart: ^0.40.2
   flutter:
     sdk: flutter
   flutter_blue: ^0.8.0
+  flutter_launcher_icons: ^0.9.2
+  fluttertoast: ^8.0.8
   hive: ^2.0.4
+  http: ^0.13.3
+  location: ^4.3.0
   path_provider: null
   permission_handler: null
   provider: ^6.0.1
+  scidart: ^0.0.2-dev.6
   share: ^2.0.4
+  bluetooth_enable_fork: ^0.1.4
+
+flutter_icons:
+  image_path: "assets/images/app_icon.jpg"
+  android: true
+  ios: true
 
 dev_dependencies:
   flutter_test:
@@ -47,8 +59,8 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
+  assets:
+    - assets/images/
   #   - images/a_dot_ham.jpeg
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
