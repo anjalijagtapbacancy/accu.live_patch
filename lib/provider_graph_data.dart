@@ -134,6 +134,11 @@ class ProviderGraphData with ChangeNotifier, Constant {
   // SgFilter filter = new SgFilter(3, frameLength);
 
   clearProviderGraphData() {
+    BpFromRt=0;
+    avgHrv = 0;
+    avgPrv = 0;
+    dBp = 0;
+    dDbp = 0;
     arrhythmia_type=null;
     tabSelectedIndex = 0;
     devicesList.clear();
@@ -349,6 +354,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
   clearStoreDataToLocal() async {
     //stepCount = 0;
+    BpFromRt=0;
     arrhythmia_type=null;
     avgHrv = 0;
     avgPrv = 0;
@@ -403,12 +409,8 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
   void generateGraphValuesList(List<int>? valueList) async {
     if (valueList != null && valueList.length > 0) {
-      // if(valueList.length>101) {
-      //   printLog("valueList.lengh1 ${valueList.length}");
-      //   valueList.removeRange(102, valueList.length - 1);
-      // }
-      //printLog("valueList ${valueList.toList()}");
-      //printLog("valueList.lengh ${valueList.length}");
+      printLog("valueList ${valueList.toList()}");
+      printLog("valueList.lengh ${valueList.length}");
       List<int>? stepCountList = [
         valueList[valueList.length - 2],
         valueList[valueList.length - 1]
@@ -660,12 +662,18 @@ class ProviderGraphData with ChangeNotifier, Constant {
       rrIntervalList1.add(0);
     }
 
-    //printLog("totalOfPeaksEcg1  " +totalOfPeaksEcg1.toString() +" avg1 " +(totalOfPeaksEcg1 / (peaksPositionsEcgArray1.length)).toString());
+    printLog("totalOfPeaksEcg1  " +totalOfPeaksEcg1.toString() +" avg1 " +(totalOfPeaksEcg1 / (peaksPositionsEcgArray1.length)).toString());
     double avgPeak = (totalOfPeaksEcg1 / (peaksPositionsEcgArray1.length));
-    // if (avgPeak.isInfinite || avgPeak.isNaN) {
-    //   avgPeak = 1;
-    // }
-    heartRate = (60 / avgPeak).round();
+    if (avgPeak.isInfinite || avgPeak.isNaN) {
+      heartRate=0;
+    }else {
+      if ((60 / avgPeak).round() > 200) {
+        heartRate = 200;
+      } else {
+        heartRate = (60 / avgPeak).round();
+      }
+    }
+    print("heartRate $heartRate");
     // notifyListeners();
     } catch (Exception) {
       print("Exception ecg ${Exception.toString()}");
@@ -818,7 +826,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
       }
       //print("rrIntervalList $rrIntervalList");
 
-      if (rrIntervalList == []) {
+      if (rrIntervalList.isEmpty) {
         rrIntervalList.add(0);
       }
       data=[rrIntervalList.average];
@@ -829,14 +837,18 @@ class ProviderGraphData with ChangeNotifier, Constant {
       }
       //arrhythmia_type = GetArrthmiaType(rrIntervalList);
 
-      //print("totalOfPeaksEcg  " + totalOfPeaksEcg.toString() + " avg " + (totalOfPeaksEcg / (R_peaksPositionsEcgArray.length)).toString());
+      print("totalOfPeaksEcg  " + totalOfPeaksEcg.toString() + " avg " + (totalOfPeaksEcg / (R_peaksPositionsEcgArray.length)).toString());
       double avgPeak = (totalOfPeaksEcg / (R_peaksPositionsEcgArray.length));
-      // if (avgPeak.isInfinite || avgPeak.isNaN) {
-      //   avgPeak = 1;
-      // }
-      //print("end");
-      heartRate = (60 / avgPeak).round();
-      // print("heartRate1 $heartRate  arrhythmia_type1 ${arrhythmia_type}");
+      if (avgPeak.isInfinite || avgPeak.isNaN) {
+        heartRate=0;
+      }else {
+        if ((60 / avgPeak).round() > 200) {
+          heartRate = 200;
+        } else {
+          heartRate = (60 / avgPeak).round();
+        }
+      }
+      print("heartRate $heartRate");
       //heartRate=heartRate1;
       // Constant.providerGraphData.arrhythmia_type=arrhythmia_type;
       //print("before RtInterval");

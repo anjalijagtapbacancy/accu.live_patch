@@ -10,13 +10,13 @@ class Constant {
   String writeChangeModeUuid = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
   String csvFilePath="assets/datasets/all_samples_training.csv";
   String rrIntervalFilePath="assets/datasets/rrInterval.csv";
-  int yAxisGraphData = 500;
+  int yAxisGraphData = 500;//500
  // int yAxisGraphInterval = 200;
   double xAxisInterval = 200; //bottom data
-  double yAxisInterval = 1000; //left data
-  int periodicTimeInSec = 8000;
-  static int filterDataListLength = 4000;
-  int filterDataListLength1 = 1600;
+  double yAxisInterval = 1000; //left data`
+  int periodicTimeInSec = 8100;//8000,7200
+  static int filterDataListLength = 4050;//4000,3600
+  int filterDataListLength1 = 1620;//1600,1440
 
   String ppg = "PPG";
   String ecg = "ECG";
@@ -24,15 +24,16 @@ class Constant {
   String spo2 = "Spo2";
   String strHeartRate = "Heart Rate:";
   String strStepCount = "Step Count:";
+  String strBpRt = "BPfromECG:";
   String heartRateUnit = "BPM";
   String bpUnit = "mmHg";
   String rvUnit = "ms";
 
-  static String fastAPI = "http://66.94.110.161:8001";
+ // static String fastAPI = "http://66.94.110.161:8001";
 
   String strNoDeviceConnected = "No device connected";
   String strConnect = "Connect";
-  String displayDeviceString = "nordic";
+  String displayDeviceString = "bacancy";
   String strNoDevicesAvailable = "No devices are available";
   String strAvailableDevices = "Available Devices";
   static ProviderGraphData providerGraphData =new ProviderGraphData();

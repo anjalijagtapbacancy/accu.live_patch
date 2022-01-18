@@ -5,7 +5,7 @@ import 'package:flutter_blue/flutter_blue.dart';
 import 'package:flutter_bluetooth_connection/provider_graph_data.dart';
 import 'dart:io';
 import 'dart:math';
-
+import 'package:flutter/services.dart';
 import 'package:csv/csv.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bluetooth_connection/constant.dart';
@@ -50,7 +50,7 @@ class _GraphScreenState extends State<GraphScreen>
   @override
   void initState() {
     super.initState();
-
+    //landscape();
     // Create TabController for getting the index of current tab
     /*  _controller = TabController(
         length: providerGraphDataWatch != null ? providerGraphDataWatch!.tabLength :  3, vsync: this);
@@ -112,7 +112,7 @@ class _GraphScreenState extends State<GraphScreen>
         backgroundColor: clrDarkBg,
         appBar: AppBar(
           bottom: new PreferredSize(
-              preferredSize: new Size(200.0, 20.0),
+              preferredSize: new Size(200.0, 0.0),
               child: new Container(
                 height: 32.0,
                 child: TabBar(
@@ -140,31 +140,30 @@ class _GraphScreenState extends State<GraphScreen>
             //               }
             //             }),
             //       ),
-
+            //
+            // Visibility(
+            //   visible: !(providerGraphDataWatch!.connectedDevice != null),
+            //   // visible: false,
+            //   child: IconButton(
+            //       icon: Icon(
+            //         // providerGraphDataWatch!.isEnabled ? "Disabled" : "Enabled",
+            //         providerGraphDataWatch!.isShowAvailableDevices
+            //             ? Icons.bluetooth_disabled
+            //             : Icons.bluetooth_audio,
+            //         color: clrWhite,
+            //       ),
+            //       onPressed: () {
+            //         if (!providerGraphDataWatch!.isLoading) {
+            //           providerGraphDataWatch!.setIsShowAvailableDevices();
+            //         }
+            //       }),
+            // ),
             Visibility(
-              visible: !(providerGraphDataWatch!.connectedDevice != null),
-              // visible: false,
-              child: IconButton(
-                  icon: Icon(
-                    // providerGraphDataWatch!.isEnabled ? "Disabled" : "Enabled",
-                    providerGraphDataWatch!.isShowAvailableDevices
-                        ? Icons.bluetooth_disabled
-                        : Icons.bluetooth_audio,
-                    color: clrWhite,
-                  ),
-                  onPressed: () {
-                    if (!providerGraphDataWatch!.isLoading) {
-                      providerGraphDataWatch!.setIsShowAvailableDevices();
-                    }
-                  }),
-            ),
-            Visibility(
-              visible: providerGraphDataWatch!.isServiceStarted &&
-                  providerGraphDataWatch!.tempEcgDecimalList.isNotEmpty,
+              visible: (!providerGraphDataWatch!.isServiceStarted),
               // visible: false,
               child: TextButton(
                   child: Text(
-                    providerGraphDataWatch!.isEnabled ? "Disabled" : "Enabled",
+                    providerGraphDataWatch!.isEnabled ? "Disable" : "Enable",
                     style: TextStyle(color: clrWhite),
                   ),
                   onPressed: () {
@@ -344,6 +343,15 @@ class _GraphScreenState extends State<GraphScreen>
           //print("isServiceStarted");
           if (providerGraphDataWatch!.tabLength == 3) {
             //print("tabLength  iff ${value.toString()}");
+            // List<int> temp_value;
+            // printLog("value.lengh1 ${value.length}");
+            // if(value.length>102) {
+            //   temp_value=value.getRange(0,102).toList();
+            // }
+            // else {
+            //   temp_value = value;
+            // }
+            // printLog("temp_value.lengh2 ${temp_value.length}");
             providerGraphDataWatch!.generateGraphValuesList(value);
           } else {
             //print("tabLength  else ${value}");
@@ -421,6 +429,9 @@ class _GraphScreenState extends State<GraphScreen>
               ),
             ),
           ),
+          SizedBox(
+            width: 160,
+          ),
           Align(
             alignment: Alignment.centerRight,
             child: Visibility(
@@ -450,49 +461,6 @@ class _GraphScreenState extends State<GraphScreen>
                         TextSpan(
                           children: [
                             TextSpan(
-                              text: 'BpRt:',
-                              style: TextStyle(fontSize: 12),
-                            ),
-                            TextSpan(
-                              text: providerGraphDataWatch!.BpFromRt.toString(),
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(
-                    width: 8,
-                  ),
-                  Column(
-                    children: [
-                      Text.rich(
-                        TextSpan(
-                          children: [
-                            TextSpan(
-                              text: 'HRV: ',
-                              style: TextStyle(fontSize: 12),
-                            ),
-                            TextSpan(
-                              text: providerGraphDataWatch!.avgHrv
-                                  .round()
-                                  .toString(),
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16),
-                            ),
-                            TextSpan(
-                              text: ' $rvUnit',
-                              style: TextStyle(fontSize: 12),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Text.rich(
-                        TextSpan(
-                          children: [
-                            TextSpan(
                               text: 'PRV: ',
                               style: TextStyle(fontSize: 12),
                             ),
@@ -510,10 +478,74 @@ class _GraphScreenState extends State<GraphScreen>
                           ],
                         ),
                       )
+                      // Text.rich(
+                      //   TextSpan(
+                      //     children: [
+                      //       TextSpan(
+                      //         text: 'BpRt:',
+                      //         style: TextStyle(fontSize: 12),
+                      //       ),
+                      //       TextSpan(
+                      //         text: providerGraphDataWatch!.BpFromRt.toString(),
+                      //         style: TextStyle(
+                      //             fontWeight: FontWeight.bold, fontSize: 16),
+                      //       ),
+                      //     ],
+                      //   ),
+                      // ),
                     ],
                   ),
+                  // SizedBox(
+                  //   width: 8,
+                  // ),
+                  // Column(
+                  //   children: [
+                  //     // Text.rich(
+                  //     //   TextSpan(
+                  //     //     children: [
+                  //     //       TextSpan(
+                  //     //         text: 'HRV: ',
+                  //     //         style: TextStyle(fontSize: 12),
+                  //     //       ),
+                  //     //       TextSpan(
+                  //     //         text: providerGraphDataWatch!.avgHrv
+                  //     //             .round()
+                  //     //             .toString(),
+                  //     //         style: TextStyle(
+                  //     //             fontWeight: FontWeight.bold, fontSize: 16),
+                  //     //       ),
+                  //     //       TextSpan(
+                  //     //         text: ' $rvUnit',
+                  //     //         style: TextStyle(fontSize: 12),
+                  //     //       ),
+                  //     //     ],
+                  //     //   ),
+                  //     // ),
+                  //     Text.rich(
+                  //       TextSpan(
+                  //         children: [
+                  //           TextSpan(
+                  //             text: 'PRV: ',
+                  //             style: TextStyle(fontSize: 12),
+                  //           ),
+                  //           TextSpan(
+                  //             text: providerGraphDataWatch!.avgPrv
+                  //                 .round()
+                  //                 .toString(),
+                  //             style: TextStyle(
+                  //                 fontWeight: FontWeight.bold, fontSize: 16),
+                  //           ),
+                  //           TextSpan(
+                  //             text: ' $rvUnit',
+                  //             style: TextStyle(fontSize: 12),
+                  //           )
+                  //         ],
+                  //       ),
+                  //     )
+                  //   ],
+                  // ),
                   SizedBox(
-                    width: 8,
+                    width: 10,
                   ),
                   Column(
                     children: [
@@ -585,46 +617,60 @@ class _GraphScreenState extends State<GraphScreen>
               ),
             ),
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              providerGraphDataWatch!.arrhythmia_type != null
-                  ? Text("Type: ${providerGraphDataWatch!.arrhythmia_type}")
-                  : Text("Type: No Type Available"),
-              // FutureBuilder<ArrhythmiaType>(
-              //   future: providerGraphDataWatch!.arrhythmia_type,
-              //   builder: (context, snapshot) {
-              //     if (snapshot.hasData) {
-              //       if (snapshot.data!.arrhythmiaType == "N") {
-              //         type = "Normal";
-              //       } else if (snapshot.data!.arrhythmiaType == "B") {
-              //         type = "Bigeminy";
-              //       } else if (snapshot.data!.arrhythmiaType == "VT") {
-              //         type = "Ventricular Tachycardia";
-              //       } else if (snapshot.data!.arrhythmiaType == "T") {
-              //         type = "Trigeminy";
-              //       }
-              //       return Text(type ?? "");
-              //     } else if (snapshot.hasError) {
-              //       return Text('Exception');
-              //     }
-              //     return Text("No Type Available");
-              //   },
-              // ),
-            ],
+          Visibility(
+            visible: providerGraphDataWatch!.isEnabled
+            // &&
+            // providerGraphDataWatch!.heartRate < 150 &&
+            // providerGraphDataWatch!.heartRate > 60
+            ,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                providerGraphDataWatch!.arrhythmia_type != null
+                    ? Text(
+                        "Arrhythmia Type: ${providerGraphDataWatch!.arrhythmia_type}")
+                    : Text("Arrhythmia Type: No Type Available"),
+                // FutureBuilder<ArrhythmiaType>(
+                //   future: providerGraphDataWatch!.arrhythmia_type,
+                //   builder: (context, snapshot) {
+                //     if (snapshot.hasData) {
+                //       if (snapshot.data!.arrhythmiaType == "N") {
+                //         type = "Normal";
+                //       } else if (snapshot.data!.arrhythmiaType == "B") {
+                //         type = "Bigeminy";
+                //       } else if (snapshot.data!.arrhythmiaType == "VT") {
+                //         type = "Ventricular Tachycardia";
+                //       } else if (snapshot.data!.arrhythmiaType == "T") {
+                //         type = "Trigeminy";
+                //       }
+                //       return Text(type ?? "");
+                //     } else if (snapshot.hasError) {
+                //       return Text('Exception');
+                //     }
+                //     return Text("No Type Available");
+                //   },
+                // ),
+              ],
+            ),
           ),
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: Visibility(
-                  visible: providerGraphDataWatch!.isEnabled
-                  // &&
-                  // providerGraphDataWatch!.heartRate < 150 &&
-                  // providerGraphDataWatch!.heartRate > 60
-                  ,
-                  child: Text.rich(
+          SizedBox(
+            width: 20,
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Visibility(
+              visible: providerGraphDataWatch!.isEnabled
+              // &&
+              // providerGraphDataWatch!.heartRate < 150 &&
+              // providerGraphDataWatch!.heartRate > 60
+              ,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text.rich(
                     TextSpan(
                       children: [
                         TextSpan(
@@ -644,34 +690,89 @@ class _GraphScreenState extends State<GraphScreen>
                         )
                       ],
                     ),
-                  )),
+                  ),
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: '$strBpRt ',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                        TextSpan(
+                          text: providerGraphDataWatch!.BpFromRt.toString(),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        TextSpan(
+                          text: ' $bpUnit',
+                          style: TextStyle(fontSize: 12),
+                        )
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           SizedBox(
-            width: 8,
+            width: 10,
           ),
-          Visibility(
-              // visible: providerGraphDataWatch!.isEnabled,
-
-              child: Text.rich(
-            TextSpan(
-              children: [
-                TextSpan(
-                  text: '$strHeartRate ',
-                  style: TextStyle(fontSize: 12),
-                ),
-                TextSpan(
-                  text:
-                      "${providerGraphDataWatch!.heartRate.round().toString()}",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                TextSpan(
-                  text: ' $heartRateUnit',
-                  style: TextStyle(fontSize: 12),
-                )
-              ],
+          Align(
+            alignment: Alignment.centerRight,
+            child: Visibility(
+              visible: providerGraphDataWatch!.isEnabled
+              // &&
+              // providerGraphDataWatch!.heartRate < 150 &&
+              // providerGraphDataWatch!.heartRate > 60
+              ,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: '$strHeartRate ',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                        TextSpan(
+                          text:
+                              "${providerGraphDataWatch!.heartRate.round().toString()}",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        TextSpan(
+                          text: ' $heartRateUnit',
+                          style: TextStyle(fontSize: 12),
+                        )
+                      ],
+                    ),
+                  ),
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'HRV: ',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                        TextSpan(
+                          text:
+                              providerGraphDataWatch!.avgHrv.round().toString(),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        TextSpan(
+                          text: ' $rvUnit',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          )),
+          ),
         ],
       ),
     );
@@ -688,7 +789,7 @@ class _GraphScreenState extends State<GraphScreen>
             color: clrDarkBg),
         child: Padding(
           padding: const EdgeInsets.only(
-              right: 18.0, left: 12.0, top: 24, bottom: 12),
+              right: 10.0, left: 5.0, top: 10, bottom: 0),
           child: LineChart(title == ecg
               ? mainData(providerGraphDataWatch!.tempEcgSpotsListData,
                   providerGraphDataWatch!.tempEcgDecimalList)
@@ -806,7 +907,7 @@ class _GraphScreenState extends State<GraphScreen>
                     color: clrDarkBg),
                 child: Padding(
                   padding: const EdgeInsets.only(
-                      right: 18.0, left: 12.0, top: 24, bottom: 12),
+                      right: 10.0, left: 5.0, top: 5, bottom: 45),
                   child: LineChart(mainData(
                       providerGraphDataWatch!.tempEcgSpotsListData,
                       providerGraphDataWatch!.tempEcgDecimalList)),
@@ -834,7 +935,7 @@ class _GraphScreenState extends State<GraphScreen>
                 color: clrDarkBg),
             child: Padding(
               padding: const EdgeInsets.only(
-                  right: 18.0, left: 12.0, top: 24, bottom: 12),
+                  right: 10.0, left: 5.0, top: 5, bottom: 45),
               child: LineChart(mainData(
                   providerGraphDataWatch!.tempPpgSpotsListData,
                   providerGraphDataWatch!.tempPpgDecimalList)),
@@ -983,5 +1084,14 @@ class _GraphScreenState extends State<GraphScreen>
     await file.writeAsString(csvData);
     providerGraphDataWatch!.setLoading(false);
     Share.shareFiles(['${file.path}'], text: 'peaksPositionsPpgArray csv');*/
+  }
+
+  void landscape() async {
+    await SystemChrome.setPreferredOrientations(
+      [
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ],
+    );
   }
 }

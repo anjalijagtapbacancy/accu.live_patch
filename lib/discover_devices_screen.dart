@@ -303,7 +303,7 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
       // if (e.code != 'already_connected') {
       //   throw e;
       // }
-      printLog(e.toString());
+      printLog("Exception ${e.toString()}");
       providerGraphDataWatch!.setLoading(false);
     } finally {
       List<BluetoothService> services = [];
@@ -366,12 +366,10 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
   Dialog Choice() {
     return Dialog(
       child: Container(
-        height: 200,
+        height: 150,
         width: 100,
-        child: Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+        child: Column(
+            mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -436,8 +434,7 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
               ),
             ],
           ),
-        ),
-      ), /* PopupMenuButton(
+        ), /* PopupMenuButton(
             onSelected: (value) {
               if (value == 1) {
                 choice = ecgNppg;
