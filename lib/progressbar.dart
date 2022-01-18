@@ -8,7 +8,7 @@ class ProgressBar extends StatelessWidget with Constant {
   @override
   Widget build(BuildContext context) {
     return AbsorbPointer(
-        absorbing: true,
+        absorbing: false,
         child: Container(
           height: MediaQuery.of(context).size.height,
           width: MediaQuery.of(context).size.width,

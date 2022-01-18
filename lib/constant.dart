@@ -8,7 +8,8 @@ class Constant {
   String readUuid = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
   String writeUuid = "00001525-1212-efde-1523-785feabcd123";
   String writeChangeModeUuid = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
-
+  String csvFilePath="assets/datasets/all_samples_training.csv";
+  String rrIntervalFilePath="assets/datasets/rrInterval.csv";
   int yAxisGraphData = 500;
  // int yAxisGraphInterval = 200;
   double xAxisInterval = 200; //bottom data

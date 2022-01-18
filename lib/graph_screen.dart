@@ -341,7 +341,7 @@ class _GraphScreenState extends State<GraphScreen>
         providerGraphDataWatch!.services!.length > 0) {
       try {
         if (providerGraphDataWatch!.isServiceStarted) {
-          print("isServiceStarted");
+          //print("isServiceStarted");
           if (providerGraphDataWatch!.tabLength == 3) {
             //print("tabLength  iff ${value.toString()}");
             providerGraphDataWatch!.generateGraphValuesList(value);
@@ -454,7 +454,7 @@ class _GraphScreenState extends State<GraphScreen>
                               style: TextStyle(fontSize: 12),
                             ),
                             TextSpan(
-                              text: ProviderGraphData.BpFromRt.toString(),
+                              text: providerGraphDataWatch!.BpFromRt.toString(),
                               style: TextStyle(
                                   fontWeight: FontWeight.bold, fontSize: 16),
                             ),
@@ -590,27 +590,29 @@ class _GraphScreenState extends State<GraphScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.max,
             children: [
-              Text("Type: "),
-              FutureBuilder<ArrhythmiaType>(
-                future: providerGraphDataWatch!.arrhythmia_type,
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    if (snapshot.data!.arrhythmiaType == "N") {
-                      type = "Normal";
-                    } else if (snapshot.data!.arrhythmiaType == "B") {
-                      type = "Bigeminy";
-                    } else if (snapshot.data!.arrhythmiaType == "VT") {
-                      type = "Ventricular Tachycardia";
-                    } else if (snapshot.data!.arrhythmiaType == "T") {
-                      type = "Trigeminy";
-                    }
-                    return Text(type ?? "");
-                  } else if (snapshot.hasError) {
-                    return Text('Exception');
-                  }
-                  return Text("No Type Available");
-                },
-              ),
+              providerGraphDataWatch!.arrhythmia_type != null
+                  ? Text("Type: ${providerGraphDataWatch!.arrhythmia_type}")
+                  : Text("Type: No Type Available"),
+              // FutureBuilder<ArrhythmiaType>(
+              //   future: providerGraphDataWatch!.arrhythmia_type,
+              //   builder: (context, snapshot) {
+              //     if (snapshot.hasData) {
+              //       if (snapshot.data!.arrhythmiaType == "N") {
+              //         type = "Normal";
+              //       } else if (snapshot.data!.arrhythmiaType == "B") {
+              //         type = "Bigeminy";
+              //       } else if (snapshot.data!.arrhythmiaType == "VT") {
+              //         type = "Ventricular Tachycardia";
+              //       } else if (snapshot.data!.arrhythmiaType == "T") {
+              //         type = "Trigeminy";
+              //       }
+              //       return Text(type ?? "");
+              //     } else if (snapshot.hasError) {
+              //       return Text('Exception');
+              //     }
+              //     return Text("No Type Available");
+              //   },
+              // ),
             ],
           ),
           Expanded(
@@ -659,7 +661,8 @@ class _GraphScreenState extends State<GraphScreen>
                   style: TextStyle(fontSize: 12),
                 ),
                 TextSpan(
-                  text: "${providerGraphDataWatch!.heartRate.round().toString()}",
+                  text:
+                      "${providerGraphDataWatch!.heartRate.round().toString()}",
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 TextSpan(
