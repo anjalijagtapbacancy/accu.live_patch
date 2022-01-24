@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_connection/provider_graph_data.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 
 class Constant {
   String appName = "Bacancy Medical";

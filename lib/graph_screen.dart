@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_blue/flutter_blue.dart';
@@ -17,7 +18,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share/share.dart';
 
-import 'ModelClass/Prediction.dart';
 import 'constant.dart';
 
 class GraphScreen extends StatefulWidget {
@@ -98,6 +98,7 @@ class _GraphScreenState extends State<GraphScreen>
     }
     bluetoothConnSub!.cancel();
     connDeviceSub!.cancel();
+    providerGraphDataWatch!.setisFirst(true);
     providerGraphDataWatch!.clearProviderGraphData();
     super.dispose();
   }
@@ -188,11 +189,12 @@ class _GraphScreenState extends State<GraphScreen>
                         } catch (err) {
                           printLog("notfy err ${err.toString()}");
                         }
-
+                        providerGraphDataWatch!.setisFirst(true);
                         providerGraphDataWatch!.setLoading(true);
                         printLog("stop service");
 
                         //stop service
+                        //providerGraphDataWatch!.writeCharacteristic!.write([0]);
                         providerGraphDataWatch!.writeCharacteristic!.write([0]);
                         if (sub != null) {
                           sub.cancel();
@@ -218,6 +220,7 @@ class _GraphScreenState extends State<GraphScreen>
                           readCharacteristics(value);
                         });
                         // start service
+                        //providerGraphDataWatch!.writeCharacteristic!.write([1]);
                         providerGraphDataWatch!.writeCharacteristic!.write([1]);
                         printLog("start service");
                         // ignore: cancel_subscriptions
@@ -352,10 +355,23 @@ class _GraphScreenState extends State<GraphScreen>
             //   temp_value = value;
             // }
             // printLog("temp_value.lengh2 ${temp_value.length}");
+            if(!providerGraphDataWatch!.isFirst) {
             providerGraphDataWatch!.generateGraphValuesList(value);
+            }
+            else{
+              print("isFirst ${providerGraphDataWatch!.isFirst}");
+              print("value $value ");
+            }
+            providerGraphDataWatch!.setisFirst(false);
           } else {
-            //print("tabLength  else ${value}");
-            providerGraphDataWatch!.getSpo2Data(value);
+            print("tabLength  else");
+            if(!providerGraphDataWatch!.isFirst) {
+              providerGraphDataWatch!.getSpo2Data(value);
+            }else{
+              print("isFirst ${providerGraphDataWatch!.isFirst}");
+              print("value $value ");
+            }
+            providerGraphDataWatch!.setisFirst(false);
           }
         }
       } catch (err) {
@@ -788,8 +804,8 @@ class _GraphScreenState extends State<GraphScreen>
             ),
             color: clrDarkBg),
         child: Padding(
-          padding: const EdgeInsets.only(
-              right: 10.0, left: 5.0, top: 10, bottom: 0),
+          padding:
+              const EdgeInsets.only(right: 10.0, left: 5.0, top: 10, bottom: 0),
           child: LineChart(title == ecg
               ? mainData(providerGraphDataWatch!.tempEcgSpotsListData,
                   providerGraphDataWatch!.tempEcgDecimalList)

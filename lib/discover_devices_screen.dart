@@ -42,12 +42,13 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
       if (providerGraphDataRead!.connectedDevice != null) {
         connDeviceSub =
             providerGraphDataRead!.connectedDevice!.state.listen((event) async {
-              showToast("device event ${event.toString()}");
-              if (event == BluetoothDeviceState.disconnected) {
-                providerGraphDataRead!.clearConnectedDevice();
-                scanDevices();
-              }
-            });
+          showToast("device event ${event.toString()}");
+          if (event == BluetoothDeviceState.disconnected) {
+            providerGraphDataRead!.clearConnectedDevice();
+            providerGraphDataRead!.setLoading(false);
+            scanDevices();
+          }
+        });
       }
     });
   }
@@ -133,15 +134,20 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
                                 Column(
                                   children: <Widget>[
                                     Text(
-                                      providerGraphDataWatch!.devicesList[i].name == ''
+                                      providerGraphDataWatch!
+                                                  .devicesList[i].name ==
+                                              ''
                                           ? '(unknown device)'
-                                          : providerGraphDataWatch!.devicesList[i].name,
+                                          : providerGraphDataWatch!
+                                              .devicesList[i].name,
                                       style: TextStyle(color: clrWhite),
                                     ),
                                     SizedBox(height: 8),
                                     Text(
-                                      providerGraphDataWatch!.devicesList[i].id.toString(),
-                                      style: TextStyle(color: Colors.grey.shade400),
+                                      providerGraphDataWatch!.devicesList[i].id
+                                          .toString(),
+                                      style: TextStyle(
+                                          color: Colors.grey.shade400),
                                     ),
                                   ],
                                 ),
@@ -151,16 +157,22 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
                               width: 200,
                               child: OutlinedButton(
                                   style: TextButton.styleFrom(
-                                    side: BorderSide(color: clrWhite.withOpacity(0.4), width: 1),
+                                    side: BorderSide(
+                                        color: clrWhite.withOpacity(0.4),
+                                        width: 1),
                                     shape: const RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.all(Radius.circular(25))),
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(25))),
                                   ),
                                   child: Text(
                                     strConnect,
-                                    style: TextStyle(color: Colors.grey.shade200, fontWeight: FontWeight.w500),
+                                    style: TextStyle(
+                                        color: Colors.grey.shade200,
+                                        fontWeight: FontWeight.w500),
                                   ),
                                   onPressed: () async {
-                                    connectDevice(providerGraphDataWatch!.devicesList[i]);
+                                    connectDevice(
+                                        providerGraphDataWatch!.devicesList[i]);
                                   }),
                             ),
                           ],
@@ -174,12 +186,13 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
       ),
     );
   }
-  void chechBluetooth(){
+
+  void chechBluetooth() {
     bluetoothConnSub = flutterBlue.state.listen((event) async {
       switch (event) {
         case BluetoothState.on:
           Utils().showToast("Bluetooth on");
-         // if(providerGraphDataWatch!.isLocServiceEnabled)
+          // if(providerGraphDataWatch!.isLocServiceEnabled)
           scanDevices();
           break;
         case BluetoothState.off:
@@ -191,11 +204,13 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
       }
     });
   }
+
   Future<void> enableBT() async {
     BluetoothEnable.enableBluetooth.then((value) {
       print(value);
     });
   }
+
 //   void setUpBluetooth() {
 //     this.flutterBlue.isOn.then((value) {
 //       providerGraphDataWatch!.enableLocation();
@@ -265,25 +280,24 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
 //   }
 
   void scanDevices() {
-   // if(providerGraphDataWatch!=null) {
-      providerGraphDataWatch!.setLoading(true);
+    // if(providerGraphDataWatch!=null) {
+    providerGraphDataWatch!.setLoading(true);
 
-      this.flutterBlue.scanResults.listen((List<ScanResult> results) {
-        // printLog("  scan result length devices ${results.length}");
-        providerGraphDataWatch!.devicesList.clear();
-        for (ScanResult result in results) {
-
-          // printLog("  scanResults ${result.device}");
-          if (result.device.name.toLowerCase().contains(displayDeviceString)) {
-            providerGraphDataWatch!.setDeviceList(result.device);
-          }
+    this.flutterBlue.scanResults.listen((List<ScanResult> results) {
+      // printLog("  scan result length devices ${results.length}");
+      providerGraphDataWatch!.devicesList.clear();
+      for (ScanResult result in results) {
+        // printLog("  scanResults ${result.device}");
+        if (result.device.name.toLowerCase().contains(displayDeviceString)) {
+          providerGraphDataWatch!.setDeviceList(result.device);
         }
-      });
-      providerGraphDataWatch!.setLoading(false);
+      }
+    });
+    providerGraphDataWatch!.setLoading(false);
 
-      this.flutterBlue.startScan();
-      providerGraphDataWatch!.setIsScanning(true);
-  //  }
+    this.flutterBlue.startScan();
+    providerGraphDataWatch!.setIsScanning(true);
+    //  }
   }
 
   void connectDevice(BluetoothDevice device) async {
@@ -293,7 +307,7 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
     providerGraphDataWatch!.setIsScanning(false);
 
     try {
-      await device.connect().timeout(Duration(seconds: 5),onTimeout:() {
+      await device.connect().timeout(Duration(seconds: 5), onTimeout: () {
         device.disconnect();
         providerGraphDataWatch!.setLoading(false);
         chechBluetooth();
@@ -315,7 +329,10 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
       readCharacteristics();
       //providerGraphDataWatch!.TrainModel();
       providerGraphDataWatch!.setLoading(false);
-      showDialog(barrierDismissible: false, context: context, builder: (BuildContext context) => Choice());
+      showDialog(
+          barrierDismissible: false,
+          context: context,
+          builder: (BuildContext context) => Choice());
 
       // providerGraphDataWatch!.setIsShowAvailableDevices();
     }
@@ -323,15 +340,19 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
 
   void readCharacteristics() {
     //print("services ${providerGraphDataWatch!.services!.length.toString()}");
-    if (providerGraphDataWatch!.services != null && providerGraphDataWatch!.services!.length > 0) {
+    if (providerGraphDataWatch!.services != null &&
+        providerGraphDataWatch!.services!.length > 0) {
       for (BluetoothService service in providerGraphDataWatch!.services!) {
-        for (BluetoothCharacteristic characteristic in service.characteristics) {
+        for (BluetoothCharacteristic characteristic
+            in service.characteristics) {
           if (characteristic.uuid.toString() == writeChangeModeUuid) {
             try {
-              providerGraphDataWatch!.setWriteChangeModeCharacteristic(characteristic);
+              providerGraphDataWatch!
+                  .setWriteChangeModeCharacteristic(characteristic);
               // providerGraphDataWatch!.setTabSelectedIndex(_controller!.index);
             } catch (err) {
-              printLog("setWriteChangeModeCharacteristic caught err ${err.toString()}");
+              printLog(
+                  "setWriteChangeModeCharacteristic caught err ${err.toString()}");
             }
           }
           if (characteristic.uuid.toString() == writeUuid) {
@@ -369,20 +390,31 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
         height: 150,
         width: 100,
         child: Column(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              GestureDetector(
-                child: Text(
-                  ecgNppg,
-                  style: TextStyle(color: Colors.black),
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              height: 74,
+              width: 280,
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                child: Container(
+                  height: 74,
+                  width: 280,
+                  child: Center(
+                    child: Text(
+                      ecgNppg,
+                      style: TextStyle(color: Colors.black),
+                    ),
+                  ),
                 ),
                 onTap: () {
                   choice = ecgNppg;
                   providerGraphDataWatch!.tabLength = 3;
                   Navigator.pop(context);
-                  providerGraphDataWatch!.writeChangeModeCharacteristic!.write([4]);
+                  providerGraphDataWatch!.writeChangeModeCharacteristic!
+                      .write([4]);
                   bluetoothConnSub!.cancel();
                   Navigator.push(
                       context,
@@ -393,27 +425,38 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
                               ))).then((value) {
                     //setUpBluetooth();
                     chechBluetooth();
-                    if (value !=null) {
+                    if (value != null) {
                       showToast("Your device has been disconnected");
                     }
-
                   });
                 },
               ),
-              Container(
-                height: 2,
-                color: Colors.grey,
-              ),
-              GestureDetector(
-                child: Text(
-                  spo2,
-                  style: TextStyle(color: Colors.black),
+            ),
+            Container(
+              height: 2,
+              color: Colors.grey,
+            ),
+            Container(
+              height: 74,
+              width: 280,
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                child: Container(
+                  height: 74,
+                  width: 280,
+                  child: Center(
+                    child: Text(
+                      spo2,
+                      style: TextStyle(color: Colors.black),
+                    ),
+                  ),
                 ),
                 onTap: () {
                   choice = spo2;
                   providerGraphDataWatch!.tabLength = 1;
                   Navigator.pop(context);
-                  providerGraphDataWatch!.writeChangeModeCharacteristic!.write([7]);
+                  providerGraphDataWatch!.writeChangeModeCharacteristic!
+                      .write([7]);
                   bluetoothConnSub!.cancel();
 
                   Navigator.push(
@@ -425,16 +468,16 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
                               ))).then((value) {
                     //setUpBluetooth();
                     chechBluetooth();
-                    if (value !=null) {
+                    if (value != null) {
                       showToast("Your device has been disconnected");
                     }
-
                   });
                 },
               ),
-            ],
-          ),
-        ), /* PopupMenuButton(
+            ),
+          ],
+        ),
+      ), /* PopupMenuButton(
             onSelected: (value) {
               if (value == 1) {
                 choice = ecgNppg;
