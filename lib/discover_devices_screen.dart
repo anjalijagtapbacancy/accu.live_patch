@@ -307,7 +307,7 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
     providerGraphDataWatch!.setIsScanning(false);
 
     try {
-      await device.connect().timeout(Duration(seconds: 5), onTimeout: () {
+      await device.connect(autoConnect: false).timeout(Duration(seconds: 5), onTimeout: () {
         device.disconnect();
         providerGraphDataWatch!.setLoading(false);
         chechBluetooth();
@@ -412,6 +412,8 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
                 onTap: () {
                   choice = ecgNppg;
                   providerGraphDataWatch!.tabLength = 3;
+                  providerGraphDataRead!.setIndex(0);
+                  providerGraphDataRead!.setIsecgppgOrSpo2(false);
                   Navigator.pop(context);
                   providerGraphDataWatch!.writeChangeModeCharacteristic!
                       .write([4]);
@@ -454,6 +456,8 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
                 onTap: () {
                   choice = spo2;
                   providerGraphDataWatch!.tabLength = 1;
+                  providerGraphDataRead!.setIndex(3);
+                  providerGraphDataRead!.setIsecgppgOrSpo2(true);
                   Navigator.pop(context);
                   providerGraphDataWatch!.writeChangeModeCharacteristic!
                       .write([7]);

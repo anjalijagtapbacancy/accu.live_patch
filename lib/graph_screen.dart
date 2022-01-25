@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_blue/flutter_blue.dart';
+import 'package:flutter_bluetooth_connection/discover_devices_screen.dart';
 import 'package:flutter_bluetooth_connection/provider_graph_data.dart';
 import 'dart:io';
 import 'dart:math';
@@ -46,6 +47,7 @@ class _GraphScreenState extends State<GraphScreen>
   final FlutterBlue flutterBlue = FlutterBlue.instance;
   StreamSubscription? bluetoothConnSub;
   StreamSubscription? connDeviceSub;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
@@ -84,6 +86,10 @@ class _GraphScreenState extends State<GraphScreen>
           providerGraphDataRead!.clearConnectedDevice();
           bluetoothConnSub!.cancel();
           connDeviceSub!.cancel();
+          if (_scaffoldKey.currentState!.isDrawerOpen == true)
+            Navigator.pop(context);
+          if (_scaffoldKey.currentState!.isEndDrawerOpen == true)
+            Navigator.pop(context);
           Navigator.pop(context, true);
         }
       });
@@ -103,6 +109,10 @@ class _GraphScreenState extends State<GraphScreen>
     super.dispose();
   }
 
+  void _openEndDrawer() {
+    _scaffoldKey.currentState!.openEndDrawer();
+  }
+
   @override
   Widget build(BuildContext context) {
     providerGraphDataWatch = context.watch<ProviderGraphData>();
@@ -110,20 +120,13 @@ class _GraphScreenState extends State<GraphScreen>
     return DefaultTabController(
       length: providerGraphDataWatch!.tabLength,
       child: Scaffold(
+        key: _scaffoldKey,
         backgroundColor: clrDarkBg,
         appBar: AppBar(
-          bottom: new PreferredSize(
-              preferredSize: new Size(200.0, 0.0),
-              child: new Container(
-                height: 32.0,
-                child: TabBar(
-                  tabs: tabsChoice(providerGraphDataWatch!.tabLength),
-                ),
-              )),
-          title: Text(
-            widget.title,
-            style: TextStyle(color: clrWhite),
-          ),
+          // title: Text(
+          //   widget.title,
+          //   style: TextStyle(color: clrWhite),
+          // ),
           actions: [
             //       Visibility(
             //         visible: !(providerGraphDataWatch!.connectedDevice != null),
@@ -159,21 +162,21 @@ class _GraphScreenState extends State<GraphScreen>
             //         }
             //       }),
             // ),
-            Visibility(
-              visible: (!providerGraphDataWatch!.isServiceStarted),
-              // visible: false,
-              child: TextButton(
-                  child: Text(
-                    providerGraphDataWatch!.isEnabled ? "Disable" : "Enable",
-                    style: TextStyle(color: clrWhite),
-                  ),
-                  onPressed: () {
-                    if (!providerGraphDataWatch!.isLoading) {
-                      widget.flutterBlue.startScan();
-                      providerGraphDataWatch!.setIsEnabled();
-                    }
-                  }),
-            ),
+            // Visibility(
+            //   visible: (!providerGraphDataWatch!.isServiceStarted),
+            //   // visible: false,
+            //   child: TextButton(
+            //       child: Text(
+            //         providerGraphDataWatch!.isEnabled ? "Disable" : "Enable",
+            //         style: TextStyle(color: clrWhite),
+            //       ),
+            //       onPressed: () {
+            //         if (!providerGraphDataWatch!.isLoading) {
+            //           //widget.flutterBlue.startScan();
+            //           providerGraphDataWatch!.setIsEnabled();
+            //         }
+            //       }),
+            // ),
             Visibility(
               visible: providerGraphDataWatch!.connectedDevice != null,
               child: TextButton(
@@ -255,85 +258,651 @@ class _GraphScreenState extends State<GraphScreen>
                     }
                   }),
             ),
-
             Visibility(
-              visible: false,
-              child: Opacity(
-                opacity: !providerGraphDataWatch!.isServiceStarted ? 1 : 0.4,
-                child: DropdownButton<String>(
-                  hint: Text(
-                    dropDownValue!,
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  items: <String>[ecgNppg, spo2].map((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Opacity(
-                        opacity: opacity(value),
-                        child: GestureDetector(
-                          child: Text(value),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: !providerGraphDataWatch!.isServiceStarted
-                      ? (value) async {
-                          print(value);
-                          if (opacity(value!) == 1) {
-                            providerGraphDataWatch!.setLoading(true);
-                            print(providerGraphDataWatch!.isServiceStarted);
-                            changeMode(value);
-                            providerGraphDataWatch!.setLoading(false);
-                            setState(() {
-                              dropDownValue = value;
-                            });
-                          }
-                        }
-                      : null,
-                ),
-              ),
+              visible: providerGraphDataWatch!.isEnabled && !providerGraphDataWatch!.isecgppgOrSpo2,
+              child: TextButton(
+                  onPressed: () async {
+                    _openEndDrawer();
+                  },
+                  child: Text(
+                    'More',
+                    style: TextStyle(color: clrWhite),
+                  )),
             ),
           ],
-          toolbarHeight: 78,
+          toolbarHeight: 40,
         ),
         body: Stack(
           children: [
             (providerGraphDataWatch!.connectedDevice != null)
-                ? TabBarView(
-                    children: tabViews(providerGraphDataWatch!.tabLength),
-                  )
+                ? showBody()
                 : providerGraphDataWatch!.isLoading
                     ? ProgressBar()
                     : Offstage(),
           ],
         ),
+        endDrawer: Theme(
+          data: Theme.of(context).copyWith(
+            canvasColor: clrDarkBg,
+          ),
+          child: Visibility(
+            visible: providerGraphDataWatch!.isEnabled,
+            child: Container(
+              width: 400,
+              child: Drawer(
+                  child: SingleChildScrollView(
+                    child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                    Container(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.max,
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            height: 10,
+                          ),
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: '$strStepCount\n',
+                                  style: TextStyle(fontSize: 15, color: clrWhite),
+                                ),
+                                providerGraphDataWatch!.stepCount==0 ?
+                                TextSpan(
+                                  text:
+                                  '--',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 50,
+                                      color: clrPrimary),
+                                ):TextSpan(
+                                  text:
+                                      '${providerGraphDataWatch!.stepCount.round().toString()}',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 50,
+                                      color: clrPrimary),
+                                ),
+                                TextSpan(
+                                  text: '   steps',
+                                  style: TextStyle(fontSize: 12, color: clrPrimary),
+                                )
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            height: 20,
+                          ),
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: '$strHeartRate\n',
+                                  style: TextStyle(fontSize: 15, color: clrWhite),
+                                ),
+                                providerGraphDataWatch!.heartRate==0 ?
+                                TextSpan(
+                                  text:
+                                  '--',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 50,
+                                      color: clrPrimary),
+                                ):TextSpan(
+                                  text:
+                                      '${providerGraphDataWatch!.heartRate.round().toString()}',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 50,
+                                      color: clrPrimary),
+                                ),
+                                TextSpan(
+                                  text: '   $heartRateUnit',
+                                  style: TextStyle(fontSize: 12, color: clrPrimary),
+                                )
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            height: 20,
+                          ),
+                          Text.rich(
+                              TextSpan(
+                                children: [
+                                  TextSpan(
+                                    text: '         BP\n',
+                                    style: TextStyle(fontSize: 15, color: clrWhite),
+                                  ),
+                                  providerGraphDataWatch!.dBp==0 ?
+                                  TextSpan(
+                                    text:
+                                    '--/',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 50,
+                                        color: clrPrimary),
+                                  ):TextSpan(
+                                    text:
+                                        '${providerGraphDataWatch!.dBp.round().toString()}/',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 50,
+                                        color: clrPrimary),
+                                  ),
+                                  providerGraphDataWatch!.dDbp==0 ?
+                                  TextSpan(
+                                    text:
+                                    '--',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 50,
+                                        color: clrPrimary),
+                                  ):TextSpan(
+                                    text:
+                                        '${providerGraphDataWatch!.dDbp.round().toString()}',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 40,
+                                        color: clrPrimary),
+                                  ),
+                                  TextSpan(
+                                    text: '   $bpUnit',
+                                    style:
+                                        TextStyle(fontSize: 12, color: clrPrimary),
+                                  )
+                                ],
+                              ),
+                            ),
+                          SizedBox(
+                            height: 20,
+                          ),
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: '$strBpRt\n',
+                                  style: TextStyle(fontSize: 15, color: clrWhite),
+                                ),
+                                providerGraphDataWatch!.BpFromRt==0 ?
+                                TextSpan(
+                                  text:
+                                  '--',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 50,
+                                      color: clrPrimary),
+                                ):TextSpan(
+                                  text:
+                                      '${providerGraphDataWatch!.BpFromRt.round().toString()}',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 50,
+                                      color: clrPrimary),
+                                ),
+                                TextSpan(
+                                  text: '   $bpUnit',
+                                  style: TextStyle(fontSize: 12, color: clrPrimary),
+                                )
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            height: 20,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.max,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            height: 30,
+                          ),
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'Arrhythmia Type\n',
+                                  style: TextStyle(fontSize: 14, color: clrWhite),
+                                ),
+                                providerGraphDataWatch!.arrhythmia_type != null
+                                    ? TextSpan(
+                                        text:
+                                            '${providerGraphDataWatch!.arrhythmia_type}',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                            color: clrPrimary),
+                                      )
+                                    : TextSpan(
+                                        text: 'No Type Available',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                            color: clrPrimary),
+                                      ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            height: 30,
+                          ),
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'HRV\n',
+                                  style: TextStyle(fontSize: 14, color: clrWhite),
+                                ),
+                                providerGraphDataWatch!.avgHrv==0 ? TextSpan(
+                                  text:'--',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                      color: clrPrimary),
+                                ):TextSpan(
+                                  text:
+                                  providerGraphDataWatch!.avgHrv.round().toString(),
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                      color: clrPrimary),
+                                ),
+                                TextSpan(
+                                  text: '  $rvUnit',
+                                  style: TextStyle(fontSize: 10,
+                                      color: clrPrimary),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            height: 30,
+                          ),
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'PRV\n',
+                                  style: TextStyle(fontSize: 14, color: clrWhite),
+                                ),
+                                providerGraphDataWatch!.avgPrv==0 ? TextSpan(
+                                  text:'--',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                      color: clrPrimary),
+                                ):TextSpan(
+                                  text:
+                                  providerGraphDataWatch!.avgPrv
+                                      .round()
+                                      .toString(),
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                      color: clrPrimary),
+                                ),
+                                TextSpan(
+                                  text: '  $rvUnit',
+                                  style: TextStyle(fontSize: 10,
+                                      color: clrPrimary),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            height: 30,
+                          ),
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'PTT\n',
+                                  style: TextStyle(fontSize: 14, color: clrWhite),
+                                ),
+                              providerGraphDataWatch!.avgPTT==0 ? TextSpan(
+                                text:'--',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                    color: clrPrimary),
+                              ):TextSpan(
+                                  text:
+                                  providerGraphDataWatch!.avgPTT
+                                      .toStringAsFixed(4),
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                      color: clrPrimary),
+                                ),
+                                TextSpan(
+                                  text: '  $rvUnit',
+                                  style: TextStyle(fontSize: 10,
+                                      color: clrPrimary),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            height: 30,
+                          ),
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'Pulse Pressure\n',
+                                  style: TextStyle(fontSize: 14, color: clrWhite),
+                                ),
+                                providerGraphDataWatch!.PP==0 ? TextSpan(
+                                  text:'--',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                      color: clrPrimary),
+                                ):TextSpan(
+                                  text:
+                                  providerGraphDataWatch!.PP
+                                      .round().toString(),
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                      color: clrPrimary),
+                                ),
+                                TextSpan(
+                                  text: '  $bpUnit',
+                                  style: TextStyle(fontSize: 10,
+                                      color: clrPrimary),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            height: 30,
+                          ),
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'MAP\n',
+                                  style: TextStyle(fontSize: 14, color: clrWhite),
+                                ),
+                                providerGraphDataWatch!.MAP==0 ? TextSpan(
+                                  text:'--',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                      color: clrPrimary),
+                                ):TextSpan(
+                                  text:
+                                  providerGraphDataWatch!.MAP
+                                      .round().toString(),
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                      color: clrPrimary),
+                                ),
+                                TextSpan(
+                                  text: '  $bpUnit',
+                                  style: TextStyle(fontSize: 10,
+                                      color: clrPrimary),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            height: 30,
+                          ),
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'SV\n',
+                                  style: TextStyle(fontSize: 14, color: clrWhite),
+                                ),
+                                providerGraphDataWatch!.SV==0 ? TextSpan(
+                                  text:'--',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                      color: clrPrimary),
+                                ):TextSpan(
+                                  text:
+                                  providerGraphDataWatch!.SV
+                                      .round().toString(),
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                      color: clrPrimary),
+                                ),
+                                TextSpan(
+                                  text: '  mL',
+                                  style: TextStyle(fontSize: 10,
+                                      color: clrPrimary),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            height: 30,
+                          ),
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'RR\n',
+                                  style: TextStyle(fontSize: 14, color: clrWhite),
+                                ),
+                                providerGraphDataWatch!.avgPeak==0 ? TextSpan(
+                                  text:'--',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                      color: clrPrimary),
+                                ):TextSpan(
+                                  text:
+                                  providerGraphDataWatch!.avgPeak.toStringAsFixed(4),
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                      color: clrPrimary),
+                                ),
+                                TextSpan(
+                                  text: '',
+                                  style: TextStyle(fontSize: 10,
+                                      color: clrPrimary),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            height: 30,
+                          ),
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'CO\n',
+                                  style: TextStyle(fontSize: 14, color: clrWhite),
+                                ),
+                                providerGraphDataWatch!.CO==0 ? TextSpan(
+                                  text:'--',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                      color: clrPrimary),
+                                ):TextSpan(
+                                  text:
+                                  providerGraphDataWatch!.CO
+                                      .round().toString(),
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                      color: clrPrimary),
+                                ),
+                                TextSpan(
+                                  text: '  L/min',
+                                  style: TextStyle(fontSize: 10,
+                                      color: clrPrimary),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            height: 30,
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+                  )),
+            ),
+          ),
+        ),
+        drawer: Drawer(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: <Widget>[
+              DrawerHeader(
+                margin: EdgeInsets.only(bottom: 5.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    Text(
+                      widget.title,
+                      style: TextStyle(
+                          color: clrWhite,
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      providerGraphDataWatch!.connectedDevice == null
+                          ? 'Device Id: '
+                          : 'Device Id: ${providerGraphDataWatch!.connectedDevice!.id}',
+                      style: TextStyle(color: clrWhite, fontSize: 12),
+                    ),
+                    GestureDetector(
+                      child: Text(
+                        'Disconnect',
+                        style: TextStyle(
+                            color: clrWhite,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold),
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.pop(context);
+                      },
+                    )
+                  ],
+                ),
+                decoration: const BoxDecoration(
+                  color: Colors.teal,
+                ),
+              ),
+              Visibility(
+                visible: !providerGraphDataWatch!.isecgppgOrSpo2,
+                child: ListTile(
+                  leading: Icon(Icons.align_horizontal_left_rounded),
+                  title: Text(
+                    ecgNppg,
+                    style: TextStyle(color: clrBlack),
+                  ),
+                  onTap: () {
+                    providerGraphDataWatch!.setIndex(0);
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
+              Visibility(
+                visible: !providerGraphDataWatch!.isecgppgOrSpo2,
+                child: ListTile(
+                  leading: Icon(Icons.align_horizontal_left_rounded),
+                  title: Text(
+                    ecg,
+                    style: TextStyle(color: clrBlack),
+                  ),
+                  onTap: () {
+                    providerGraphDataWatch!.setIndex(1);
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
+              Visibility(
+                visible: !providerGraphDataWatch!.isecgppgOrSpo2,
+                child: ListTile(
+                  leading: Icon(Icons.align_horizontal_left_rounded),
+                  title: Text(
+                    ppg,
+                    style: TextStyle(color: clrBlack),
+                  ),
+                  onTap: () {
+                    providerGraphDataWatch!.setIndex(2);
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
+              Visibility(
+                visible: providerGraphDataWatch!.isecgppgOrSpo2,
+                child: ListTile(
+                  leading: Icon(Icons.air),
+                  title: Text(
+                    spo2,
+                    style: TextStyle(color: clrBlack),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
+              Visibility(
+                visible: (!providerGraphDataWatch!.isServiceStarted &&
+                    !providerGraphDataWatch!.isecgppgOrSpo2),
+                // visible: false,
+                child: ListTile(
+                  leading: Icon(Icons.article),
+                  title: Text(
+                    providerGraphDataWatch!.isEnabled ? "Disable" : "Enable",
+                    style: TextStyle(color: clrBlack),
+                  ),
+                  onTap: () {
+                    if (!providerGraphDataWatch!.isLoading) {
+                      //widget.flutterBlue.startScan();
+                      providerGraphDataWatch!.setIsEnabled();
+                    }
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  void changeMode(String value) {
-    if (value == ecgNppg) {
-      providerGraphDataWatch!.tabLength = 3;
-      providerGraphDataWatch!.writeChangeModeCharacteristic!.write([4]);
-    } else {
-      providerGraphDataWatch!.tabLength = 1;
-      providerGraphDataWatch!.writeChangeModeCharacteristic!.write([7]);
-    }
-  }
-
-  double opacity(String value) {
-    if (value == dropDownValue) {
-      return 0.4;
-    } else {
-      return 1;
-    }
-  }
-
-  List<Widget> tabsChoice(int length) {
-    if (length == 3) {
-      return [_tabWidget(ecgNppg), _tabWidget(ecg), _tabWidget(ppg)];
-    } else {
-      return [_tabWidget(spo2)];
+  Widget showBody() {
+    switch (providerGraphDataWatch!.index) {
+      case 0:
+        return _ecgPpgView();
+      case 1:
+        return _ecgTabView();
+      case 2:
+        return _ppgTabView();
+      case 3:
+        return _spo2TabView();
+      default:
+        return _ecgPpgView();
     }
   }
 
@@ -355,19 +924,18 @@ class _GraphScreenState extends State<GraphScreen>
             //   temp_value = value;
             // }
             // printLog("temp_value.lengh2 ${temp_value.length}");
-            if(!providerGraphDataWatch!.isFirst) {
-            providerGraphDataWatch!.generateGraphValuesList(value);
-            }
-            else{
+            if (!providerGraphDataWatch!.isFirst) {
+              providerGraphDataWatch!.generateGraphValuesList(value);
+            } else {
               print("isFirst ${providerGraphDataWatch!.isFirst}");
               print("value $value ");
             }
             providerGraphDataWatch!.setisFirst(false);
           } else {
             print("tabLength  else");
-            if(!providerGraphDataWatch!.isFirst) {
+            if (!providerGraphDataWatch!.isFirst) {
               providerGraphDataWatch!.getSpo2Data(value);
-            }else{
+            } else {
               print("isFirst ${providerGraphDataWatch!.isFirst}");
               print("value $value ");
             }
@@ -406,14 +974,6 @@ class _GraphScreenState extends State<GraphScreen>
     }
   }
 
-  List<Widget> tabViews(int length) {
-    if (length == 3) {
-      return [_ecgPpgView(), _ecgTabView(), _ppgTabView()];
-    } else {
-      return [_spo2TabView()];
-    }
-  }
-
   Stack _ecgPpgView() {
     return Stack(
       children: [
@@ -432,7 +992,7 @@ class _GraphScreenState extends State<GraphScreen>
 
   Widget rowPpgTitle(String title) {
     return Padding(
-      padding: EdgeInsets.only(top: 4.0),
+      padding: EdgeInsets.only(top: 1.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -442,174 +1002,6 @@ class _GraphScreenState extends State<GraphScreen>
               child: Text(
                 title,
                 style: TextStyle(fontSize: 12),
-              ),
-            ),
-          ),
-          SizedBox(
-            width: 160,
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Visibility(
-              visible: providerGraphDataWatch!.isEnabled,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Column(
-                    children: [
-                      Text.rich(
-                        TextSpan(
-                          children: [
-                            TextSpan(
-                              text: 'PTT: ',
-                              style: TextStyle(fontSize: 12),
-                            ),
-                            TextSpan(
-                              text: providerGraphDataWatch!.avgPTT
-                                  .toStringAsFixed(4),
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 12),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Text.rich(
-                        TextSpan(
-                          children: [
-                            TextSpan(
-                              text: 'PRV: ',
-                              style: TextStyle(fontSize: 12),
-                            ),
-                            TextSpan(
-                              text: providerGraphDataWatch!.avgPrv
-                                  .round()
-                                  .toString(),
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16),
-                            ),
-                            TextSpan(
-                              text: ' $rvUnit',
-                              style: TextStyle(fontSize: 12),
-                            )
-                          ],
-                        ),
-                      )
-                      // Text.rich(
-                      //   TextSpan(
-                      //     children: [
-                      //       TextSpan(
-                      //         text: 'BpRt:',
-                      //         style: TextStyle(fontSize: 12),
-                      //       ),
-                      //       TextSpan(
-                      //         text: providerGraphDataWatch!.BpFromRt.toString(),
-                      //         style: TextStyle(
-                      //             fontWeight: FontWeight.bold, fontSize: 16),
-                      //       ),
-                      //     ],
-                      //   ),
-                      // ),
-                    ],
-                  ),
-                  // SizedBox(
-                  //   width: 8,
-                  // ),
-                  // Column(
-                  //   children: [
-                  //     // Text.rich(
-                  //     //   TextSpan(
-                  //     //     children: [
-                  //     //       TextSpan(
-                  //     //         text: 'HRV: ',
-                  //     //         style: TextStyle(fontSize: 12),
-                  //     //       ),
-                  //     //       TextSpan(
-                  //     //         text: providerGraphDataWatch!.avgHrv
-                  //     //             .round()
-                  //     //             .toString(),
-                  //     //         style: TextStyle(
-                  //     //             fontWeight: FontWeight.bold, fontSize: 16),
-                  //     //       ),
-                  //     //       TextSpan(
-                  //     //         text: ' $rvUnit',
-                  //     //         style: TextStyle(fontSize: 12),
-                  //     //       ),
-                  //     //     ],
-                  //     //   ),
-                  //     // ),
-                  //     Text.rich(
-                  //       TextSpan(
-                  //         children: [
-                  //           TextSpan(
-                  //             text: 'PRV: ',
-                  //             style: TextStyle(fontSize: 12),
-                  //           ),
-                  //           TextSpan(
-                  //             text: providerGraphDataWatch!.avgPrv
-                  //                 .round()
-                  //                 .toString(),
-                  //             style: TextStyle(
-                  //                 fontWeight: FontWeight.bold, fontSize: 16),
-                  //           ),
-                  //           TextSpan(
-                  //             text: ' $rvUnit',
-                  //             style: TextStyle(fontSize: 12),
-                  //           )
-                  //         ],
-                  //       ),
-                  //     )
-                  //   ],
-                  // ),
-                  SizedBox(
-                    width: 10,
-                  ),
-                  Column(
-                    children: [
-                      Text.rich(
-                        TextSpan(
-                          children: [
-                            TextSpan(
-                              text: 'BP: ',
-                              style: TextStyle(fontSize: 12),
-                            ),
-                            TextSpan(
-                              text: providerGraphDataWatch!.dBp
-                                  .round()
-                                  .toString(),
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16),
-                            ),
-                            TextSpan(
-                              text: ' $bpUnit',
-                              style: TextStyle(fontSize: 12),
-                            )
-                          ],
-                        ),
-                      ),
-                      Text.rich(
-                        TextSpan(
-                          children: [
-                            TextSpan(
-                              text: 'DBP: ',
-                              style: TextStyle(fontSize: 12),
-                            ),
-                            TextSpan(
-                              text: providerGraphDataWatch!.dDbp
-                                  .round()
-                                  .toString(),
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16),
-                            ),
-                            TextSpan(
-                              text: ' $bpUnit',
-                              style: TextStyle(fontSize: 12),
-                            )
-                          ],
-                        ),
-                      )
-                    ],
-                  ),
-                ],
               ),
             ),
           ),
@@ -620,7 +1012,7 @@ class _GraphScreenState extends State<GraphScreen>
 
   Widget rowEcgTitle(String title) {
     return Padding(
-      padding: EdgeInsets.only(top: 4.0),
+      padding: EdgeInsets.only(top: 1.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -630,162 +1022,6 @@ class _GraphScreenState extends State<GraphScreen>
               child: Text(
                 title,
                 style: TextStyle(fontSize: 12),
-              ),
-            ),
-          ),
-          Visibility(
-            visible: providerGraphDataWatch!.isEnabled
-            // &&
-            // providerGraphDataWatch!.heartRate < 150 &&
-            // providerGraphDataWatch!.heartRate > 60
-            ,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                providerGraphDataWatch!.arrhythmia_type != null
-                    ? Text(
-                        "Arrhythmia Type: ${providerGraphDataWatch!.arrhythmia_type}")
-                    : Text("Arrhythmia Type: No Type Available"),
-                // FutureBuilder<ArrhythmiaType>(
-                //   future: providerGraphDataWatch!.arrhythmia_type,
-                //   builder: (context, snapshot) {
-                //     if (snapshot.hasData) {
-                //       if (snapshot.data!.arrhythmiaType == "N") {
-                //         type = "Normal";
-                //       } else if (snapshot.data!.arrhythmiaType == "B") {
-                //         type = "Bigeminy";
-                //       } else if (snapshot.data!.arrhythmiaType == "VT") {
-                //         type = "Ventricular Tachycardia";
-                //       } else if (snapshot.data!.arrhythmiaType == "T") {
-                //         type = "Trigeminy";
-                //       }
-                //       return Text(type ?? "");
-                //     } else if (snapshot.hasError) {
-                //       return Text('Exception');
-                //     }
-                //     return Text("No Type Available");
-                //   },
-                // ),
-              ],
-            ),
-          ),
-          SizedBox(
-            width: 20,
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Visibility(
-              visible: providerGraphDataWatch!.isEnabled
-              // &&
-              // providerGraphDataWatch!.heartRate < 150 &&
-              // providerGraphDataWatch!.heartRate > 60
-              ,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(
-                          text: '$strStepCount ',
-                          style: TextStyle(fontSize: 12),
-                        ),
-                        TextSpan(
-                          text: providerGraphDataWatch!.stepCount
-                              .round()
-                              .toString(),
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                        TextSpan(
-                          text: ' steps',
-                          style: TextStyle(fontSize: 12),
-                        )
-                      ],
-                    ),
-                  ),
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(
-                          text: '$strBpRt ',
-                          style: TextStyle(fontSize: 12),
-                        ),
-                        TextSpan(
-                          text: providerGraphDataWatch!.BpFromRt.toString(),
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                        TextSpan(
-                          text: ' $bpUnit',
-                          style: TextStyle(fontSize: 12),
-                        )
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SizedBox(
-            width: 10,
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Visibility(
-              visible: providerGraphDataWatch!.isEnabled
-              // &&
-              // providerGraphDataWatch!.heartRate < 150 &&
-              // providerGraphDataWatch!.heartRate > 60
-              ,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(
-                          text: '$strHeartRate ',
-                          style: TextStyle(fontSize: 12),
-                        ),
-                        TextSpan(
-                          text:
-                              "${providerGraphDataWatch!.heartRate.round().toString()}",
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                        TextSpan(
-                          text: ' $heartRateUnit',
-                          style: TextStyle(fontSize: 12),
-                        )
-                      ],
-                    ),
-                  ),
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(
-                          text: 'HRV: ',
-                          style: TextStyle(fontSize: 12),
-                        ),
-                        TextSpan(
-                          text:
-                              providerGraphDataWatch!.avgHrv.round().toString(),
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                        TextSpan(
-                          text: ' $rvUnit',
-                          style: TextStyle(fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
               ),
             ),
           ),
@@ -806,11 +1042,14 @@ class _GraphScreenState extends State<GraphScreen>
         child: Padding(
           padding:
               const EdgeInsets.only(right: 10.0, left: 5.0, top: 10, bottom: 0),
-          child: LineChart(title == ecg
-              ? mainData(providerGraphDataWatch!.tempEcgSpotsListData,
-                  providerGraphDataWatch!.tempEcgDecimalList)
-              : mainData(providerGraphDataWatch!.tempPpgSpotsListData,
-                  providerGraphDataWatch!.tempPpgDecimalList)),
+          child: LineChart(
+              title == ecg
+                  ? mainData(providerGraphDataWatch!.tempEcgSpotsListData,
+                      providerGraphDataWatch!.tempEcgDecimalList)
+                  : mainData(providerGraphDataWatch!.tempPpgSpotsListData,
+                      providerGraphDataWatch!.tempPpgDecimalList),
+              swapAnimationDuration: Duration.zero,
+              swapAnimationCurve: Curves.linear),
         ),
       ),
     );
@@ -924,9 +1163,11 @@ class _GraphScreenState extends State<GraphScreen>
                 child: Padding(
                   padding: const EdgeInsets.only(
                       right: 10.0, left: 5.0, top: 5, bottom: 45),
-                  child: LineChart(mainData(
-                      providerGraphDataWatch!.tempEcgSpotsListData,
-                      providerGraphDataWatch!.tempEcgDecimalList)),
+                  child: LineChart(
+                      mainData(providerGraphDataWatch!.tempEcgSpotsListData,
+                          providerGraphDataWatch!.tempEcgDecimalList),
+                      swapAnimationDuration: Duration.zero,
+                      swapAnimationCurve: Curves.linear),
                 ),
               ),
             ),
@@ -952,9 +1193,11 @@ class _GraphScreenState extends State<GraphScreen>
             child: Padding(
               padding: const EdgeInsets.only(
                   right: 10.0, left: 5.0, top: 5, bottom: 45),
-              child: LineChart(mainData(
-                  providerGraphDataWatch!.tempPpgSpotsListData,
-                  providerGraphDataWatch!.tempPpgDecimalList)),
+              child: LineChart(
+                  mainData(providerGraphDataWatch!.tempPpgSpotsListData,
+                      providerGraphDataWatch!.tempPpgDecimalList),
+                  swapAnimationDuration: Duration.zero,
+                  swapAnimationCurve: Curves.linear),
             ),
           ),
         ),
@@ -976,31 +1219,36 @@ class _GraphScreenState extends State<GraphScreen>
           SizedBox(
             width: 38,
           ),
-          Text.rich(
-            TextSpan(
-              children: [
-                TextSpan(
-                  text: providerGraphDataWatch!.spo2Val.toString(),
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 32),
+          providerGraphDataWatch!.spo2Val == 0
+              ? providerGraphDataWatch!.isServiceStarted == true
+                  ? Text(
+                      'Checking....',
+                      style:
+                          TextStyle(fontSize: 32),
+                    )
+                  : Text(
+                      '-- --  %',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
+                    )
+              : Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: providerGraphDataWatch!.spo2Val.toString(),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 32),
+                      ),
+                      TextSpan(
+                        text: ' %',
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    ],
+                  ),
                 ),
-                TextSpan(
-                  text: ' %',
-                  style: TextStyle(fontSize: 18),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );
-  }
-
-  Widget _tabWidget(String title) {
-    return Tab(
-        icon: Text(
-      title,
-      style: TextStyle(color: clrWhite),
-    ));
   }
 
   void _generateCsvFile() async {
@@ -1100,14 +1348,5 @@ class _GraphScreenState extends State<GraphScreen>
     await file.writeAsString(csvData);
     providerGraphDataWatch!.setLoading(false);
     Share.shareFiles(['${file.path}'], text: 'peaksPositionsPpgArray csv');*/
-  }
-
-  void landscape() async {
-    await SystemChrome.setPreferredOrientations(
-      [
-        DeviceOrientation.landscapeLeft,
-        DeviceOrientation.landscapeRight,
-      ],
-    );
   }
 }

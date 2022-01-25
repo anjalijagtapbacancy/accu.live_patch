@@ -39,7 +39,8 @@ class ProviderGraphData with ChangeNotifier, Constant {
   var isScanning = true;
 
   double spo2Val = 0;
-
+  int index = 0;
+  bool isecgppgOrSpo2=false;
   int tabLength = 3;
   int ecgDataLength = 0;
   int ppgDataLength = 0;
@@ -103,6 +104,11 @@ class ProviderGraphData with ChangeNotifier, Constant {
   double avgPTT = 0;
   double dBp = 0;
   double dDbp = 0;
+  double PP = 0;
+  double MAP = 0;
+  double CO = 0;
+  double SV = 0;
+  double avgPeak = 0;
 
   // static double avgPrv1=0,avgHrv1= 0;
   // static double avgPTT1 = 0;
@@ -171,7 +177,14 @@ class ProviderGraphData with ChangeNotifier, Constant {
     // notifyListeners();
   }
 */
-
+  void setIndex(int Index) {
+    index = Index;
+    notifyListeners();
+  }
+  setIsecgppgOrSpo2(bool value) {
+    isecgppgOrSpo2 = value;
+    notifyListeners();
+  }
   void enableLocation() async {
     isLocServiceEnabled = await location.serviceEnabled();
     if (!isLocServiceEnabled) {
@@ -839,7 +852,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
           totalOfPeaksEcg.toString() +
           " avg " +
           (totalOfPeaksEcg / (R_peaksPositionsEcgArray.length)).toString());
-      double avgPeak = (totalOfPeaksEcg / (R_peaksPositionsEcgArray.length));
+      avgPeak = (totalOfPeaksEcg / (R_peaksPositionsEcgArray.length));
       if (avgPeak.isInfinite || avgPeak.isNaN) {
         heartRate = 0;
         avgPeak=0;
@@ -1159,7 +1172,10 @@ class ProviderGraphData with ChangeNotifier, Constant {
       // dDbp = 99.606825109447 - 96.651802662872 * avgPTT;
       dBp = 145.802365863 - 83.006119783168 * avgPTT;
       dDbp = 110.606825109447 - 96.651802662872 * avgPTT;
-
+      PP= dBp-dDbp;
+      MAP=((dBp+(2*dDbp))/3);
+      SV=dBp-dDbp;
+      CO=((SV*heartRate)/1000);
       //print("avgPTT1 $avgPTT , avgHrv1 $avgHrv");
       // Constant.providerGraphData.avgPTT = avgPTT;
       // Constant.providerGraphData.avgHrv = avgHrv;

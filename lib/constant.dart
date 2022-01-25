@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_connection/provider_graph_data.dart';
 
 class Constant {
-  String appName = "Bacancy Medical";
+  String appName = "Accu.Live Patch";
   String readUuid = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
   String writeUuid = "00001525-1212-efde-1523-785feabcd123";
   String writeChangeModeUuid = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
@@ -21,9 +21,9 @@ class Constant {
   String ecg = "ECG";
   String ecgNppg = "ECG & PPG";
   String spo2 = "Spo2";
-  String strHeartRate = "Heart Rate:";
-  String strStepCount = "Step Count:";
-  String strBpRt = "BPfromECG:";
+  String strHeartRate = "Heart Rate";
+  String strStepCount = "Step Count";
+  String strBpRt = "BPfromECG";
   String heartRateUnit = "BPM";
   String bpUnit = "mmHg";
   String rvUnit = "ms";
@@ -53,7 +53,7 @@ class Constant {
   MaterialColor clrPrimarySwatch = Colors.teal;
 
   // Color clrPrimary = Color(0xFF23B6E6);
-  Color clrPrimary = Colors.teal;
+  Color clrPrimary = Color(0xFF009688);
 
   Color clrSecondary = Color(0xff02d39a);
   Color clrDarkBg = Color(0xff232d37);
