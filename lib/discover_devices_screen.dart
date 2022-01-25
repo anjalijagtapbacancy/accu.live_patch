@@ -414,6 +414,12 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
                   providerGraphDataWatch!.tabLength = 3;
                   providerGraphDataRead!.setIndex(0);
                   providerGraphDataRead!.setIsecgppgOrSpo2(false);
+                  if (providerGraphDataWatch!.isecgSelected == true)
+                    providerGraphDataWatch!.setecgSelected();
+                  if (providerGraphDataWatch!.isecgppgSelected == false)
+                    providerGraphDataWatch!.setecgppgSelected();
+                  if (providerGraphDataWatch!.isppgSelected == true)
+                    providerGraphDataWatch!.setppgSelected();
                   Navigator.pop(context);
                   providerGraphDataWatch!.writeChangeModeCharacteristic!
                       .write([4]);
@@ -458,6 +464,8 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
                   providerGraphDataWatch!.tabLength = 1;
                   providerGraphDataRead!.setIndex(3);
                   providerGraphDataRead!.setIsecgppgOrSpo2(true);
+                  if (providerGraphDataWatch!.isspo2Selected == false)
+                    providerGraphDataWatch!.setspo2Selected();
                   Navigator.pop(context);
                   providerGraphDataWatch!.writeChangeModeCharacteristic!
                       .write([7]);

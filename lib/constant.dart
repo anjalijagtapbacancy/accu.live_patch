@@ -32,7 +32,7 @@ class Constant {
 
   String strNoDeviceConnected = "No device connected";
   String strConnect = "Connect";
-  String displayDeviceString = "bacancy";
+  String displayDeviceString = "accu.live";
   String strNoDevicesAvailable = "No devices are available";
   String strAvailableDevices = "Available Devices";
   static ProviderGraphData providerGraphData =new ProviderGraphData();

@@ -180,72 +180,80 @@ class _GraphScreenState extends State<GraphScreen>
             Visibility(
               visible: providerGraphDataWatch!.connectedDevice != null,
               child: TextButton(
-                  onPressed: () async {
-                    if (!providerGraphDataWatch!.isLoading) {
-                      //try {
-                      print(
-                          "UUID== ${providerGraphDataWatch!.readCharacteristic!.uuid.toString()}");
-                      if (providerGraphDataWatch!.isServiceStarted) {
-                        try {
-                          await providerGraphDataWatch!.readCharacteristic!
-                              .setNotifyValue(false);
-                        } catch (err) {
-                          printLog("notfy err ${err.toString()}");
-                        }
-                        providerGraphDataWatch!.setisFirst(true);
-                        providerGraphDataWatch!.setLoading(true);
-                        printLog("stop service");
-
-                        //stop service
-                        //providerGraphDataWatch!.writeCharacteristic!.write([0]);
-                        providerGraphDataWatch!.writeCharacteristic!.write([0]);
-                        if (sub != null) {
-                          sub.cancel();
-                        }
-                        providerGraphDataWatch!.setServiceStarted(false);
-
-                        await providerGraphDataWatch!.storedDataToLocal();
-
-                        providerGraphDataWatch!.setLoading(false);
-                      } else {
+                onPressed: () async {
+                  if (!providerGraphDataWatch!.isLoading) {
+                    //try {
+                    print(
+                        "UUID== ${providerGraphDataWatch!.readCharacteristic!.uuid.toString()}");
+                    if (providerGraphDataWatch!.isServiceStarted) {
+                      try {
                         await providerGraphDataWatch!.readCharacteristic!
-                            .setNotifyValue(true);
-
-                        providerGraphDataWatch!.setLoading(true);
-
-                        await providerGraphDataWatch!.clearStoreDataToLocal();
-                        // printLog(
-                        //     "mainEcgDecimalList.length=== ${providerGraphDataWatch!.mainEcgDecimalList.length}");
-                        // printLog(
-                        //     "mainPpgDecimalList.length=== ${providerGraphDataWatch!.mainPpgDecimalList.length}");
-                        sub = providerGraphDataWatch!.readCharacteristic!.value
-                            .listen((value) {
-                          readCharacteristics(value);
-                        });
-                        // start service
-                        //providerGraphDataWatch!.writeCharacteristic!.write([1]);
-                        providerGraphDataWatch!.writeCharacteristic!.write([1]);
-                        printLog("start service");
-                        // ignore: cancel_subscriptions
-                        // if (sub != null) {
-                        //   sub.cancel();
-                        // }
-
-                        providerGraphDataWatch!.setServiceStarted(true);
-                        providerGraphDataWatch!.setLoading(false);
-
-                        // await providerGraphDataWatch!.readCharacteristic!
-                        //     .read();
+                            .setNotifyValue(false);
+                      } catch (err) {
+                        printLog("notfy err ${err.toString()}");
                       }
-                      // } catch (e) {
-                      //   printLog("err $e");
+                      providerGraphDataWatch!.setisFirst(true);
+                      providerGraphDataWatch!.setLoading(true);
+                      printLog("stop service");
+
+                      //stop service
+                      //providerGraphDataWatch!.writeCharacteristic!.write([0]);
+                      providerGraphDataWatch!.writeCharacteristic!.write([0]);
+                      if (sub != null) {
+                        sub.cancel();
+                      }
+                      providerGraphDataWatch!.setServiceStarted(false);
+
+                      await providerGraphDataWatch!.storedDataToLocal();
+
+                      providerGraphDataWatch!.setLoading(false);
+                    } else {
+                      await providerGraphDataWatch!.readCharacteristic!
+                          .setNotifyValue(true);
+
+                      providerGraphDataWatch!.setLoading(true);
+
+                      await providerGraphDataWatch!.clearStoreDataToLocal();
+                      // printLog(
+                      //     "mainEcgDecimalList.length=== ${providerGraphDataWatch!.mainEcgDecimalList.length}");
+                      // printLog(
+                      //     "mainPpgDecimalList.length=== ${providerGraphDataWatch!.mainPpgDecimalList.length}");
+                      sub = providerGraphDataWatch!.readCharacteristic!.value
+                          .listen((value) {
+                        readCharacteristics(value);
+                      });
+                      // start service
+                      //providerGraphDataWatch!.writeCharacteristic!.write([1]);
+                      providerGraphDataWatch!.writeCharacteristic!.write([1]);
+                      printLog("start service");
+                      // ignore: cancel_subscriptions
+                      // if (sub != null) {
+                      //   sub.cancel();
                       // }
+
+                      providerGraphDataWatch!.setServiceStarted(true);
+                      providerGraphDataWatch!.setLoading(false);
+
+                      // await providerGraphDataWatch!.readCharacteristic!
+                      //     .read();
                     }
-                  },
-                  child: Text(
-                    providerGraphDataWatch!.isServiceStarted ? "Stop" : "Start",
-                    style: TextStyle(color: clrWhite),
-                  )),
+                    // } catch (e) {
+                    //   printLog("err $e");
+                    // }
+                  }
+                },
+                child: providerGraphDataWatch!.isServiceStarted
+                    ? Image.asset(
+                        "assets/images/icons_circled_pause.png",
+                        fit: BoxFit.fill,
+                        // color: clrWhite,
+                      )
+                    : Image.asset(
+                        "assets/images/icons_circled_play.png",
+                        fit: BoxFit.fill,
+                        // color: clrWhite,
+                      ),
+              ),
             ),
             Visibility(
               visible: !providerGraphDataWatch!.isServiceStarted &&
@@ -259,7 +267,8 @@ class _GraphScreenState extends State<GraphScreen>
                   }),
             ),
             Visibility(
-              visible: providerGraphDataWatch!.isEnabled && !providerGraphDataWatch!.isecgppgOrSpo2,
+              visible: providerGraphDataWatch!.isEnabled &&
+                  !providerGraphDataWatch!.isecgppgOrSpo2,
               child: TextButton(
                   onPressed: () async {
                     _openEndDrawer();
@@ -291,46 +300,48 @@ class _GraphScreenState extends State<GraphScreen>
               width: 400,
               child: Drawer(
                   child: SingleChildScrollView(
-                    child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisSize: MainAxisSize.max,
-                children: [
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
                     Container(
                       child: Column(
                         mainAxisSize: MainAxisSize.max,
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           SizedBox(
-                            height: 10,
+                            height: 30,
                           ),
                           Text.rich(
                             TextSpan(
                               children: [
                                 TextSpan(
                                   text: '$strStepCount\n',
-                                  style: TextStyle(fontSize: 15, color: clrWhite),
+                                  style:
+                                      TextStyle(fontSize: 15, color: clrWhite),
                                 ),
-                                providerGraphDataWatch!.stepCount==0 ?
-                                TextSpan(
-                                  text:
-                                  '--',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 50,
-                                      color: clrPrimary),
-                                ):TextSpan(
-                                  text:
-                                      '${providerGraphDataWatch!.stepCount.round().toString()}',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 50,
-                                      color: clrPrimary),
-                                ),
+                                providerGraphDataWatch!.stepCount == 0
+                                    ? TextSpan(
+                                        text: '--',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 50,
+                                            color: clrPrimary),
+                                      )
+                                    : TextSpan(
+                                        text:
+                                            '${providerGraphDataWatch!.stepCount.round().toString()}',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 50,
+                                            color: clrPrimary),
+                                      ),
                                 TextSpan(
                                   text: '   steps',
-                                  style: TextStyle(fontSize: 12, color: clrPrimary),
+                                  style: TextStyle(
+                                      fontSize: 12, color: clrPrimary),
                                 )
                               ],
                             ),
@@ -343,27 +354,29 @@ class _GraphScreenState extends State<GraphScreen>
                               children: [
                                 TextSpan(
                                   text: '$strHeartRate\n',
-                                  style: TextStyle(fontSize: 15, color: clrWhite),
+                                  style:
+                                      TextStyle(fontSize: 15, color: clrWhite),
                                 ),
-                                providerGraphDataWatch!.heartRate==0 ?
-                                TextSpan(
-                                  text:
-                                  '--',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 50,
-                                      color: clrPrimary),
-                                ):TextSpan(
-                                  text:
-                                      '${providerGraphDataWatch!.heartRate.round().toString()}',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 50,
-                                      color: clrPrimary),
-                                ),
+                                providerGraphDataWatch!.heartRate == 0
+                                    ? TextSpan(
+                                        text: '--',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 50,
+                                            color: clrPrimary),
+                                      )
+                                    : TextSpan(
+                                        text:
+                                            '${providerGraphDataWatch!.heartRate.round().toString()}',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 50,
+                                            color: clrPrimary),
+                                      ),
                                 TextSpan(
                                   text: '   $heartRateUnit',
-                                  style: TextStyle(fontSize: 12, color: clrPrimary),
+                                  style: TextStyle(
+                                      fontSize: 12, color: clrPrimary),
                                 )
                               ],
                             ),
@@ -372,52 +385,53 @@ class _GraphScreenState extends State<GraphScreen>
                             height: 20,
                           ),
                           Text.rich(
-                              TextSpan(
-                                children: [
-                                  TextSpan(
-                                    text: '         BP\n',
-                                    style: TextStyle(fontSize: 15, color: clrWhite),
-                                  ),
-                                  providerGraphDataWatch!.dBp==0 ?
-                                  TextSpan(
-                                    text:
-                                    '--/',
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 50,
-                                        color: clrPrimary),
-                                  ):TextSpan(
-                                    text:
-                                        '${providerGraphDataWatch!.dBp.round().toString()}/',
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 50,
-                                        color: clrPrimary),
-                                  ),
-                                  providerGraphDataWatch!.dDbp==0 ?
-                                  TextSpan(
-                                    text:
-                                    '--',
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 50,
-                                        color: clrPrimary),
-                                  ):TextSpan(
-                                    text:
-                                        '${providerGraphDataWatch!.dDbp.round().toString()}',
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 40,
-                                        color: clrPrimary),
-                                  ),
-                                  TextSpan(
-                                    text: '   $bpUnit',
-                                    style:
-                                        TextStyle(fontSize: 12, color: clrPrimary),
-                                  )
-                                ],
-                              ),
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'BP\n',
+                                  style:
+                                      TextStyle(fontSize: 15, color: clrWhite),
+                                ),
+                                providerGraphDataWatch!.dBp == 0
+                                    ? TextSpan(
+                                        text: '--/',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 50,
+                                            color: clrPrimary),
+                                      )
+                                    : TextSpan(
+                                        text:
+                                            '${providerGraphDataWatch!.dBp.round().toString()}/',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 50,
+                                            color: clrPrimary),
+                                      ),
+                                providerGraphDataWatch!.dDbp == 0
+                                    ? TextSpan(
+                                        text: '--',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 50,
+                                            color: clrPrimary),
+                                      )
+                                    : TextSpan(
+                                        text:
+                                            '${providerGraphDataWatch!.dDbp.round().toString()}',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 40,
+                                            color: clrPrimary),
+                                      ),
+                                TextSpan(
+                                  text: '   $bpUnit',
+                                  style: TextStyle(
+                                      fontSize: 12, color: clrPrimary),
+                                )
+                              ],
                             ),
+                          ),
                           SizedBox(
                             height: 20,
                           ),
@@ -426,27 +440,64 @@ class _GraphScreenState extends State<GraphScreen>
                               children: [
                                 TextSpan(
                                   text: '$strBpRt\n',
-                                  style: TextStyle(fontSize: 15, color: clrWhite),
+                                  style:
+                                      TextStyle(fontSize: 15, color: clrWhite),
                                 ),
-                                providerGraphDataWatch!.BpFromRt==0 ?
-                                TextSpan(
-                                  text:
-                                  '--',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 50,
-                                      color: clrPrimary),
-                                ):TextSpan(
-                                  text:
-                                      '${providerGraphDataWatch!.BpFromRt.round().toString()}',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 50,
-                                      color: clrPrimary),
-                                ),
+                                providerGraphDataWatch!.BpFromRt == 0
+                                    ? TextSpan(
+                                        text: '--',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 50,
+                                            color: clrPrimary),
+                                      )
+                                    : TextSpan(
+                                        text:
+                                            '${providerGraphDataWatch!.BpFromRt.round().toString()}',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 50,
+                                            color: clrPrimary),
+                                      ),
                                 TextSpan(
                                   text: '   $bpUnit',
-                                  style: TextStyle(fontSize: 12, color: clrPrimary),
+                                  style: TextStyle(
+                                      fontSize: 12, color: clrPrimary),
+                                )
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            height: 20,
+                          ),
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'RR\n',
+                                  style:
+                                  TextStyle(fontSize: 15, color: clrWhite),
+                                ),
+                                providerGraphDataWatch!.avgPeak == 0
+                                    ? TextSpan(
+                                  text: '--',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 50,
+                                      color: clrPrimary),
+                                )
+                                    : TextSpan(
+                                  text:
+                                  '${providerGraphDataWatch!.avgPeak.toStringAsFixed(4)}',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 50,
+                                      color: clrPrimary),
+                                ),
+                                TextSpan(
+                                  text: '',
+                                  style: TextStyle(
+                                      fontSize: 12, color: clrPrimary),
                                 )
                               ],
                             ),
@@ -471,7 +522,8 @@ class _GraphScreenState extends State<GraphScreen>
                               children: [
                                 TextSpan(
                                   text: 'Arrhythmia Type\n',
-                                  style: TextStyle(fontSize: 14, color: clrWhite),
+                                  style:
+                                      TextStyle(fontSize: 14, color: clrWhite),
                                 ),
                                 providerGraphDataWatch!.arrhythmia_type != null
                                     ? TextSpan(
@@ -500,26 +552,30 @@ class _GraphScreenState extends State<GraphScreen>
                               children: [
                                 TextSpan(
                                   text: 'HRV\n',
-                                  style: TextStyle(fontSize: 14, color: clrWhite),
+                                  style:
+                                      TextStyle(fontSize: 14, color: clrWhite),
                                 ),
-                                providerGraphDataWatch!.avgHrv==0 ? TextSpan(
-                                  text:'--',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                      color: clrPrimary),
-                                ):TextSpan(
-                                  text:
-                                  providerGraphDataWatch!.avgHrv.round().toString(),
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                      color: clrPrimary),
-                                ),
+                                providerGraphDataWatch!.avgHrv == 0
+                                    ? TextSpan(
+                                        text: '--',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                            color: clrPrimary),
+                                      )
+                                    : TextSpan(
+                                        text: providerGraphDataWatch!.avgHrv
+                                            .round()
+                                            .toString(),
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                            color: clrPrimary),
+                                      ),
                                 TextSpan(
                                   text: '  $rvUnit',
-                                  style: TextStyle(fontSize: 10,
-                                      color: clrPrimary),
+                                  style: TextStyle(
+                                      fontSize: 10, color: clrPrimary),
                                 ),
                               ],
                             ),
@@ -532,28 +588,30 @@ class _GraphScreenState extends State<GraphScreen>
                               children: [
                                 TextSpan(
                                   text: 'PRV\n',
-                                  style: TextStyle(fontSize: 14, color: clrWhite),
+                                  style:
+                                      TextStyle(fontSize: 14, color: clrWhite),
                                 ),
-                                providerGraphDataWatch!.avgPrv==0 ? TextSpan(
-                                  text:'--',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                      color: clrPrimary),
-                                ):TextSpan(
-                                  text:
-                                  providerGraphDataWatch!.avgPrv
-                                      .round()
-                                      .toString(),
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                      color: clrPrimary),
-                                ),
+                                providerGraphDataWatch!.avgPrv == 0
+                                    ? TextSpan(
+                                        text: '--',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                            color: clrPrimary),
+                                      )
+                                    : TextSpan(
+                                        text: providerGraphDataWatch!.avgPrv
+                                            .round()
+                                            .toString(),
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                            color: clrPrimary),
+                                      ),
                                 TextSpan(
                                   text: '  $rvUnit',
-                                  style: TextStyle(fontSize: 10,
-                                      color: clrPrimary),
+                                  style: TextStyle(
+                                      fontSize: 10, color: clrPrimary),
                                 ),
                               ],
                             ),
@@ -566,27 +624,29 @@ class _GraphScreenState extends State<GraphScreen>
                               children: [
                                 TextSpan(
                                   text: 'PTT\n',
-                                  style: TextStyle(fontSize: 14, color: clrWhite),
+                                  style:
+                                      TextStyle(fontSize: 14, color: clrWhite),
                                 ),
-                              providerGraphDataWatch!.avgPTT==0 ? TextSpan(
-                                text:'--',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                    color: clrPrimary),
-                              ):TextSpan(
-                                  text:
-                                  providerGraphDataWatch!.avgPTT
-                                      .toStringAsFixed(4),
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                      color: clrPrimary),
-                                ),
+                                providerGraphDataWatch!.avgPTT == 0
+                                    ? TextSpan(
+                                        text: '--',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                            color: clrPrimary),
+                                      )
+                                    : TextSpan(
+                                        text: providerGraphDataWatch!.avgPTT
+                                            .toStringAsFixed(4),
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                            color: clrPrimary),
+                                      ),
                                 TextSpan(
                                   text: '  $rvUnit',
-                                  style: TextStyle(fontSize: 10,
-                                      color: clrPrimary),
+                                  style: TextStyle(
+                                      fontSize: 10, color: clrPrimary),
                                 ),
                               ],
                             ),
@@ -599,27 +659,30 @@ class _GraphScreenState extends State<GraphScreen>
                               children: [
                                 TextSpan(
                                   text: 'Pulse Pressure\n',
-                                  style: TextStyle(fontSize: 14, color: clrWhite),
+                                  style:
+                                      TextStyle(fontSize: 14, color: clrWhite),
                                 ),
-                                providerGraphDataWatch!.PP==0 ? TextSpan(
-                                  text:'--',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                      color: clrPrimary),
-                                ):TextSpan(
-                                  text:
-                                  providerGraphDataWatch!.PP
-                                      .round().toString(),
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                      color: clrPrimary),
-                                ),
+                                providerGraphDataWatch!.PP == 0
+                                    ? TextSpan(
+                                        text: '--',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                            color: clrPrimary),
+                                      )
+                                    : TextSpan(
+                                        text: providerGraphDataWatch!.PP
+                                            .round()
+                                            .toString(),
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                            color: clrPrimary),
+                                      ),
                                 TextSpan(
                                   text: '  $bpUnit',
-                                  style: TextStyle(fontSize: 10,
-                                      color: clrPrimary),
+                                  style: TextStyle(
+                                      fontSize: 10, color: clrPrimary),
                                 ),
                               ],
                             ),
@@ -632,27 +695,30 @@ class _GraphScreenState extends State<GraphScreen>
                               children: [
                                 TextSpan(
                                   text: 'MAP\n',
-                                  style: TextStyle(fontSize: 14, color: clrWhite),
+                                  style:
+                                      TextStyle(fontSize: 14, color: clrWhite),
                                 ),
-                                providerGraphDataWatch!.MAP==0 ? TextSpan(
-                                  text:'--',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                      color: clrPrimary),
-                                ):TextSpan(
-                                  text:
-                                  providerGraphDataWatch!.MAP
-                                      .round().toString(),
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                      color: clrPrimary),
-                                ),
+                                providerGraphDataWatch!.MAP == 0
+                                    ? TextSpan(
+                                        text: '--',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                            color: clrPrimary),
+                                      )
+                                    : TextSpan(
+                                        text: providerGraphDataWatch!.MAP
+                                            .round()
+                                            .toString(),
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                            color: clrPrimary),
+                                      ),
                                 TextSpan(
                                   text: '  $bpUnit',
-                                  style: TextStyle(fontSize: 10,
-                                      color: clrPrimary),
+                                  style: TextStyle(
+                                      fontSize: 10, color: clrPrimary),
                                 ),
                               ],
                             ),
@@ -665,59 +731,30 @@ class _GraphScreenState extends State<GraphScreen>
                               children: [
                                 TextSpan(
                                   text: 'SV\n',
-                                  style: TextStyle(fontSize: 14, color: clrWhite),
+                                  style:
+                                      TextStyle(fontSize: 14, color: clrWhite),
                                 ),
-                                providerGraphDataWatch!.SV==0 ? TextSpan(
-                                  text:'--',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                      color: clrPrimary),
-                                ):TextSpan(
-                                  text:
-                                  providerGraphDataWatch!.SV
-                                      .round().toString(),
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                      color: clrPrimary),
-                                ),
+                                providerGraphDataWatch!.SV == 0
+                                    ? TextSpan(
+                                        text: '--',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                            color: clrPrimary),
+                                      )
+                                    : TextSpan(
+                                        text: providerGraphDataWatch!.SV
+                                            .round()
+                                            .toString(),
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                            color: clrPrimary),
+                                      ),
                                 TextSpan(
                                   text: '  mL',
-                                  style: TextStyle(fontSize: 10,
-                                      color: clrPrimary),
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(
-                            height: 30,
-                          ),
-                          Text.rich(
-                            TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: 'RR\n',
-                                  style: TextStyle(fontSize: 14, color: clrWhite),
-                                ),
-                                providerGraphDataWatch!.avgPeak==0 ? TextSpan(
-                                  text:'--',
                                   style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                      color: clrPrimary),
-                                ):TextSpan(
-                                  text:
-                                  providerGraphDataWatch!.avgPeak.toStringAsFixed(4),
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                      color: clrPrimary),
-                                ),
-                                TextSpan(
-                                  text: '',
-                                  style: TextStyle(fontSize: 10,
-                                      color: clrPrimary),
+                                      fontSize: 10, color: clrPrimary),
                                 ),
                               ],
                             ),
@@ -730,27 +767,30 @@ class _GraphScreenState extends State<GraphScreen>
                               children: [
                                 TextSpan(
                                   text: 'CO\n',
-                                  style: TextStyle(fontSize: 14, color: clrWhite),
+                                  style:
+                                      TextStyle(fontSize: 14, color: clrWhite),
                                 ),
-                                providerGraphDataWatch!.CO==0 ? TextSpan(
-                                  text:'--',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                      color: clrPrimary),
-                                ):TextSpan(
-                                  text:
-                                  providerGraphDataWatch!.CO
-                                      .round().toString(),
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                      color: clrPrimary),
-                                ),
+                                providerGraphDataWatch!.CO == 0
+                                    ? TextSpan(
+                                        text: '--',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                            color: clrPrimary),
+                                      )
+                                    : TextSpan(
+                                        text: providerGraphDataWatch!.CO
+                                            .round()
+                                            .toString(),
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                            color: clrPrimary),
+                                      ),
                                 TextSpan(
                                   text: '  L/min',
-                                  style: TextStyle(fontSize: 10,
-                                      color: clrPrimary),
+                                  style: TextStyle(
+                                      fontSize: 10, color: clrPrimary),
                                 ),
                               ],
                             ),
@@ -761,9 +801,9 @@ class _GraphScreenState extends State<GraphScreen>
                         ],
                       ),
                     ),
-                ],
-              ),
-                  )),
+                  ],
+                ),
+              )),
             ),
           ),
         ),
@@ -791,18 +831,23 @@ class _GraphScreenState extends State<GraphScreen>
                           : 'Device Id: ${providerGraphDataWatch!.connectedDevice!.id}',
                       style: TextStyle(color: clrWhite, fontSize: 12),
                     ),
-                    GestureDetector(
-                      child: Text(
-                        'Disconnect',
-                        style: TextStyle(
-                            color: clrWhite,
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(0, 5, 0, 0),
+                      child: GestureDetector(
+                        child: RaisedButton(
+                          color: clrGrey,
+                          child: Text(
+                            'Disconnect',
+                            style: TextStyle(
+                                color: clrDarkBg,
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold),
+                          ),onPressed: (){
+                          Navigator.pop(context);
+                          Navigator.pop(context);
+                        },
+                        ),
                       ),
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.pop(context);
-                      },
                     )
                   ],
                 ),
@@ -813,7 +858,12 @@ class _GraphScreenState extends State<GraphScreen>
               Visibility(
                 visible: !providerGraphDataWatch!.isecgppgOrSpo2,
                 child: ListTile(
-                  leading: Icon(Icons.align_horizontal_left_rounded),
+                  selected: providerGraphDataWatch!.isecgppgSelected,
+                  selectedTileColor: clrGrey,
+                  leading: Image.asset(
+                    "assets/images/line_graph.png",
+                    height: 20,
+                  ),
                   title: Text(
                     ecgNppg,
                     style: TextStyle(color: clrBlack),
@@ -821,13 +871,27 @@ class _GraphScreenState extends State<GraphScreen>
                   onTap: () {
                     providerGraphDataWatch!.setIndex(0);
                     Navigator.pop(context);
+                    if (providerGraphDataWatch!.isecgppgSelected == false)
+                      providerGraphDataWatch!.setecgppgSelected();
+
+                    if (providerGraphDataWatch!.isspo2Selected == true)
+                      providerGraphDataWatch!.setspo2Selected();
+                    if (providerGraphDataWatch!.isecgSelected == true)
+                      providerGraphDataWatch!.setecgSelected();
+                    if (providerGraphDataWatch!.isppgSelected == true)
+                      providerGraphDataWatch!.setppgSelected();
                   },
                 ),
               ),
               Visibility(
                 visible: !providerGraphDataWatch!.isecgppgOrSpo2,
                 child: ListTile(
-                  leading: Icon(Icons.align_horizontal_left_rounded),
+                  selected: providerGraphDataWatch!.isecgSelected,
+                  selectedTileColor: clrGrey,
+                  leading: Image.asset(
+                    "assets/images/line_graph.png",
+                    height: 20,
+                  ),
                   title: Text(
                     ecg,
                     style: TextStyle(color: clrBlack),
@@ -835,13 +899,27 @@ class _GraphScreenState extends State<GraphScreen>
                   onTap: () {
                     providerGraphDataWatch!.setIndex(1);
                     Navigator.pop(context);
+                    if (providerGraphDataWatch!.isecgSelected == false)
+                      providerGraphDataWatch!.setecgSelected();
+
+                    if (providerGraphDataWatch!.isspo2Selected == true)
+                      providerGraphDataWatch!.setspo2Selected();
+                    if (providerGraphDataWatch!.isecgppgSelected = true)
+                      providerGraphDataWatch!.setecgppgSelected();
+                    if (providerGraphDataWatch!.isppgSelected = true)
+                      providerGraphDataWatch!.setppgSelected();
                   },
                 ),
               ),
               Visibility(
                 visible: !providerGraphDataWatch!.isecgppgOrSpo2,
                 child: ListTile(
-                  leading: Icon(Icons.align_horizontal_left_rounded),
+                  selected: providerGraphDataWatch!.isppgSelected,
+                  selectedTileColor: clrGrey,
+                  leading: Image.asset(
+                    "assets/images/line_graph.png",
+                    height: 20,
+                  ),
                   title: Text(
                     ppg,
                     style: TextStyle(color: clrBlack),
@@ -849,19 +927,42 @@ class _GraphScreenState extends State<GraphScreen>
                   onTap: () {
                     providerGraphDataWatch!.setIndex(2);
                     Navigator.pop(context);
+                    if (providerGraphDataWatch!.isppgSelected == false)
+                      providerGraphDataWatch!.setppgSelected();
+
+                    if (providerGraphDataWatch!.isspo2Selected == true)
+                      providerGraphDataWatch!.setspo2Selected();
+                    if (providerGraphDataWatch!.isecgSelected == true)
+                      providerGraphDataWatch!.setecgSelected();
+                    if (providerGraphDataWatch!.isecgppgSelected = true)
+                      providerGraphDataWatch!.setecgppgSelected();
                   },
                 ),
               ),
               Visibility(
                 visible: providerGraphDataWatch!.isecgppgOrSpo2,
                 child: ListTile(
-                  leading: Icon(Icons.air),
+                  selected: providerGraphDataWatch!.isspo2Selected,
+                  selectedTileColor: clrGrey,
+                  leading: Image.asset(
+                    "assets/images/o2.png",
+                    height: 30,
+                  ),
                   title: Text(
                     spo2,
                     style: TextStyle(color: clrBlack),
                   ),
                   onTap: () {
                     Navigator.pop(context);
+                    if (providerGraphDataWatch!.isspo2Selected == false)
+                      providerGraphDataWatch!.setspo2Selected();
+
+                    if (providerGraphDataWatch!.isecgSelected == true)
+                      providerGraphDataWatch!.setecgSelected();
+                    if (providerGraphDataWatch!.isecgppgSelected == true)
+                      providerGraphDataWatch!.setecgppgSelected();
+                    if (providerGraphDataWatch!.isppgSelected == true)
+                      providerGraphDataWatch!.setppgSelected();
                   },
                 ),
               ),
@@ -870,18 +971,27 @@ class _GraphScreenState extends State<GraphScreen>
                     !providerGraphDataWatch!.isecgppgOrSpo2),
                 // visible: false,
                 child: ListTile(
-                  leading: Icon(Icons.article),
-                  title: Text(
-                    providerGraphDataWatch!.isEnabled ? "Disable" : "Enable",
-                    style: TextStyle(color: clrBlack),
+                  leading: Image.asset(
+                    "assets/images/filter.png",
+                    height: 30,
                   ),
-                  onTap: () {
-                    if (!providerGraphDataWatch!.isLoading) {
-                      //widget.flutterBlue.startScan();
-                      providerGraphDataWatch!.setIsEnabled();
-                    }
-                    Navigator.pop(context);
-                  },
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      Text(
+                        "Filter",
+                        style: TextStyle(color: clrBlack),
+                      ),
+                      Switch(
+                        value: providerGraphDataWatch!.isEnabled ? true : false,
+                        onChanged: (value) {
+                          providerGraphDataWatch!.setIsEnabled();
+                        },
+                      )
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -1045,9 +1155,9 @@ class _GraphScreenState extends State<GraphScreen>
           child: LineChart(
               title == ecg
                   ? mainData(providerGraphDataWatch!.tempEcgSpotsListData,
-                      providerGraphDataWatch!.tempEcgDecimalList)
+                      providerGraphDataWatch!.tempEcgDecimalList, true)
                   : mainData(providerGraphDataWatch!.tempPpgSpotsListData,
-                      providerGraphDataWatch!.tempPpgDecimalList),
+                      providerGraphDataWatch!.tempPpgDecimalList, false),
               swapAnimationDuration: Duration.zero,
               swapAnimationCurve: Curves.linear),
         ),
@@ -1056,10 +1166,10 @@ class _GraphScreenState extends State<GraphScreen>
   }
 
   LineChartData mainData(
-      List<FlSpot> tempSpotsList, List<double> tempDecimalList) {
+      List<FlSpot> tempSpotsList, List<double> tempDecimalList, bool isgrid) {
     return LineChartData(
       gridData: FlGridData(
-        show: true,
+        show: isgrid,
         drawVerticalLine: true,
         getDrawingHorizontalLine: (value) {
           return FlLine(
@@ -1165,7 +1275,7 @@ class _GraphScreenState extends State<GraphScreen>
                       right: 10.0, left: 5.0, top: 5, bottom: 45),
                   child: LineChart(
                       mainData(providerGraphDataWatch!.tempEcgSpotsListData,
-                          providerGraphDataWatch!.tempEcgDecimalList),
+                          providerGraphDataWatch!.tempEcgDecimalList, true),
                       swapAnimationDuration: Duration.zero,
                       swapAnimationCurve: Curves.linear),
                 ),
@@ -1195,7 +1305,7 @@ class _GraphScreenState extends State<GraphScreen>
                   right: 10.0, left: 5.0, top: 5, bottom: 45),
               child: LineChart(
                   mainData(providerGraphDataWatch!.tempPpgSpotsListData,
-                      providerGraphDataWatch!.tempPpgDecimalList),
+                      providerGraphDataWatch!.tempPpgDecimalList, false),
                   swapAnimationDuration: Duration.zero,
                   swapAnimationCurve: Curves.linear),
             ),
@@ -1223,8 +1333,7 @@ class _GraphScreenState extends State<GraphScreen>
               ? providerGraphDataWatch!.isServiceStarted == true
                   ? Text(
                       'Checking....',
-                      style:
-                          TextStyle(fontSize: 32),
+                      style: TextStyle(fontSize: 32),
                     )
                   : Text(
                       '-- --  %',

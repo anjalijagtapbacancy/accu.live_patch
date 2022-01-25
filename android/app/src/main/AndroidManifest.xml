@@ -11,7 +11,7 @@
     <uses-permission android:name="android.permission.READ_INTERNAL_STORAGE"/>
   
    <application
-        android:label="Bacancy Medical"
+        android:label="Accu.Live Patch"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

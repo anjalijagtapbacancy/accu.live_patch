@@ -21,7 +21,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
   final FlutterBlue flutterBlue = FlutterBlue.instance;
   BluetoothDevice? connectedDevice;
   List<BluetoothService>? services;
-  bool isFirst=true;
+  bool isFirst = true;
   String? arrhythmia_type;
 
   Location location = new Location();
@@ -40,7 +40,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
   double spo2Val = 0;
   int index = 0;
-  bool isecgppgOrSpo2=false;
+  bool isecgppgOrSpo2 = false;
   int tabLength = 3;
   int ecgDataLength = 0;
   int ppgDataLength = 0;
@@ -49,6 +49,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
   double AvgRt = 0;
   int BpFromRt = 0;
   List<dynamic> data = [];
+
   //List<double> rrIntervalList = [];
   List<dynamic> rrInterval = [];
   List<double> rtIntervalList = [];
@@ -109,6 +110,10 @@ class ProviderGraphData with ChangeNotifier, Constant {
   double CO = 0;
   double SV = 0;
   double avgPeak = 0;
+  bool isecgSelected = false,
+      isppgSelected = false,
+      isecgppgSelected = false,
+      isspo2Selected = false;
 
   // static double avgPrv1=0,avgHrv1= 0;
   // static double avgPTT1 = 0;
@@ -136,6 +141,11 @@ class ProviderGraphData with ChangeNotifier, Constant {
     avgPrv = 0;
     dBp = 0;
     dDbp = 0;
+    PP = 0;
+    MAP = 0;
+    CO = 0;
+    SV = 0;
+    avgPeak = 0;
     arrhythmia_type = null;
     tabSelectedIndex = 0;
     devicesList.clear();
@@ -181,10 +191,12 @@ class ProviderGraphData with ChangeNotifier, Constant {
     index = Index;
     notifyListeners();
   }
+
   setIsecgppgOrSpo2(bool value) {
     isecgppgOrSpo2 = value;
     notifyListeners();
   }
+
   void enableLocation() async {
     isLocServiceEnabled = await location.serviceEnabled();
     if (!isLocServiceEnabled) {
@@ -205,10 +217,12 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
     notifyListeners();
   }
+
   setisFirst(bool value) {
     isFirst = value;
     //notifyListeners();
   }
+
   setLoading(bool value) {
     isLoading = value;
     notifyListeners();
@@ -221,6 +235,23 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
   setIsEnabled() {
     isEnabled = !isEnabled;
+    notifyListeners();
+  }
+
+  setecgSelected() {
+    isecgSelected = !isecgSelected;
+    notifyListeners();
+  }
+  setppgSelected() {
+    isppgSelected = !isppgSelected;
+    notifyListeners();
+  }
+  setecgppgSelected() {
+    isecgppgSelected = !isecgppgSelected;
+    notifyListeners();
+  }
+  setspo2Selected() {
+    isspo2Selected = !isspo2Selected;
     notifyListeners();
   }
 
@@ -365,6 +396,11 @@ class ProviderGraphData with ChangeNotifier, Constant {
     avgPrv = 0;
     dBp = 0;
     dDbp = 0;
+    PP = 0;
+    MAP = 0;
+    CO = 0;
+    SV = 0;
+    avgPeak = 0;
     spo2Val = 0;
     avgPTT = 0;
     heartRate = 0;
@@ -408,8 +444,8 @@ class ProviderGraphData with ChangeNotifier, Constant {
       spo2Val = (double.parse(
               int.parse(strHex, radix: 16).toString().padLeft(1, '0'))) /
           100;
-      if(spo2Val>100){
-        spo2Val=100.0;
+      if (spo2Val > 100) {
+        spo2Val = 100.0;
       }
       print("spo2Val read ${spo2Val.toString()}");
     }
@@ -855,7 +891,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
       avgPeak = (totalOfPeaksEcg / (R_peaksPositionsEcgArray.length));
       if (avgPeak.isInfinite || avgPeak.isNaN) {
         heartRate = 0;
-        avgPeak=0;
+        avgPeak = 0;
       } else {
         if ((60 / avgPeak).round() > 200) {
           heartRate = 200;
@@ -866,8 +902,8 @@ class ProviderGraphData with ChangeNotifier, Constant {
       print("heartRate $heartRate");
       rrInterval.add([avgPeak]);
       if (rrInterval.isNotEmpty) {
-          Prediction();
-        }
+        Prediction();
+      }
       //heartRate=heartRate1;
       // Constant.providerGraphData.arrhythmia_type=arrhythmia_type;
       //print("before RtInterval");
@@ -1172,10 +1208,10 @@ class ProviderGraphData with ChangeNotifier, Constant {
       // dDbp = 99.606825109447 - 96.651802662872 * avgPTT;
       dBp = 145.802365863 - 83.006119783168 * avgPTT;
       dDbp = 110.606825109447 - 96.651802662872 * avgPTT;
-      PP= dBp-dDbp;
-      MAP=((dBp+(2*dDbp))/3);
-      SV=dBp-dDbp;
-      CO=((SV*heartRate)/1000);
+      PP = dBp - dDbp;
+      MAP = ((dBp + (2 * dDbp)) / 3);
+      SV = dBp - dDbp;
+      CO = ((SV * heartRate) / 1000);
       //print("avgPTT1 $avgPTT , avgHrv1 $avgHrv");
       // Constant.providerGraphData.avgPTT = avgPTT;
       // Constant.providerGraphData.avgHrv = avgHrv;
