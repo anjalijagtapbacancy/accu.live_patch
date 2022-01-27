@@ -242,14 +242,17 @@ class ProviderGraphData with ChangeNotifier, Constant {
     isecgSelected = !isecgSelected;
     notifyListeners();
   }
+
   setppgSelected() {
     isppgSelected = !isppgSelected;
     notifyListeners();
   }
+
   setecgppgSelected() {
     isecgppgSelected = !isecgppgSelected;
     notifyListeners();
   }
+
   setspo2Selected() {
     isspo2Selected = !isspo2Selected;
     notifyListeners();
@@ -481,7 +484,22 @@ class ProviderGraphData with ChangeNotifier, Constant {
       }
       print("ecg hex list ${mainEcgHexList.length.toString()}");
       print("ppg hex list ${mainPpgHexList.length.toString()}");
-
+      if (mainEcgHexList.length < 500) {
+      if (mainEcgHexList.length <= 100) {
+        yAxisGraphData = 100;
+      } else if (mainEcgHexList.length <= 200) {
+        yAxisGraphData = 200;
+      } else if (mainEcgHexList.length <= 300) {
+        yAxisGraphData = 300;
+      } else if (mainEcgHexList.length <= 400) {
+        yAxisGraphData = 400;
+      } else if (mainEcgHexList.length < 500) {
+        yAxisGraphData = 500;
+      }
+      }else {
+        yAxisGraphData = 500;
+      }
+      print("yAxisGraphData $yAxisGraphData");
       if (mainEcgHexList.length > (yAxisGraphData * 2) &&
           mainPpgHexList.length > (yAxisGraphData * 2)) {
         tempEcgHexList = mainEcgHexList

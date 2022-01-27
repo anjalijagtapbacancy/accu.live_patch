@@ -835,11 +835,12 @@ class _GraphScreenState extends State<GraphScreen>
                       padding: const EdgeInsets.fromLTRB(0, 5, 0, 0),
                       child: GestureDetector(
                         child: RaisedButton(
-                          color: clrGrey,
+                          elevation: 5,
+                          color: clrWhite,
                           child: Text(
                             'Disconnect',
                             style: TextStyle(
-                                color: clrDarkBg,
+                                color: clrPrimary,
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold),
                           ),onPressed: (){

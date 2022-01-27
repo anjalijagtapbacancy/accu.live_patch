@@ -332,7 +332,7 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
       showDialog(
           barrierDismissible: false,
           context: context,
-          builder: (BuildContext context) => Choice());
+          builder: (BuildContext context) => WillPopScope(onWillPop: () => Future.value(false),child: Choice()));
 
       // providerGraphDataWatch!.setIsShowAvailableDevices();
     }
@@ -386,8 +386,9 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
 
   Dialog Choice() {
     return Dialog(
+      backgroundColor: Colors.transparent,
       child: Container(
-        height: 150,
+        height: 180,
         width: 100,
         child: Column(
           mainAxisSize: MainAxisSize.max,
@@ -395,8 +396,27 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
+              child: Row(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    height: 30,
+                    child: GestureDetector(child: Icon(Icons.close,color: clrWhite),onTap: (){
+                      Navigator.pop(context);
+                      if (providerGraphDataWatch!.connectedDevice != null) {
+                        providerGraphDataWatch!.connectedDevice!.disconnect();
+                      }
+                    },),
+                  ),
+                ],
+              ),
+            ),
+            Container(
               height: 74,
               width: 280,
+              color: clrWhite,
               child: GestureDetector(
                 behavior: HitTestBehavior.translucent,
                 child: Container(
@@ -447,6 +467,7 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
             Container(
               height: 74,
               width: 280,
+              color: clrWhite,
               child: GestureDetector(
                 behavior: HitTestBehavior.translucent,
                 child: Container(
@@ -489,33 +510,7 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
             ),
           ],
         ),
-      ), /* PopupMenuButton(
-            onSelected: (value) {
-              if (value == 1) {
-                choice = ecgNppg;
-                providerGraphDataWatch!.tabLength = 3;
-              } else {
-                choice = spo2;
-                providerGraphDataWatch!.tabLength = 1;
-              }
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => MyHomePage(
-                            title: appName,
-                            dropdownValue: choice!,
-                          )));
-            },
-            itemBuilder: (context) => [
-                  PopupMenuItem(
-                    child: Text(ecgNppg),
-                    value: 1,
-                  ),
-                  PopupMenuItem(
-                    child: Text(spo2),
-                    value: 2,
-                  )
-                ]),*/
+      ),
     );
   }
 }
