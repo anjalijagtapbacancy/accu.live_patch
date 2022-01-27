@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_connection/constant.dart';
 
 class ProgressBar extends StatelessWidget with Constant {
-  // int color;
-  // ProgressBar(@required this.color);
-
   @override
   Widget build(BuildContext context) {
     return AbsorbPointer(

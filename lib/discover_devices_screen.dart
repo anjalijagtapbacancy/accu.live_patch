@@ -1,4 +1,3 @@
-// import 'package:bluetooth_enable/bluetooth_enable.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -55,7 +54,6 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
 
   @override
   void dispose() {
-    //_controller!.dispose();
     bluetoothConnSub!.cancel();
     connDeviceSub!.cancel();
     providerGraphDataWatch!.clearProviderGraphData();
@@ -95,7 +93,6 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
                     providerGraphDataWatch!.enableLocation();
                     providerGraphDataWatch!.devicesList.clear();
                     chechBluetooth();
-                    //await this.flutterBlue.startScan();
                   }
                 }
               }),
@@ -110,7 +107,6 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
                   itemCount: providerGraphDataWatch!.devicesList.length,
                   separatorBuilder: (context, i) {
                     return Divider(
-                        // color: clrGrey,
                         );
                   },
                   itemBuilder: (context, i) {
@@ -180,7 +176,7 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
                       ),
                     );
                   })
-              : Center(child: Text("No devices are available")),
+              : Center(child: Text(strNoDevicesAvailable)),
           providerGraphDataWatch!.isLoading ? ProgressBar() : Offstage(),
         ],
       ),
@@ -192,7 +188,6 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
       switch (event) {
         case BluetoothState.on:
           Utils().showToast("Bluetooth on");
-          // if(providerGraphDataWatch!.isLocServiceEnabled)
           scanDevices();
           break;
         case BluetoothState.off:
@@ -211,76 +206,7 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
     });
   }
 
-//   void setUpBluetooth() {
-//     this.flutterBlue.isOn.then((value) {
-//       providerGraphDataWatch!.enableLocation();
-//
-//       printLog("  isOn ${value.toString()}");
-//       if (!value) {
-//         providerGraphDataWatch!.setLoading(true);
-//
-//         //Request to turn on Bluetooth within an app
-//         // BluetoothEnable.enableBluetooth.then((value) {
-//         //   providerGraphDataWatch!.setLoading(false);
-//
-//         //   if (value == "true") {
-//         //     //Bluetooth has been enabled
-//         //     // setUpBluetooth();
-//         //   } else if (value == "false") {
-//         //     //Bluetooth has not been enabled
-//         //   }
-//         // });
-//       }
-//       if (value) {
-//         providerGraphDataWatch!.setLoading(true);
-//
-//         this.flutterBlue.isAvailable.then((value) {
-//           printLog(" isAvailable ${value.toString()}");
-//         });
-//
-//         /*this
-//             .flutterBlue
-//             .connectedDevices
-//             .asStream()
-//             .listen((List<BluetoothDevice> devices) {
-//           printLog("  devices ${devices.length}");
-//
-//           for (BluetoothDevice device in devices) {
-//             printLog("  connectedDevices ${device}");
-//
-//             if (device.name.toLowerCase().contains(displayDeviceString)) {
-//               providerGraphDataWatch!.setDeviceList(device);
-//               device.state.asBroadcastStream();
-//             }
-//           }
-//         });*/
-//
-//         /*   if (providerGraphDataWatch!.devicesList.length == 1) {
-//           print("devicesList iff ${providerGraphDataWatch!.devicesList.length.toString()}");
-//           connectDevice(providerGraphDataWatch!.devicesList.first);
-//         } else {
-//           print("devicesList elsee ${providerGraphDataWatch!.devicesList.length.toString()}");
-//         }
-// */
-//         this.flutterBlue.scanResults.listen((List<ScanResult> results) {
-//           // printLog("  scan result length devices ${results.length}");
-//           for (ScanResult result in results) {
-//             // printLog("  scanResults ${result.device}");
-//             if (result.device.name.toLowerCase().contains(displayDeviceString)) {
-//               providerGraphDataWatch!.setDeviceList(result.device);
-//             }
-//           }
-//         });
-//         providerGraphDataWatch!.setLoading(false);
-//
-//         this.flutterBlue.startScan();
-//         providerGraphDataWatch!.setIsScanning(true);
-//       }
-//     });
-//   }
-
   void scanDevices() {
-    // if(providerGraphDataWatch!=null) {
     providerGraphDataWatch!.setLoading(true);
 
     this.flutterBlue.scanResults.listen((List<ScanResult> results) {
@@ -297,7 +223,6 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
 
     this.flutterBlue.startScan();
     providerGraphDataWatch!.setIsScanning(true);
-    //  }
   }
 
   void connectDevice(BluetoothDevice device) async {
@@ -312,11 +237,7 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
         providerGraphDataWatch!.setLoading(false);
         chechBluetooth();
       });
-      // print("IIII index  ${_controller!.index.toString()}");
     } catch (e) {
-      // if (e.code != 'already_connected') {
-      //   throw e;
-      // }
       printLog("Exception ${e.toString()}");
       providerGraphDataWatch!.setLoading(false);
     } finally {
@@ -327,19 +248,15 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
       providerGraphDataWatch!.setConnectedDevice(device, context, services);
       Future.delayed(Duration(milliseconds: 200));
       readCharacteristics();
-      //providerGraphDataWatch!.TrainModel();
       providerGraphDataWatch!.setLoading(false);
       showDialog(
           barrierDismissible: false,
           context: context,
           builder: (BuildContext context) => WillPopScope(onWillPop: () => Future.value(false),child: Choice()));
-
-      // providerGraphDataWatch!.setIsShowAvailableDevices();
     }
   }
 
   void readCharacteristics() {
-    //print("services ${providerGraphDataWatch!.services!.length.toString()}");
     if (providerGraphDataWatch!.services != null &&
         providerGraphDataWatch!.services!.length > 0) {
       for (BluetoothService service in providerGraphDataWatch!.services!) {
@@ -349,7 +266,6 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
             try {
               providerGraphDataWatch!
                   .setWriteChangeModeCharacteristic(characteristic);
-              // providerGraphDataWatch!.setTabSelectedIndex(_controller!.index);
             } catch (err) {
               printLog(
                   "setWriteChangeModeCharacteristic caught err ${err.toString()}");
@@ -364,20 +280,7 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
           }
           if (characteristic.uuid.toString() == readUuid) {
             printLog("readUUid matched ! ${readUuid.toString()}");
-            // try {
             providerGraphDataWatch!.setReadCharacteristic(characteristic);
-            //   if (providerGraphDataWatch!.isServiceStarted) {
-            //     if (providerGraphDataWatch!.tabLength == 3) {
-            //       providerGraphDataWatch!.generateGraphValuesList(
-            //           providerGraphDataWatch!.readValues[characteristic.uuid]);
-            //     } else {
-            //       providerGraphDataWatch!.getSpo2Data(
-            //           providerGraphDataWatch!.readValues[characteristic.uuid]);
-            //     }
-            //   }
-            // } catch (err) {
-            //   printLog(" caught err ${err.toString()}");
-            // }
           }
         }
       }
@@ -408,6 +311,7 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
                       if (providerGraphDataWatch!.connectedDevice != null) {
                         providerGraphDataWatch!.connectedDevice!.disconnect();
                       }
+                      chechBluetooth();
                     },),
                   ),
                 ],

@@ -1,13 +1,10 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_blue/flutter_blue.dart';
-import 'package:flutter_bluetooth_connection/discover_devices_screen.dart';
 import 'package:flutter_bluetooth_connection/provider_graph_data.dart';
 import 'dart:io';
 import 'dart:math';
-import 'package:flutter/services.dart';
 import 'package:csv/csv.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bluetooth_connection/constant.dart';
@@ -35,7 +32,6 @@ class GraphScreen extends StatefulWidget {
 
 class _GraphScreenState extends State<GraphScreen>
     with Constant, Utils, SingleTickerProviderStateMixin {
-  // TabController? _controller;
   _GraphScreenState(this.dropDownValue);
 
   var sub;
@@ -52,15 +48,6 @@ class _GraphScreenState extends State<GraphScreen>
   @override
   void initState() {
     super.initState();
-    //landscape();
-    // Create TabController for getting the index of current tab
-    /*  _controller = TabController(
-        length: providerGraphDataWatch != null ? providerGraphDataWatch!.tabLength :  3, vsync: this);
-    _controller!.addListener(() {
-      providerGraphDataWatch!.setTabSelectedIndex(_controller!.index);
-      printLog("-------Selected Index: " + _controller!.index.toString());
-    });
-*/
     SchedulerBinding.instance!.addPostFrameCallback((_) {
       providerGraphDataRead = context.read<ProviderGraphData>();
       bluetoothConnSub = flutterBlue.state.listen((event) {
@@ -98,7 +85,6 @@ class _GraphScreenState extends State<GraphScreen>
 
   @override
   void dispose() {
-    //_controller!.dispose();
     if (providerGraphDataWatch!.connectedDevice != null) {
       providerGraphDataWatch!.connectedDevice!.disconnect();
     }
@@ -123,60 +109,7 @@ class _GraphScreenState extends State<GraphScreen>
         key: _scaffoldKey,
         backgroundColor: clrDarkBg,
         appBar: AppBar(
-          // title: Text(
-          //   widget.title,
-          //   style: TextStyle(color: clrWhite),
-          // ),
           actions: [
-            //       Visibility(
-            //         visible: !(providerGraphDataWatch!.connectedDevice != null),
-            //         // visible: false,
-            //         child: IconButton(
-            //             icon: Icon(
-            //               // providerGraphDataWatch!.isEnabled ? "Disabled" : "Enabled",
-            //               providerGraphDataWatch!.isShowAvailableDevices ? Icons.bluetooth_disabled : Icons.bluetooth_audio,
-            //               color: clrWhite,
-            //             ),
-            //             onPressed: () async{
-            //               if (!providerGraphDataWatch!.isLoading) {
-            // await device.disconnect();
-
-            //               }
-            //             }),
-            //       ),
-            //
-            // Visibility(
-            //   visible: !(providerGraphDataWatch!.connectedDevice != null),
-            //   // visible: false,
-            //   child: IconButton(
-            //       icon: Icon(
-            //         // providerGraphDataWatch!.isEnabled ? "Disabled" : "Enabled",
-            //         providerGraphDataWatch!.isShowAvailableDevices
-            //             ? Icons.bluetooth_disabled
-            //             : Icons.bluetooth_audio,
-            //         color: clrWhite,
-            //       ),
-            //       onPressed: () {
-            //         if (!providerGraphDataWatch!.isLoading) {
-            //           providerGraphDataWatch!.setIsShowAvailableDevices();
-            //         }
-            //       }),
-            // ),
-            // Visibility(
-            //   visible: (!providerGraphDataWatch!.isServiceStarted),
-            //   // visible: false,
-            //   child: TextButton(
-            //       child: Text(
-            //         providerGraphDataWatch!.isEnabled ? "Disable" : "Enable",
-            //         style: TextStyle(color: clrWhite),
-            //       ),
-            //       onPressed: () {
-            //         if (!providerGraphDataWatch!.isLoading) {
-            //           //widget.flutterBlue.startScan();
-            //           providerGraphDataWatch!.setIsEnabled();
-            //         }
-            //       }),
-            // ),
             Visibility(
               visible: providerGraphDataWatch!.connectedDevice != null,
               child: TextButton(
@@ -197,7 +130,7 @@ class _GraphScreenState extends State<GraphScreen>
                       printLog("stop service");
 
                       //stop service
-                      //providerGraphDataWatch!.writeCharacteristic!.write([0]);
+                      //providerGraphDataWatch!.writeChangeModeCharacteristic!.write([0]);
                       providerGraphDataWatch!.writeCharacteristic!.write([0]);
                       if (sub != null) {
                         sub.cancel();
@@ -214,44 +147,27 @@ class _GraphScreenState extends State<GraphScreen>
                       providerGraphDataWatch!.setLoading(true);
 
                       await providerGraphDataWatch!.clearStoreDataToLocal();
-                      // printLog(
-                      //     "mainEcgDecimalList.length=== ${providerGraphDataWatch!.mainEcgDecimalList.length}");
-                      // printLog(
-                      //     "mainPpgDecimalList.length=== ${providerGraphDataWatch!.mainPpgDecimalList.length}");
                       sub = providerGraphDataWatch!.readCharacteristic!.value
                           .listen((value) {
                         readCharacteristics(value);
                       });
                       // start service
-                      //providerGraphDataWatch!.writeCharacteristic!.write([1]);
+                      //providerGraphDataWatch!.writeChangeModeCharacteristic!.write([1]);
                       providerGraphDataWatch!.writeCharacteristic!.write([1]);
                       printLog("start service");
-                      // ignore: cancel_subscriptions
-                      // if (sub != null) {
-                      //   sub.cancel();
-                      // }
-
                       providerGraphDataWatch!.setServiceStarted(true);
                       providerGraphDataWatch!.setLoading(false);
-
-                      // await providerGraphDataWatch!.readCharacteristic!
-                      //     .read();
                     }
-                    // } catch (e) {
-                    //   printLog("err $e");
-                    // }
                   }
                 },
                 child: providerGraphDataWatch!.isServiceStarted
                     ? Image.asset(
                         "assets/images/icons_circled_pause.png",
                         fit: BoxFit.fill,
-                        // color: clrWhite,
                       )
                     : Image.asset(
                         "assets/images/icons_circled_play.png",
                         fit: BoxFit.fill,
-                        // color: clrWhite,
                       ),
               ),
             ),
@@ -1018,23 +934,11 @@ class _GraphScreenState extends State<GraphScreen>
   }
 
   void readCharacteristics(List<int> value) {
-    //print("services ${providerGraphDataWatch!.services!.length.toString()}");
     if (providerGraphDataWatch!.services != null &&
         providerGraphDataWatch!.services!.length > 0) {
       try {
         if (providerGraphDataWatch!.isServiceStarted) {
-          //print("isServiceStarted");
           if (providerGraphDataWatch!.tabLength == 3) {
-            //print("tabLength  iff ${value.toString()}");
-            // List<int> temp_value;
-            // printLog("value.lengh1 ${value.length}");
-            // if(value.length>102) {
-            //   temp_value=value.getRange(0,102).toList();
-            // }
-            // else {
-            //   temp_value = value;
-            // }
-            // printLog("temp_value.lengh2 ${temp_value.length}");
             if (!providerGraphDataWatch!.isFirst) {
               providerGraphDataWatch!.generateGraphValuesList(value);
             } else {
@@ -1056,32 +960,6 @@ class _GraphScreenState extends State<GraphScreen>
       } catch (err) {
         printLog(" caught err ${err.toString()}");
       }
-      // for (BluetoothService service in providerGraphDataWatch!.services!) {
-      //   for (BluetoothCharacteristic characteristic
-      //   in service.characteristics) {
-      //     if (characteristic.uuid.toString() == writeChangeModeUuid) {
-      //       try {
-      //         providerGraphDataWatch!
-      //             .setWriteChangeModeCharacteristic(characteristic);
-      //         // providerGraphDataWatch!.setTabSelectedIndex(_controller!.index);
-      //       } catch (err) {
-      //         printLog(
-      //             "setWriteChangeModeCharacteristic caught err ${err.toString()}");
-      //       }
-      //     }
-      //     if (characteristic.uuid.toString() == writeUuid) {
-      //       try {
-      //         providerGraphDataWatch!.setWriteCharacteristic(characteristic);
-      //       } catch (err) {
-      //         printLog("setWriteCharacteristic caught err ${err.toString()}");
-      //       }
-      //     }
-      //     if (characteristic.uuid.toString() == readUuid) {
-      //       printLog("readUUid matched ! ${readUuid.toString()}");
-      //
-      //     }
-      //   }
-      //}
     }
   }
 
@@ -1384,56 +1262,6 @@ class _GraphScreenState extends State<GraphScreen>
       }
       column.add(row);
     }
-    // if (providerGraphDataWatch!.savedIntervalList.length ==
-    //     providerGraphDataWatch!.savedEcgLocalDataList.length) {
-    //   for (int i = 0;
-    //       i < providerGraphDataWatch!.savedEcgLocalDataList.length;
-    //       i++) {
-    //     row = [];
-    //     row.add(providerGraphDataWatch!.savedEcgLocalDataList[i]);
-    //     row.add(providerGraphDataWatch!.savedPpgLocalDataList[i]);
-    //     row.add(providerGraphDataWatch!.savedIntervalList[i]);
-    //     column.add(row);
-    //   }
-    // } else if (providerGraphDataWatch!.savedIntervalList.length >
-    //     providerGraphDataWatch!.savedEcgLocalDataList.length) {
-    //   for (int i = 0;
-    //       i < providerGraphDataWatch!.savedIntervalList.length;
-    //       i++) {
-    //     row = [];
-    //     if (i <= providerGraphDataWatch!.savedEcgLocalDataList.length) {
-    //       row.add(providerGraphDataWatch!.savedEcgLocalDataList[i]);
-    //       row.add(providerGraphDataWatch!.savedPpgLocalDataList[i]);
-    //     } else {
-    //       //row.add([]);
-    //      // row.add([]);
-    //     }
-    //     row.add(providerGraphDataWatch!.savedIntervalList[i]);
-    //     column.add(row);
-    //   }
-    // } else if (providerGraphDataWatch!.savedIntervalList.length <
-    //     providerGraphDataWatch!.savedEcgLocalDataList.length) {
-    //   for (int i = 0;
-    //       i < providerGraphDataWatch!.savedEcgLocalDataList.length;
-    //       i++) {
-    //     row = [];
-    //     row.add(providerGraphDataWatch!.savedEcgLocalDataList[i]);
-    //     row.add(providerGraphDataWatch!.savedPpgLocalDataList[i]);
-    //     if (i >= providerGraphDataWatch!.savedIntervalList.length) {
-    //       //row.add([]);
-    //     } else {
-    //       row.add(providerGraphDataWatch!.savedIntervalList[i]);
-    //     }
-    //     column.add(row);
-    //   }
-    // }
-
-    // for(int i=0;i<providerGraphDataWatch!.savedIntervalList.length;i++){
-    //   row = [];
-    //   row.add(providerGraphDataWatch!.savedIntervalList[i]);
-    //   column.add(row);
-    // }
-    //column.add(row);
     String csvData = ListToCsvConverter().convert(column);
     final String directory = (await getApplicationSupportDirectory()).path;
     final path = "$directory/csv_graph_data.csv";
@@ -1443,20 +1271,5 @@ class _GraphScreenState extends State<GraphScreen>
     providerGraphDataWatch!.setLoading(false);
 
     Share.shareFiles(['${file.path}'], text: 'Exported csv');
-
-    /*for (int i = 0; i < providerGraphDataWatch!.peaksPositionsPpgArray.length; i++) {
-      row = [];
-      row.add(providerGraphDataWatch!.peaksPositionsPpgArray[i]);
-      column.add(row);
-    }
-
-    String csvData = ListToCsvConverter().convert(column);
-    final String directory = (await getApplicationSupportDirectory()).path;
-    final path = "$directory/peaksPositionsPpgArray.csv";
-    printLog(path);
-    final File file = File(path);
-    await file.writeAsString(csvData);
-    providerGraphDataWatch!.setLoading(false);
-    Share.shareFiles(['${file.path}'], text: 'peaksPositionsPpgArray csv');*/
   }
 }
