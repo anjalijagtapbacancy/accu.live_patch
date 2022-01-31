@@ -1047,6 +1047,9 @@ class _GraphScreenState extends State<GraphScreen>
   LineChartData mainData(
       List<FlSpot> tempSpotsList, List<double> tempDecimalList, bool isgrid) {
     return LineChartData(
+      axisTitleData: FlAxisTitleData(show: true,
+      bottomTitle: AxisTitle(margin:0,showTitle: true,titleText: 'sec(s)',textStyle: TextStyle(fontSize: 12,color: clrWhite)),
+      leftTitle: AxisTitle(showTitle: true,titleText: 'ADC values(mV)',textStyle: TextStyle(fontSize: 12,color: clrWhite))),
       gridData: FlGridData(
         show: isgrid,
         drawVerticalLine: true,
@@ -1086,12 +1089,8 @@ class _GraphScreenState extends State<GraphScreen>
         leftTitles: SideTitles(
           showTitles: true,
           interval: tempDecimalList.isNotEmpty
-              ? (tempDecimalList.reduce(max) - tempDecimalList.reduce(min)) /
-                          4 !=
-                      0
-                  ? (tempDecimalList.reduce(max) -
-                          tempDecimalList.reduce(min)) /
-                      4
+              ? ((tempDecimalList.reduce(max) - tempDecimalList.reduce(min)) / 4).floorToDouble() != 0
+                  ? double.parse((((tempDecimalList.reduce(max) - tempDecimalList.reduce(min)) / 4).floor()).toStringAsFixed(1))
                   : yAxisInterval
               : yAxisInterval,
           getTextStyles: (context, value) => TextStyle(
@@ -1108,14 +1107,15 @@ class _GraphScreenState extends State<GraphScreen>
       ),
       borderData: FlBorderData(
           show: true, border: Border.all(color: clrGraphLine, width: 1)),
-      minX: tempSpotsList.isNotEmpty ? tempSpotsList.first.x : 0,
-      maxX: tempSpotsList.isNotEmpty ? tempSpotsList.last.x + 1 : 0,
-      minY: tempDecimalList.isNotEmpty ? tempDecimalList.reduce(min) : 0,
-      maxY: tempDecimalList.isNotEmpty ? tempDecimalList.reduce(max) : 0,
+      minX: tempSpotsList.isNotEmpty ? tempSpotsList.length < 500 ? 0.225 : tempSpotsList.first.x : 0,
+      maxX: tempSpotsList.isNotEmpty ? tempSpotsList.length < 500 ? 2.5 : tempSpotsList.last.x : 0,
+      minY: tempDecimalList.isNotEmpty ? tempSpotsList.length < 500 ? 2:double.parse(((tempDecimalList.reduce(min))).toStringAsFixed(1)) : 0,
+      maxY: tempDecimalList.isNotEmpty ? tempSpotsList.length < 500 ? 7:double.parse(((tempDecimalList.reduce(max))).toStringAsFixed(1)): 0,
       lineBarsData: [
         LineChartBarData(
           spots: tempSpotsList,
           show: true,
+          curveSmoothness:0.05,
           isCurved: true,
           // graph shape
           colors: [clrPrimary, clrSecondary],

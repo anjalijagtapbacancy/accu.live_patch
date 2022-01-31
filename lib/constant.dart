@@ -10,8 +10,8 @@ class Constant {
   String csvFilePath="assets/datasets/all_samples_training.csv";
   int yAxisGraphData = 500;//500
  // int yAxisGraphInterval = 200;
-  double xAxisInterval = 200; //bottom data
-  double yAxisInterval = 1000; //left data`
+  double xAxisInterval = 1; //200 bottom data
+  double yAxisInterval = 0.5; //1000 left data
   int periodicTimeInSec = 8100;//8000,7200
   static int filterDataListLength = 4050;//4000,3600
   int filterDataListLength1 = 1620;//1600,1440
@@ -29,7 +29,7 @@ class Constant {
 
 
   String strConnect = "Connect";
-  String displayDeviceString = "accu.live";
+  String displayDeviceString = "patch";
   String strNoDevicesAvailable = "No devices are available";
 
 
