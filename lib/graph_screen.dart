@@ -43,7 +43,7 @@ class _GraphScreenState extends State<GraphScreen>
   final FlutterBlue flutterBlue = FlutterBlue.instance;
   StreamSubscription? bluetoothConnSub;
   StreamSubscription? connDeviceSub;
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
@@ -73,9 +73,9 @@ class _GraphScreenState extends State<GraphScreen>
           providerGraphDataRead!.clearConnectedDevice();
           bluetoothConnSub!.cancel();
           connDeviceSub!.cancel();
-          if (_scaffoldKey.currentState!.isDrawerOpen == true)
+          if (scaffoldKey.currentState!.isDrawerOpen == true)
             Navigator.pop(context);
-          if (_scaffoldKey.currentState!.isEndDrawerOpen == true)
+          if (scaffoldKey.currentState!.isEndDrawerOpen == true)
             Navigator.pop(context);
           Navigator.pop(context, true);
         }
@@ -95,8 +95,8 @@ class _GraphScreenState extends State<GraphScreen>
     super.dispose();
   }
 
-  void _openEndDrawer() {
-    _scaffoldKey.currentState!.openEndDrawer();
+  void openEndDrawer() {
+    scaffoldKey.currentState!.openEndDrawer();
   }
 
   @override
@@ -106,7 +106,7 @@ class _GraphScreenState extends State<GraphScreen>
     return DefaultTabController(
       length: providerGraphDataWatch!.tabLength,
       child: Scaffold(
-        key: _scaffoldKey,
+        key: scaffoldKey,
         backgroundColor: clrDarkBg,
         appBar: AppBar(
           actions: [
@@ -187,7 +187,7 @@ class _GraphScreenState extends State<GraphScreen>
                   !providerGraphDataWatch!.isecgppgOrSpo2,
               child: TextButton(
                   onPressed: () async {
-                    _openEndDrawer();
+                    openEndDrawer();
                   },
                   child: Text(
                     'More',
@@ -392,24 +392,24 @@ class _GraphScreenState extends State<GraphScreen>
                                 TextSpan(
                                   text: 'RR\n',
                                   style:
-                                  TextStyle(fontSize: 15, color: clrWhite),
+                                      TextStyle(fontSize: 15, color: clrWhite),
                                 ),
                                 providerGraphDataWatch!.avgPeak == 0
                                     ? TextSpan(
-                                  text: '--',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 50,
-                                      color: clrPrimary),
-                                )
+                                        text: '--',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 50,
+                                            color: clrPrimary),
+                                      )
                                     : TextSpan(
-                                  text:
-                                  '${providerGraphDataWatch!.avgPeak.toStringAsFixed(4)}',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 50,
-                                      color: clrPrimary),
-                                ),
+                                        text:
+                                            '${providerGraphDataWatch!.avgPeak.toStringAsFixed(4)}',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 50,
+                                            color: clrPrimary),
+                                      ),
                                 TextSpan(
                                   text: '',
                                   style: TextStyle(
@@ -759,10 +759,11 @@ class _GraphScreenState extends State<GraphScreen>
                                 color: clrPrimary,
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold),
-                          ),onPressed: (){
-                          Navigator.pop(context);
-                          Navigator.pop(context);
-                        },
+                          ),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.pop(context);
+                          },
                         ),
                       ),
                     )
@@ -969,39 +970,36 @@ class _GraphScreenState extends State<GraphScreen>
         ListView(
           padding: EdgeInsets.only(top: 8, right: 8),
           children: <Widget>[
-            rowEcgTitle(ecg),
+            rowTitle(ecg),
             graphWidget(ecg),
-            rowPpgTitle(ppg),
+            rowTitle(ppg),
             graphWidget(ppg)
           ],
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(0, 0, 10, 0),
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Icon(
+                Icons.arrow_forward_ios_outlined,
+                color: clrWhite,
+                size: 20,
+              ),
+            ),
+            onTap: () {
+              openEndDrawer();
+            },
+          ),
         ),
       ],
     );
   }
 
-  Widget rowPpgTitle(String title) {
+  Widget rowTitle(String title) {
     return Padding(
-      padding: EdgeInsets.only(top: 1.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            flex: 3,
-            child: Center(
-              child: Text(
-                title,
-                style: TextStyle(fontSize: 12),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget rowEcgTitle(String title) {
-    return Padding(
-      padding: EdgeInsets.only(top: 1.0),
+      padding: EdgeInsets.fromLTRB(0, 1, 20, 0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -1022,34 +1020,45 @@ class _GraphScreenState extends State<GraphScreen>
   Widget graphWidget(String title) {
     return AspectRatio(
       aspectRatio: 6 / (1.02),
-      child: Container(
-        decoration: BoxDecoration(
-            borderRadius: BorderRadius.all(
-              Radius.circular(18),
-            ),
-            color: clrDarkBg),
-        child: Padding(
-          padding:
-              const EdgeInsets.only(right: 10.0, left: 5.0, top: 10, bottom: 0),
-          child: LineChart(
-              title == ecg
-                  ? mainData(providerGraphDataWatch!.tempEcgSpotsListData,
-                      providerGraphDataWatch!.tempEcgDecimalList, true)
-                  : mainData(providerGraphDataWatch!.tempPpgSpotsListData,
-                      providerGraphDataWatch!.tempPpgDecimalList, false),
-              swapAnimationDuration: Duration.zero,
-              swapAnimationCurve: Curves.linear),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(0, 0, 15, 0),
+        child: Container(
+          decoration: BoxDecoration(
+              borderRadius: BorderRadius.all(
+                Radius.circular(18),
+              ),
+              color: clrDarkBg),
+          child: Padding(
+            padding:
+                const EdgeInsets.only(right: 10.0, left: 5.0, top: 10, bottom: 0),
+            child: LineChart(
+                title == ecg
+                    ? mainData(providerGraphDataWatch!.tempEcgSpotsListData,
+                        providerGraphDataWatch!.tempEcgDecimalList, true)
+                    : mainData(providerGraphDataWatch!.tempPpgSpotsListData,
+                        providerGraphDataWatch!.tempPpgDecimalList, false),
+                swapAnimationDuration: Duration.zero,
+                swapAnimationCurve: Curves.linear),
+          ),
         ),
       ),
     );
   }
 
   LineChartData mainData(
-      List<FlSpot> tempSpotsList, List<double> tempDecimalList, bool isgrid) {
+      List<FlSpot> tempSpotsList, List<num> tempDecimalList, bool isgrid) {
     return LineChartData(
-      axisTitleData: FlAxisTitleData(show: true,
-      bottomTitle: AxisTitle(margin:0,showTitle: true,titleText: 'sec(s)',textStyle: TextStyle(fontSize: 12,color: clrWhite)),
-      leftTitle: AxisTitle(showTitle: true,titleText: 'ADC values(mV)',textStyle: TextStyle(fontSize: 12,color: clrWhite))),
+      axisTitleData: FlAxisTitleData(
+          show: true,
+          bottomTitle: AxisTitle(
+              margin: 0,
+              showTitle: true,
+              titleText: 'sec(s)',
+              textStyle: TextStyle(fontSize: 12, color: clrWhite)),
+          leftTitle: AxisTitle(
+              showTitle: true,
+              titleText: 'ADC values(mV)',
+              textStyle: TextStyle(fontSize: 12, color: clrWhite))),
       gridData: FlGridData(
         show: isgrid,
         drawVerticalLine: true,
@@ -1089,8 +1098,15 @@ class _GraphScreenState extends State<GraphScreen>
         leftTitles: SideTitles(
           showTitles: true,
           interval: tempDecimalList.isNotEmpty
-              ? ((tempDecimalList.reduce(max) - tempDecimalList.reduce(min)) / 4).floorToDouble() != 0
-                  ? double.parse((((tempDecimalList.reduce(max) - tempDecimalList.reduce(min)) / 4).floor()).toStringAsFixed(1))
+              ? ((tempDecimalList.reduce(max) - tempDecimalList.reduce(min)) /
+                              4)
+                          .floorToDouble() !=
+                      0
+                  ? double.parse((((tempDecimalList.reduce(max) -
+                                  tempDecimalList.reduce(min)) /
+                              4)
+                          .floor())
+                      .toStringAsFixed(1))
                   : yAxisInterval
               : yAxisInterval,
           getTextStyles: (context, value) => TextStyle(
@@ -1107,15 +1123,33 @@ class _GraphScreenState extends State<GraphScreen>
       ),
       borderData: FlBorderData(
           show: true, border: Border.all(color: clrGraphLine, width: 1)),
-      minX: tempSpotsList.isNotEmpty ? tempSpotsList.length < 500 ? 0.225 : tempSpotsList.first.x : 0,
-      maxX: tempSpotsList.isNotEmpty ? tempSpotsList.length < 500 ? 2.5 : tempSpotsList.last.x : 0,
-      minY: tempDecimalList.isNotEmpty ? tempSpotsList.length < 500 ? 2:double.parse(((tempDecimalList.reduce(min))).toStringAsFixed(1)) : 0,
-      maxY: tempDecimalList.isNotEmpty ? tempSpotsList.length < 500 ? 7:double.parse(((tempDecimalList.reduce(max))).toStringAsFixed(1)): 0,
+      minX: tempSpotsList.isNotEmpty
+          ? tempSpotsList.length < 500
+              ? 0.225
+              : tempSpotsList.first.x
+          : 0,
+      maxX: tempSpotsList.isNotEmpty
+          ? tempSpotsList.length < 500
+              ? 2.5
+              : tempSpotsList.last.x
+          : 0,
+      minY: tempDecimalList.isNotEmpty
+          ? tempSpotsList.length < 500
+              ? 2
+              : double.parse(
+                  ((tempDecimalList.reduce(min)) - 0.2).toStringAsFixed(1))
+          : 0,
+      maxY: tempDecimalList.isNotEmpty
+          ? tempSpotsList.length < 500
+              ? 7
+              : double.parse(
+                  ((tempDecimalList.reduce(max)) + 0.2).toStringAsFixed(1))
+          : 0,
       lineBarsData: [
         LineChartBarData(
           spots: tempSpotsList,
           show: true,
-          curveSmoothness:0.05,
+          curveSmoothness: 0.05,
           isCurved: true,
           // graph shape
           colors: [clrPrimary, clrSecondary],
@@ -1140,54 +1174,98 @@ class _GraphScreenState extends State<GraphScreen>
         ListView(
           padding: EdgeInsets.only(top: 8, right: 8),
           children: [
-            rowEcgTitle(ecg),
+            rowTitle(ecg),
             AspectRatio(
               aspectRatio: 3 / (1),
-              child: Container(
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.all(
-                      Radius.circular(18),
-                    ),
-                    color: clrDarkBg),
-                child: Padding(
-                  padding: const EdgeInsets.only(
-                      right: 10.0, left: 5.0, top: 5, bottom: 45),
-                  child: LineChart(
-                      mainData(providerGraphDataWatch!.tempEcgSpotsListData,
-                          providerGraphDataWatch!.tempEcgDecimalList, true),
-                      swapAnimationDuration: Duration.zero,
-                      swapAnimationCurve: Curves.linear),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(0, 0, 30, 0),
+                child: Container(
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(18),
+                      ),
+                      color: clrDarkBg),
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                        right: 10.0, left: 5.0, top: 5, bottom: 45),
+                    child: LineChart(
+                        mainData(providerGraphDataWatch!.tempEcgSpotsListData,
+                            providerGraphDataWatch!.tempEcgDecimalList, true),
+                        swapAnimationDuration: Duration.zero,
+                        swapAnimationCurve: Curves.linear),
+                  ),
                 ),
               ),
             ),
           ],
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(0, 0, 10, 0),
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Icon(
+                Icons.arrow_forward_ios_outlined,
+                color: clrWhite,
+                size: 20,
+              ),
+            ),
+            onTap: () {
+              openEndDrawer();
+            },
+          ),
         ),
       ],
     );
   }
 
   Widget _ppgTabView() {
-    return ListView(
-      padding: EdgeInsets.only(top: 8, right: 8),
+    return Stack(
       children: [
-        rowPpgTitle(ppg),
-        AspectRatio(
-          aspectRatio: 3 / (1),
-          child: Container(
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.all(
-                  Radius.circular(18),
+        ListView(
+          padding: EdgeInsets.only(top: 8, right: 8),
+          children: [
+            rowTitle(ppg),
+            AspectRatio(
+              aspectRatio: 3 / (1),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(0, 0, 30, 0),
+                child: Container(
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(18),
+                      ),
+                      color: clrDarkBg),
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                        right: 20.0, left: 0.0, top: 5, bottom: 45),
+                    child: LineChart(
+                        mainData(providerGraphDataWatch!.tempPpgSpotsListData,
+                            providerGraphDataWatch!.tempPpgDecimalList, false),
+                        swapAnimationDuration: Duration.zero,
+                        swapAnimationCurve: Curves.linear),
+                  ),
                 ),
-                color: clrDarkBg),
-            child: Padding(
-              padding: const EdgeInsets.only(
-                  right: 10.0, left: 5.0, top: 5, bottom: 45),
-              child: LineChart(
-                  mainData(providerGraphDataWatch!.tempPpgSpotsListData,
-                      providerGraphDataWatch!.tempPpgDecimalList, false),
-                  swapAnimationDuration: Duration.zero,
-                  swapAnimationCurve: Curves.linear),
+              ),
             ),
+          ],
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(0, 0, 10, 0),
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Icon(
+                Icons.arrow_forward_ios_outlined,
+                color: clrWhite,
+                size: 20,
+              ),
+            ),
+            onTap: () {
+              openEndDrawer();
+            },
           ),
         ),
       ],

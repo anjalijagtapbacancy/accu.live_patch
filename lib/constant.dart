@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter_bluetooth_connection/provider_graph_data.dart';
+import 'package:moving_average/moving_average.dart';
 
 class Constant {
   String appName = "Accu.Live Patch";
@@ -27,6 +27,13 @@ class Constant {
   String bpUnit = "mmHg";
   String rvUnit = "ms";
 
+  final average_numbers = MovingAverage<num>(
+    averageType: AverageType.weighted,
+    windowSize: 6, // 4,7
+    partialStart: true,
+    getValue: (num n) => n,
+    add: (List<num> data, num value) => value,
+  );
 
   String strConnect = "Connect";
   String displayDeviceString = "patch";

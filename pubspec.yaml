@@ -42,6 +42,7 @@ dependencies:
   ml_algo: ^16.2.4
   ml_dataframe: ^0.5.1
   ml_preprocessing: ^6.0.0
+  moving_average: ^0.3.0
 
 flutter_icons:
   image_path: "assets/images/app_icon.jpg"

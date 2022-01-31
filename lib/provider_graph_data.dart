@@ -63,7 +63,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
   List<String> mainEcgHexList = [];
   List<double> mainEcgDecimalList = [];
   List<String> tempEcgHexList = [];
-  List<double> tempEcgDecimalList = [];
+  List<num> tempEcgDecimalList = [];
 
   List<double> savedPpgLocalDataList = [];
   List<FlSpot> mainPpgSpotsListData = [];
@@ -71,7 +71,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
   List<String> mainPpgHexList = [];
   List<double> mainPpgDecimalList = [];
   List<String> tempPpgHexList = [];
-  List<double> tempPpgDecimalList = [];
+  List<num> tempPpgDecimalList = [];
 
   Array sgFilteredEcg = Array([]);
   Array filterOPEcg = Array([]);
@@ -282,13 +282,13 @@ class ProviderGraphData with ChangeNotifier, Constant {
       for (int k = 0; k < tempEcgDecimalList.length; k++) {
         mainEcgSpotsListData.add(FlSpot(
             double.tryParse(((mainEcgDecimalList.length + k)/200).toString()) ?? 0,
-            tempEcgDecimalList[k]));
+            (tempEcgDecimalList[k].toDouble())));
       }
 
       for (int k = 0; k < tempPpgDecimalList.length; k++) {
         mainPpgSpotsListData.add(FlSpot(
             double.tryParse(((mainPpgDecimalList.length + k)/200).toString()) ?? 0,
-            tempPpgDecimalList[k]));
+            tempPpgDecimalList[k].toDouble()));
       }
       if (isEnabled) {
         periodicTask();
@@ -491,6 +491,8 @@ class ProviderGraphData with ChangeNotifier, Constant {
         //tempPpgDecimalList = mainPpgDecimalList.toList();
         tempPpgDecimalList=[5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5];
       }
+      tempEcgDecimalList=average_numbers(tempEcgDecimalList);
+      tempPpgDecimalList=average_numbers(tempPpgDecimalList);
       setSpotsListData();
       notifyListeners();
     }
