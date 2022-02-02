@@ -28,8 +28,8 @@ class Constant {
   String rvUnit = "ms";
 
   final average_numbers = MovingAverage<num>(
-    averageType: AverageType.weighted,
-    windowSize: 6, // 4,7
+    averageType: AverageType.simple,
+    windowSize: 4, // 4,7
     partialStart: true,
     getValue: (num n) => n,
     add: (List<num> data, num value) => value,
