@@ -9,8 +9,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'ModelClass/Prediction.dart';
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setPreferredOrientations(
@@ -40,7 +38,6 @@ class MyApp extends StatelessWidget with Constant {
                   bodyText1: TextStyle(color: clrWhite),
                   bodyText2: TextStyle(color: clrWhite),
                 )),
-            // home: MyHomePage(title: appName),
             home: DiscoverDevices()),
       );
 }
