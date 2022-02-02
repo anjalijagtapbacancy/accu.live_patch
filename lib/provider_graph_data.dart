@@ -40,14 +40,9 @@ class ProviderGraphData with ChangeNotifier, Constant {
   double spo2Val = 0;
   int index = 0;
   bool isecgppgOrSpo2 = false;
-  int tabLength = 3;
-  int ecgDataLength = 0;
-  int ppgDataLength = 0;
-  int tabSelectedIndex = 0;
   double SumRt = 0;
   double AvgRt = 0;
   int BpFromRt = 0;
-  List<dynamic> data = [];
 
   List<dynamic> rrInterval = [];
   List<double> rtIntervalList = [];
@@ -112,15 +107,10 @@ class ProviderGraphData with ChangeNotifier, Constant {
       isecgppgSelected = false,
       isspo2Selected = false;
 
-  int noiseLength = 0;
-  int frameLength = 11;
-
   List<double> hrv = [];
   double avgHrv = 0;
   List<double> prv = [];
   double avgPrv = 0;
-
-  static late Isolate RT_Interval, count_ecg_heartrate, count_ppg_heartrate;
 
   clearProviderGraphData() {
     BpFromRt = 0;
@@ -134,7 +124,6 @@ class ProviderGraphData with ChangeNotifier, Constant {
     SV = 0;
     avgPeak = 0;
     arrhythmia_type = null;
-    tabSelectedIndex = 0;
     devicesList.clear();
     isLoading = false;
     services!.clear();
@@ -669,7 +658,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
         }
       }
       rrInterval.clear();
-      data.clear();
+
 
       for (int j = 0; j < R_peaksPositionsEcgArray.length; j++) {
         if (j + 1 < R_peaksPositionsEcgArray.length) {

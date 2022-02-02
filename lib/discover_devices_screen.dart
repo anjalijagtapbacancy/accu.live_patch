@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -167,6 +168,7 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
                                         fontWeight: FontWeight.w500),
                                   ),
                                   onPressed: () async {
+                                    printLog('devicesList.length ${providerGraphDataWatch!.devicesList.length}');
                                     connectDevice(
                                         providerGraphDataWatch!.devicesList[i]);
                                   }),
@@ -208,7 +210,16 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
 
   void scanDevices() {
     providerGraphDataWatch!.setLoading(true);
-
+    this.flutterBlue.connectedDevices.asStream().listen((List<BluetoothDevice> devices) {
+      printLog("devices ${devices.length}");
+      //providerGraphDataWatch!.devicesList.clear();
+      for (BluetoothDevice device in devices) {
+        printLog("connectedDevices ${device.name}");
+        if (device.name.toLowerCase().contains(displayDeviceString)) {
+          providerGraphDataWatch!.setDeviceList(device);
+        }
+      }
+    });
     this.flutterBlue.scanResults.listen((List<ScanResult> results) {
       // printLog("  scan result length devices ${results.length}");
       providerGraphDataWatch!.devicesList.clear();
@@ -335,7 +346,6 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
                 ),
                 onTap: () {
                   choice = ecgNppg;
-                  providerGraphDataWatch!.tabLength = 3;
                   providerGraphDataRead!.setIndex(0);
                   providerGraphDataRead!.setIsecgppgOrSpo2(false);
                   if (providerGraphDataWatch!.isecgSelected == true)
@@ -346,7 +356,7 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
                     providerGraphDataWatch!.setppgSelected();
                   Navigator.pop(context);
                   providerGraphDataWatch!.writeChangeModeCharacteristic!
-                      .write([4]);
+                      .write(utf8.encode('4'));
                   bluetoothConnSub!.cancel();
                   Navigator.push(
                       context,
@@ -386,14 +396,13 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
                 ),
                 onTap: () {
                   choice = spo2;
-                  providerGraphDataWatch!.tabLength = 1;
                   providerGraphDataRead!.setIndex(3);
                   providerGraphDataRead!.setIsecgppgOrSpo2(true);
                   if (providerGraphDataWatch!.isspo2Selected == false)
                     providerGraphDataWatch!.setspo2Selected();
                   Navigator.pop(context);
                   providerGraphDataWatch!.writeChangeModeCharacteristic!
-                      .write([7]);
+                      .write(utf8.encode('7'));
                   bluetoothConnSub!.cancel();
 
                   Navigator.push(

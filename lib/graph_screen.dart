@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_blue/flutter_blue.dart';
@@ -103,9 +104,7 @@ class _GraphScreenState extends State<GraphScreen>
   Widget build(BuildContext context) {
     providerGraphDataWatch = context.watch<ProviderGraphData>();
 
-    return DefaultTabController(
-      length: providerGraphDataWatch!.tabLength,
-      child: Scaffold(
+    return Scaffold(
         key: scaffoldKey,
         backgroundColor: clrDarkBg,
         appBar: AppBar(
@@ -150,6 +149,12 @@ class _GraphScreenState extends State<GraphScreen>
                       sub = providerGraphDataWatch!.readCharacteristic!.value
                           .listen((value) {
                         readCharacteristics(value);
+                      },
+                      onError:(error) {
+                            printLog("onError: ${error.toString()}");
+                      },
+                      onDone:(){
+                            printLog("onDone");
                       });
                       // start service
                       //providerGraphDataWatch!.writeChangeModeCharacteristic!.write([1]);
@@ -915,7 +920,6 @@ class _GraphScreenState extends State<GraphScreen>
             ],
           ),
         ),
-      ),
     );
   }
 
@@ -939,7 +943,7 @@ class _GraphScreenState extends State<GraphScreen>
         providerGraphDataWatch!.services!.length > 0) {
       try {
         if (providerGraphDataWatch!.isServiceStarted) {
-          if (providerGraphDataWatch!.tabLength == 3) {
+          if (providerGraphDataWatch!.isecgppgOrSpo2==false) {
             if (!providerGraphDataWatch!.isFirst) {
               providerGraphDataWatch!.generateGraphValuesList(value);
             } else {
