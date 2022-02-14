@@ -301,9 +301,9 @@ class ProviderGraphData with ChangeNotifier, Constant {
                 0,
             tempPpgDecimalList[k].toDouble()));
       }
-      if (isEnabled) {
-        periodicTask();
-      }
+      // if (isEnabled) {
+      //   periodicTask();
+      // }
 
       if (mainEcgSpotsListData.length > yAxisGraphData) {
         tempEcgSpotsListData = mainEcgSpotsListData
@@ -322,6 +322,11 @@ class ProviderGraphData with ChangeNotifier, Constant {
       } else {
         tempPpgSpotsListData = mainPpgSpotsListData.toList();
       }
+
+      if (isEnabled) {
+        periodicTask();
+      }
+
     } catch (Exception) {
       print("Exception ${Exception.toString()}");
     }
@@ -666,17 +671,17 @@ class ProviderGraphData with ChangeNotifier, Constant {
       var numtaps = 127;
 
       var b = firwin(numtaps, Array([normalFc]));
-      if (mainEcgDecimalList.length > Constant.filterDataListLength) {
+      if (mainEcgDecimalList.length > filterDataListLength) {
         sgFilteredEcg = lfilter(
             b,
             Array([1.0]),
             Array(mainEcgDecimalList
                 .getRange(
-                    mainEcgDecimalList.length - Constant.filterDataListLength,
+                    mainEcgDecimalList.length - filterDataListLength,
                     mainEcgDecimalList.length)
                 .toList())); // filter the signal
         print(
-            "getRange... ${mainEcgDecimalList.length - Constant.filterDataListLength} ${mainEcgDecimalList.length}");
+            "getRange... ${mainEcgDecimalList.length - filterDataListLength} ${mainEcgDecimalList.length}");
       } else {
         sgFilteredEcg = lfilter(
             b, Array([1.0]), Array(mainEcgDecimalList)); // filter the signal
@@ -816,13 +821,13 @@ class ProviderGraphData with ChangeNotifier, Constant {
       var numtaps = 127;
 
       var b = firwin(numtaps, Array([normalFc]));
-      if (mainPpgDecimalList.length > Constant.filterDataListLength) {
+      if (mainPpgDecimalList.length > filterDataListLength) {
         sgFilteredPpg = lfilter(
             b,
             Array([1.0]),
             Array(mainPpgDecimalList
                 .getRange(
-                    mainPpgDecimalList.length - Constant.filterDataListLength,
+                    mainPpgDecimalList.length - filterDataListLength,
                     mainPpgDecimalList.length)
                 .toList())); // filter the signal
       } else {

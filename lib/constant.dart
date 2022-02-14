@@ -13,7 +13,7 @@ class Constant {
   double xAxisInterval = 1.5; //200 bottom data
   double yAxisInterval = 0.5; //1000 left data
   int periodicTimeInSec = 8100;//8000,7200
-  static int filterDataListLength = 4050;//4000,3600
+  int filterDataListLength = 4050;//4000,3600
   int filterDataListLength1 = 1620;//1600,1440
 
   String ppg = "PPG";
