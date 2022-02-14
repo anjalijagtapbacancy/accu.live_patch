@@ -42,11 +42,12 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
       if (providerGraphDataRead!.connectedDevice != null) {
         connDeviceSub =
             providerGraphDataRead!.connectedDevice!.state.listen((event) async {
-          showToast("device event ${event.toString()}");
+          //showToast("device event ${event.toString()}");
           if (event == BluetoothDeviceState.disconnected) {
             providerGraphDataRead!.clearConnectedDevice();
             providerGraphDataRead!.setLoading(false);
-            scanDevices();
+            //scanDevices();
+            chechBluetooth();
           }
         });
       }
@@ -55,8 +56,10 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
 
   @override
   void dispose() {
-    bluetoothConnSub!.cancel();
-    connDeviceSub!.cancel();
+    if(bluetoothConnSub != null)
+      bluetoothConnSub!.cancel();
+    if(connDeviceSub != null)
+      connDeviceSub!.cancel();
     providerGraphDataWatch!.clearProviderGraphData();
     super.dispose();
   }
@@ -99,10 +102,11 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
               }),
           SizedBox(width: 8)
         ],
+        backgroundColor: clrdeviceCard,
       ),
       body: Stack(
         children: [
-          providerGraphDataWatch!.devicesList.length > 0
+          providerGraphDataWatch!.devicesList.isNotEmpty
               ? ListView.separated(
                   padding: EdgeInsets.symmetric(vertical: 18, horizontal: 25),
                   itemCount: providerGraphDataWatch!.devicesList.length,
@@ -112,7 +116,7 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
                   },
                   itemBuilder: (context, i) {
                     return Card(
-                      color: clrDarkBg,
+                      color: clrdeviceCard,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.all(Radius.circular(12)),
                       ),
@@ -126,6 +130,7 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
                                 Icon(
                                   Icons.medical_services_outlined,
                                   color: clrPrimary,
+                                  size: 30,
                                 ),
                                 SizedBox(width: 25),
                                 Column(
@@ -155,7 +160,7 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
                               child: OutlinedButton(
                                   style: TextButton.styleFrom(
                                     side: BorderSide(
-                                        color: clrWhite.withOpacity(0.4),
+                                        color: clrPrimary.withOpacity(0.4),
                                         width: 1),
                                     shape: const RoundedRectangleBorder(
                                         borderRadius: BorderRadius.all(
@@ -189,7 +194,7 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
     bluetoothConnSub = flutterBlue.state.listen((event) async {
       switch (event) {
         case BluetoothState.on:
-          Utils().showToast("Bluetooth on");
+          //Utils().showToast("Bluetooth on");
           scanDevices();
           break;
         case BluetoothState.off:
@@ -210,19 +215,20 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
 
   void scanDevices() {
     providerGraphDataWatch!.setLoading(true);
-    this.flutterBlue.connectedDevices.asStream().listen((List<BluetoothDevice> devices) {
-      printLog("devices ${devices.length}");
-      //providerGraphDataWatch!.devicesList.clear();
-      for (BluetoothDevice device in devices) {
-        printLog("connectedDevices ${device.name}");
-        if (device.name.toLowerCase().contains(displayDeviceString)) {
-          providerGraphDataWatch!.setDeviceList(device);
-        }
-      }
-    });
+    // this.flutterBlue.connectedDevices.asStream().listen((List<BluetoothDevice> devices) {
+    //   printLog("devices ${devices.length}");
+    //   //providerGraphDataWatch!.devicesList.clear();
+    //   for (BluetoothDevice device in devices) {
+    //     printLog("connectedDevices ${device.name}");
+    //     if (device.name.toLowerCase().contains(displayDeviceString)) {
+    //       providerGraphDataWatch!.setDeviceList(device);
+    //     }
+    //   }
+    // });
     this.flutterBlue.scanResults.listen((List<ScanResult> results) {
       // printLog("  scan result length devices ${results.length}");
       providerGraphDataWatch!.devicesList.clear();
+      //print("devicesList.length2 ${providerGraphDataWatch!.devicesList.length}");
       for (ScanResult result in results) {
         // printLog("  scanResults ${result.device}");
         if (result.device.name.toLowerCase().contains(displayDeviceString)) {
@@ -292,6 +298,7 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
           if (characteristic.uuid.toString() == readUuid) {
             printLog("readUUid matched ! ${readUuid.toString()}");
             providerGraphDataWatch!.setReadCharacteristic(characteristic);
+            //providerGraphDataWatch!.readCharacteristic!.setNotifyValue(true);
           }
         }
       }
@@ -357,7 +364,8 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
                   Navigator.pop(context);
                   providerGraphDataWatch!.writeChangeModeCharacteristic!
                       .write(utf8.encode('4'));
-                  bluetoothConnSub!.cancel();
+                  // if(bluetoothConnSub != null)
+                  //   bluetoothConnSub!.cancel();
                   Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -403,8 +411,8 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
                   Navigator.pop(context);
                   providerGraphDataWatch!.writeChangeModeCharacteristic!
                       .write(utf8.encode('7'));
-                  bluetoothConnSub!.cancel();
-
+                  // if(bluetoothConnSub != null)
+                  //   bluetoothConnSub!.cancel();
                   Navigator.push(
                       context,
                       MaterialPageRoute(

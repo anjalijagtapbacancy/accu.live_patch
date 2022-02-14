@@ -43,6 +43,7 @@ dependencies:
   ml_dataframe: ^0.5.1
   ml_preprocessing: ^6.0.0
   moving_average: ^0.3.0
+  syncfusion_flutter_gauges: ^19.3.55
 
 flutter_icons:
   image_path: "assets/images/app_icon.jpg"

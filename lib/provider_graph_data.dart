@@ -34,9 +34,11 @@ class ProviderGraphData with ChangeNotifier, Constant {
   Map<Guid, List<int>> readValues = new Map<Guid, List<int>>();
   var isServiceStarted = false;
   var isEnabled = true;
+  var isCsv = false;
+  var isShare = false;
   var isShowAvailableDevices = true;
   var isScanning = true;
-
+  Color bgColor=Color(0xFF151414);//0xFF151414(black) 0xFFF50707(red)
   String? msg_id;
   double spo2Val = 0;
   int index = 0;
@@ -102,6 +104,8 @@ class ProviderGraphData with ChangeNotifier, Constant {
   double MAP = 0;
   double CO = 0;
   double SV = 0;
+  double eDv = 0;
+  double eSv = 0;
   double avgPeak = 0;
   bool isecgSelected = false,
       isppgSelected = false,
@@ -131,6 +135,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
     connectedDevice = null;
     readValues = new Map<Guid, List<int>>();
     isServiceStarted = false;
+    isCsv = false;
     stepCount = 0;
     spo2Val = 0;
     avgPTT = 0;
@@ -153,6 +158,11 @@ class ProviderGraphData with ChangeNotifier, Constant {
     mainPpgDecimalList.clear();
     tempPpgHexList.clear();
     tempPpgDecimalList.clear();
+  }
+
+  void setbgColor(Color bg_color) {
+    bgColor = bg_color;
+    notifyListeners();
   }
 
   void setIndex(int Index) {
@@ -196,7 +206,14 @@ class ProviderGraphData with ChangeNotifier, Constant {
     isEnabled = !isEnabled;
     notifyListeners();
   }
-
+  setIsShare(bool is_share) {
+    isShare =is_share;
+    notifyListeners();
+  }
+  setIsCsv() {
+    isCsv = !isCsv;
+    notifyListeners();
+  }
   setecgSelected() {
     isecgSelected = !isecgSelected;
     notifyListeners();
@@ -387,7 +404,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
         msgIdList[1].toRadixString(16).padLeft(2, '0')
       ];
 
-      int.parse(msgIdHexList[1] + msgIdHexList[0], radix: 16).toString();
+      msg_id=int.parse(msgIdHexList[1] + msgIdHexList[0], radix: 16).toString();
       print('msg_id===${msg_id}');
 
       if (msg_id == '13') {
@@ -420,7 +437,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
       msg_id =
           int.parse(msgIdHexList[1] + msgIdHexList[0], radix: 16).toString();
-      print('msg_id===${msg_id}');
+      //print('msg_id===${msg_id}');
       if (msg_id == '10') {
         for (int i = 2; i < (valueList.length); i++) {
           if (i < ((valueList.length + 2) / 2)) {
@@ -431,7 +448,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
         }
         print("ecg hex list ${mainEcgHexList.length.toString()}");
         print("ppg hex list ${mainPpgHexList.length.toString()}");
-        if (mainEcgHexList.length < 500) {
+        if (mainEcgHexList.length < 800) {
           if (mainEcgHexList.length <= 100) {
             yAxisGraphData = 100;
           } else if (mainEcgHexList.length <= 200) {
@@ -442,11 +459,22 @@ class ProviderGraphData with ChangeNotifier, Constant {
             yAxisGraphData = 400;
           } else if (mainEcgHexList.length < 500) {
             yAxisGraphData = 500;
+          }else if (mainEcgHexList.length < 600) {
+            yAxisGraphData = 600;
+          }else if (mainEcgHexList.length < 700) {
+            yAxisGraphData = 700;
+          }else if (mainEcgHexList.length < 800) {
+            yAxisGraphData = 800;
           }
+          // else if (mainEcgHexList.length < 900) {
+          //   yAxisGraphData = 900;
+          // }else if (mainEcgHexList.length < 1000) {
+          //   yAxisGraphData = 1000;
+          // }
         } else {
-          yAxisGraphData = 500;
+          yAxisGraphData = 800;
         }
-        print("yAxisGraphData $yAxisGraphData");
+        //print("yAxisGraphData $yAxisGraphData");
         if (mainEcgHexList.length > (yAxisGraphData * 2) &&
             mainPpgHexList.length > (yAxisGraphData * 2)) {
           tempEcgHexList = mainEcgHexList
@@ -497,8 +525,8 @@ class ProviderGraphData with ChangeNotifier, Constant {
           //tempPpgDecimalList = mainPpgDecimalList.toList();
           tempPpgDecimalList = [5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5];
         }
-        tempEcgDecimalList = average_numbers(tempEcgDecimalList);
-        tempPpgDecimalList = average_numbers(tempPpgDecimalList);
+        tempEcgDecimalList = average_numbers_ecg(tempEcgDecimalList);
+        tempPpgDecimalList = average_numbers_ppg(tempPpgDecimalList);
         setSpotsListData();
       } else if (msg_id == '11') {
         // List<int>? stepCountList = [
@@ -602,10 +630,10 @@ class ProviderGraphData with ChangeNotifier, Constant {
         rrIntervalList1.add(0);
       }
 
-      printLog("totalOfPeaksEcg1  " +
-          totalOfPeaksEcg1.toString() +
-          " avg1 " +
-          (totalOfPeaksEcg1 / (peaksPositionsEcgArray1.length)).toString());
+      // printLog("totalOfPeaksEcg1  " +
+      //     totalOfPeaksEcg1.toString() +
+      //     " avg1 " +
+      //     (totalOfPeaksEcg1 / (peaksPositionsEcgArray1.length)).toString());
       double avgPeak = (totalOfPeaksEcg1 / (peaksPositionsEcgArray1.length));
       if (avgPeak.isInfinite || avgPeak.isNaN) {
         heartRate = 0;
@@ -898,7 +926,10 @@ class ProviderGraphData with ChangeNotifier, Constant {
       dDbp = 110.606825109447 - 96.651802662872 * avgPTT;
       PP = dBp - dDbp;
       MAP = ((dBp + (2 * dDbp)) / 3);
-      SV = dBp - dDbp;
+      //SV = dBp - dDbp;
+      eDv=(120*80)/dDbp; //120(ml),80(mmHg),eDv(ml 60-120 ml)
+      eSv=(120*50)/dBp;   //120(mmHg),50(ml),eSv(ml 50-100 ml)
+      SV=eDv-eSv;
       CO = ((SV * heartRate) / 1000);
     } catch (Exception) {
       printLog("Exception ppg ${Exception.toString()}");
@@ -912,10 +943,10 @@ class ProviderGraphData with ChangeNotifier, Constant {
         'R': rrInterval
       });
       final prediction = classifier.predict(testList);
-      print("prediction header ${prediction.header}");
-      print("prediction rows ${prediction.rows}");
+      //print("prediction header ${prediction.header}");
+      //print("prediction rows ${prediction.rows}");
       dynamic type = prediction.rows.first.first;
-      print("type ${type}");
+      //print("type ${type}");
       if (type == 0.0) {
         arrhythmia_type = "Normal";
       } else if (type == 1.0) {
@@ -936,12 +967,12 @@ class ProviderGraphData with ChangeNotifier, Constant {
   void TrainModel() async {
     final rawCsvContent = await rootBundle.loadString(csvFilePath);
     final samples = DataFrame.fromRawCsv(rawCsvContent, fieldDelimiter: ",");
-    print(samples.header);
+    //(samples.header);
     final arrthmiaColumn = 'Arrhythmia';
-    print("samples ${samples.rows.length}");
+    //print("samples ${samples.rows.length}");
     createClassifier =
         (DataFrame samples) => KnnClassifier(samples, arrthmiaColumn, 4);
-    print("createClassifier ${createClassifier.toString()}");
+    //print("createClassifier ${createClassifier.toString()}");
     classifier = createClassifier(samples);
   }
 }
