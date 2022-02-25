@@ -236,7 +236,7 @@ class _GraphScreenState extends State<GraphScreen>
           child: Visibility(
             visible: providerGraphDataWatch!.isEnabled,
             child: Container(
-              width: 400,
+              width: 300,
               child: Drawer(
                   child: SingleChildScrollView(
                 child: Row(

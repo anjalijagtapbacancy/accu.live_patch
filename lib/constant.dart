@@ -8,20 +8,20 @@ class Constant {
   String writeUuid = "00001525-1212-efde-1523-785feabcd123";
   String writeChangeModeUuid = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
   String csvFilePath="assets/datasets/all_samples_training.csv";
-  int yAxisGraphData = 800;//500
+  int yAxisGraphData = 800;//500 //decimallist length
  // int yAxisGraphInterval = 200;
   double xAxisInterval = 1.5; //200 bottom data
   double yAxisInterval = 0.5; //1000 left data
-  int periodicTimeInSec = 8100;//8000,7200
-  int filterDataListLength = 4050;//4000,3600
-  int filterDataListLength1 = 1620;//1600,1440
+  int periodicTimeInSec = 4050;//8000,7200,8100 //decimallist length
+  int filterDataListLength = 4050;//4000,3600 //decimallist length
+  int filterDataListLength1 = 1620;//1600,1440 //decimallist length
 
   String ppg = "PPG";
   String ecg = "ECG";
   String ecgNppg = "ECG & PPG";
   String spo2 = "Spo2";
   String strHeartRate = "Heart Rate";
-  String strStepCount = "Step Count";
+  String strStepCount = "Movement";
   String strBpRt = "BPFromECG";
   String heartRateUnit = "BPM";
   String bpUnit = "mmHg";

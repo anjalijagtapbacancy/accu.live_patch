@@ -401,7 +401,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
   void getSpo2Data(List<int>? valueList) {
     if (valueList != null && valueList.length > 0) {
-      print("getSpo2Data");
+      //print("getSpo2Data");
       List<int>? msgIdList = [valueList[0], valueList[1]];
 
       List<String> msgIdHexList = [
@@ -410,7 +410,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
       ];
 
       msg_id=int.parse(msgIdHexList[1] + msgIdHexList[0], radix: 16).toString();
-      print('msg_id===${msg_id}');
+      //print('msg_id===${msg_id}');
 
       if (msg_id == '13') {
         if (valueList.length == 4) {
@@ -444,6 +444,8 @@ class ProviderGraphData with ChangeNotifier, Constant {
           int.parse(msgIdHexList[1] + msgIdHexList[0], radix: 16).toString();
       //print('msg_id===${msg_id}');
       if (msg_id == '10') {
+        mainEcgHexList.clear();
+        mainPpgHexList.clear();
         for (int i = 2; i < (valueList.length); i++) {
           if (i < ((valueList.length + 2) / 2)) {
             mainEcgHexList.add(valueList[i].toRadixString(16).padLeft(2, '0'));
@@ -453,7 +455,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
         }
         print("ecg hex list ${mainEcgHexList.length.toString()}");
         print("ppg hex list ${mainPpgHexList.length.toString()}");
-        if (mainEcgHexList.length < 800) {
+        /*if (mainEcgHexList.length < 800) {
           if (mainEcgHexList.length <= 100) {
             yAxisGraphData = 100;
           } else if (mainEcgHexList.length <= 200) {
@@ -478,24 +480,24 @@ class ProviderGraphData with ChangeNotifier, Constant {
           // }
         } else {
           yAxisGraphData = 800;
-        }
+        }*/
         //print("yAxisGraphData $yAxisGraphData");
-        if (mainEcgHexList.length > (yAxisGraphData * 2) &&
-            mainPpgHexList.length > (yAxisGraphData * 2)) {
-          tempEcgHexList = mainEcgHexList
-              .getRange(mainEcgHexList.length - (yAxisGraphData * 2),
-                  mainEcgHexList.length)
-              .toList();
-          tempPpgHexList = mainPpgHexList
-              .getRange(mainPpgHexList.length - (yAxisGraphData * 2),
-                  mainPpgHexList.length)
-              .toList();
-        } else {
-          tempEcgHexList = mainEcgHexList.toList();
-          tempPpgHexList = mainPpgHexList.toList();
-        }
+        // if (mainEcgHexList.length > (yAxisGraphData * 2) &&
+        //     mainPpgHexList.length > (yAxisGraphData * 2)) {
+        //   tempEcgHexList = mainEcgHexList
+        //       .getRange(mainEcgHexList.length - (yAxisGraphData * 2),
+        //           mainEcgHexList.length)
+        //       .toList();
+        //   tempPpgHexList = mainPpgHexList
+        //       .getRange(mainPpgHexList.length - (yAxisGraphData * 2),
+        //           mainPpgHexList.length)
+        //       .toList();
+        // } else {
+        //   tempEcgHexList = mainEcgHexList.toList();
+        //   tempPpgHexList = mainPpgHexList.toList();
+        // }
 
-        mainEcgDecimalList.clear();
+        //mainEcgDecimalList.clear();
         for (int h = 0; h < mainEcgHexList.length; h++) {
           if (h % 2 == 0) {
             String strHex = mainEcgHexList[h + 1] + mainEcgHexList[h];
@@ -503,7 +505,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
                 (double.parse(int.parse(strHex, radix: 16).toString()) / 1000));
           }
         }
-        mainPpgDecimalList.clear();
+        //mainPpgDecimalList.clear();
         for (int h = 0; h < mainPpgHexList.length; h++) {
           if (h % 2 == 0) {
             String strHex = mainPpgHexList[h + 1] + mainPpgHexList[h];
@@ -553,12 +555,12 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
   void periodicTask() async {
     try {
-      if (mainEcgHexList.length > 0 &&
-          (mainEcgHexList.length) % filterDataListLength1 == 0) {
+      if (mainEcgDecimalList.length > 0 &&
+          (mainEcgDecimalList.length) % filterDataListLength1 == 0) {
         PeriodicHeartRate();
       }
-      if (mainEcgHexList.length > 0 &&
-          (mainEcgHexList.length) % periodicTimeInSec == 0) {
+      if (mainEcgDecimalList.length > 0 &&
+          (mainEcgDecimalList.length) % periodicTimeInSec == 0) {
         countEcgHeartRate();
         countPpgHeartRate();
       }
@@ -592,6 +594,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
                 .toList()));
       }
       //final filter output
+      //print("sgFilteredEcg1.length ${sgFilteredEcg1.length}");
       var fs1 = 25;
       var nyq1 = 0.5 * fs1; // design filter
       var cutOff1 = 0.5;
@@ -687,6 +690,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
             b, Array([1.0]), Array(mainEcgDecimalList)); // filter the signal
       }
       //final filter output
+      print("sgFilteredEcg.length ${sgFilteredEcg.length}");
       var fs1 = 100;
       var nyq1 = 0.5 * fs1; // design filter
       var cutOff1 = 0.5;
@@ -697,6 +701,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
       filterOPEcg = lfilter(b1, Array([1.0]), sgFilteredEcg);
       R_peaksPositionsEcgArray.clear();
       R_peaksArrayEcg.clear();
+      print("filterOPEcg.length ${filterOPEcg.length}");
       for (int f = 2000; f < filterOPEcg.length; f++) {
         if (f - 1 > 0 && f + 1 < filterOPEcg.length) {
           if (filterOPEcg[f] > filterOPEcg[f - 1] &&

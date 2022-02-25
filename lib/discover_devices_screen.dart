@@ -229,6 +229,17 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
       // printLog("  scan result length devices ${results.length}");
       providerGraphDataWatch!.devicesList.clear();
       //print("devicesList.length2 ${providerGraphDataWatch!.devicesList.length}");
+      // if(providerGraphDataWatch!.devicesList.length > 0 ) {
+      //   for (BluetoothDevice device in providerGraphDataWatch!.devicesList) {
+      //     if (results.contains(device) == true) {
+      //       print("if ");
+      //     }
+      //     else{
+      //       print("else ");
+      //       providerGraphDataWatch!.devicesList.remove(device);
+      //     }
+      //   }
+      // }
       for (ScanResult result in results) {
         // printLog("  scanResults ${result.device}");
         if (result.device.name.toLowerCase().contains(displayDeviceString)) {
@@ -241,7 +252,17 @@ class DiscoverDevicesState extends State<DiscoverDevices> with Constant, Utils {
     this.flutterBlue.startScan();
     providerGraphDataWatch!.setIsScanning(true);
   }
-
+  // if(providerGraphDataWatch!.devicesList.isNotEmpty) {
+  // for (BluetoothDevice device in providerGraphDataWatch!.devicesList) {
+  // if (results.contains(device) == true) {
+  // print("if ");
+  // }
+  // else{
+  // print("else ");
+  // providerGraphDataWatch!.devicesList.remove(device);
+  // }
+  // }
+  // }
   void connectDevice(BluetoothDevice device) async {
     providerGraphDataWatch!.setLoading(true);
 
