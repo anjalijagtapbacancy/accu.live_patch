@@ -67,7 +67,7 @@ class _GraphScreenState extends State<GraphScreen>
           default:
         }
       });
-
+      startReadData();
       connDeviceSub =
           providerGraphDataRead!.connectedDevice!.state.listen((event) async {
         //showToast("device event ${event.toString()}");
@@ -92,8 +92,15 @@ class _GraphScreenState extends State<GraphScreen>
     }
     if (bluetoothConnSub != null) bluetoothConnSub!.cancel();
     if (connDeviceSub != null) connDeviceSub!.cancel();
-    providerGraphDataWatch!.setisFirst(true);
+    providerGraphDataWatch!.setisFirstData(true);
+    providerGraphDataWatch!.setstart(10);
+    providerGraphDataWatch!.setistimerStart(false);
+    if(providerGraphDataWatch!.isecgppgOrSpo2)
+      providerGraphDataWatch!.stopTimer();
     providerGraphDataWatch!.clearProviderGraphData();
+    if (sub != null) {
+      sub.cancel();
+    }
     super.dispose();
   }
 
@@ -130,23 +137,25 @@ class _GraphScreenState extends State<GraphScreen>
                     print(
                         "UUID== ${providerGraphDataWatch!.readCharacteristic!.uuid.toString()}");
                     if (providerGraphDataWatch!.isServiceStarted) {
-                      try {
-                        await providerGraphDataWatch!.readCharacteristic!
-                            .setNotifyValue(false);
-                      } catch (err) {
-                        printLog("notfy err ${err.toString()}");
-                      }
-                      providerGraphDataWatch!.setisFirst(true);
+                      // try {
+                      //   await providerGraphDataWatch!.readCharacteristic!
+                      //       .setNotifyValue(false);
+                      // } catch (err) {
+                      //   printLog("notfy err ${err.toString()}");
+                      // }
                       providerGraphDataWatch!.setLoading(true);
-                      printLog("stop service");
-
                       //stop service
                       providerGraphDataWatch!.writeChangeModeCharacteristic!
                           .write([0]);
+                      if(providerGraphDataWatch!.isecgppgOrSpo2)
+                        providerGraphDataWatch!.stopTimer();
+                      providerGraphDataWatch!.setisFirstData(true);
+                      providerGraphDataWatch!.setistimerStart(false);
+                      printLog("stop service");
                       //providerGraphDataWatch!.writeCharacteristic!.write([0]);
-                      if (sub != null) {
-                        sub.cancel();
-                      }
+                      // if (sub != null) {
+                      //   sub.cancel();
+                      // }
                       providerGraphDataWatch!.setServiceStarted(false);
 
                       if(providerGraphDataWatch!.isCsv)
@@ -154,24 +163,25 @@ class _GraphScreenState extends State<GraphScreen>
 
                       providerGraphDataWatch!.setLoading(false);
                     } else {
-                      await providerGraphDataWatch!.readCharacteristic!
-                          .setNotifyValue(true);
+                      // await providerGraphDataWatch!.readCharacteristic!
+                      //     .setNotifyValue(true);
 
                       providerGraphDataWatch!.setLoading(true);
+                      providerGraphDataWatch!.setstart(10);
 
                       await providerGraphDataWatch!.clearStoreDataToLocal();
                       if(providerGraphDataWatch!.isCsv)
                         providerGraphDataWatch!.setIsShare(true);
                       else
                         providerGraphDataWatch!.setIsShare(false);
-                      sub = providerGraphDataWatch!.readCharacteristic!.value
-                          .listen((value) {
-                        readCharacteristics(value);
-                      }, onError: (error) {
-                        printLog("onError: ${error.toString()}");
-                      }, onDone: () {
-                        printLog("onDone");
-                      });
+                      // sub = providerGraphDataWatch!.readCharacteristic!.value
+                      //     .listen((value) {
+                      //   readCharacteristics(value);
+                      // }, onError: (error) {
+                      //   printLog("onError: ${error.toString()}");
+                      // }, onDone: () {
+                      //   printLog("onDone");
+                      // });
                       // start service
                       providerGraphDataWatch!.writeChangeModeCharacteristic!
                           .write([1]);
@@ -224,9 +234,10 @@ class _GraphScreenState extends State<GraphScreen>
           children: [
             (providerGraphDataWatch!.connectedDevice != null)
                 ? showBody()
-                : providerGraphDataWatch!.isLoading
+                : Offstage(),
+            providerGraphDataWatch!.isLoading
                     ? ProgressBar()
-                    : Offstage(),
+                    : SizedBox.shrink()
           ],
         ),
         endDrawer: Theme(
@@ -267,7 +278,7 @@ class _GraphScreenState extends State<GraphScreen>
                                         style: TextStyle(
                                             fontWeight: FontWeight.bold,
                                             fontSize: 50,
-                                            color: Color(0xFF90CAF9)),
+                                            color: clrblue),
                                       )
                                     : TextSpan(
                                         text:
@@ -275,12 +286,12 @@ class _GraphScreenState extends State<GraphScreen>
                                         style: TextStyle(
                                             fontWeight: FontWeight.bold,
                                             fontSize: 50,
-                                            color: Color(0xFF90CAF9)),
+                                            color: clrblue),
                                       ),
                                 TextSpan(
                                   text: '   steps',
                                   style: TextStyle(
-                                      fontSize: 12, color: Color(0xFF90CAF9)),
+                                      fontSize: 12, color: clrblue),
                                 )
                               ],
                             ),
@@ -1004,26 +1015,26 @@ class _GraphScreenState extends State<GraphScreen>
     if (providerGraphDataWatch!.services != null &&
         providerGraphDataWatch!.services!.length > 0) {
       try {
-        if (providerGraphDataWatch!.isServiceStarted) {
+        //if (providerGraphDataWatch!.isServiceStarted) {
           if (providerGraphDataWatch!.isecgppgOrSpo2 == false) {
-            if (!providerGraphDataWatch!.isFirst) {
+            if (!providerGraphDataWatch!.isFirstData) {
               providerGraphDataWatch!.generateGraphValuesList(value);
             } else {
-              print("isFirst ${providerGraphDataWatch!.isFirst}");
+              print("isFirst ${providerGraphDataWatch!.isFirstData}");
               print("value $value ");
             }
-            providerGraphDataWatch!.setisFirst(false);
+            providerGraphDataWatch!.setisFirstData(false);
           } else {
             print("tabLength  else");
-            if (!providerGraphDataWatch!.isFirst) {
+            if (!providerGraphDataWatch!.isFirstData) {
               providerGraphDataWatch!.getSpo2Data(value);
             } else {
-              print("isFirst ${providerGraphDataWatch!.isFirst}");
+              print("isFirst ${providerGraphDataWatch!.isFirstData}");
               print("value $value ");
             }
-            providerGraphDataWatch!.setisFirst(false);
+            providerGraphDataWatch!.setisFirstData(false);
           }
-        }
+        //}
       } catch (err) {
         printLog(" caught err ${err.toString()}");
       }
@@ -1043,9 +1054,9 @@ class _GraphScreenState extends State<GraphScreen>
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisSize: MainAxisSize.max,
                   children: <Widget>[
-                    rowTitle(ecg),
+                    rowTitle(ecg,true),
                     graphWidget(ecg),
-                    rowTitle(ppg),
+                    rowTitle(ppg,false),
                     graphWidget(ppg)
                   ],
                 ),
@@ -1109,7 +1120,7 @@ class _GraphScreenState extends State<GraphScreen>
                               style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 50,
-                                  color: Color(0xFF90CAF9)),
+                                  color: clrblue),
                             )
                                 : TextSpan(
                               text:
@@ -1117,12 +1128,12 @@ class _GraphScreenState extends State<GraphScreen>
                               style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 50,
-                                  color: Color(0xFF90CAF9)),
+                                  color: clrblue),
                             ),
                             TextSpan(
                               text: '   steps',
                               style: TextStyle(
-                                  fontSize: 12, color: Color(0xFF90CAF9)),
+                                  fontSize: 12, color: clrblue),
                             )
                           ],
                         ),
@@ -1591,7 +1602,7 @@ class _GraphScreenState extends State<GraphScreen>
     );
   }
 
-  Widget rowTitle(String title) {
+  Widget rowTitle(String title,bool isBat) {
     return Padding(
       padding: EdgeInsets.fromLTRB(0, 0, 20, 0),
       child: Row(
@@ -1606,6 +1617,12 @@ class _GraphScreenState extends State<GraphScreen>
               ),
             ),
           ),
+          isBat == true
+          ? Text(
+            "Battery Percentage : ${providerGraphDataWatch!.batteryPercent.toString()} %",
+            style: TextStyle(fontSize: 12),
+          )
+          : SizedBox.shrink(),
         ],
       ),
     );
@@ -1794,7 +1811,7 @@ class _GraphScreenState extends State<GraphScreen>
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisSize: MainAxisSize.max,
                   children: [
-                    rowTitle(ecg),
+                    rowTitle(ecg,true),
                      Padding(
                         padding: const EdgeInsets.fromLTRB(0, 0, 30, 0),
                         child: Container(
@@ -1881,7 +1898,7 @@ class _GraphScreenState extends State<GraphScreen>
                               style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 50,
-                                  color: Color(0xFF90CAF9)),
+                                  color: clrblue),
                             )
                                 : TextSpan(
                               text:
@@ -1889,12 +1906,12 @@ class _GraphScreenState extends State<GraphScreen>
                               style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 50,
-                                  color: Color(0xFF90CAF9)),
+                                  color: clrblue),
                             ),
                             TextSpan(
                               text: '   steps',
                               style: TextStyle(
-                                  fontSize: 12, color: Color(0xFF90CAF9)),
+                                  fontSize: 12, color: clrblue),
                             )
                           ],
                         ),
@@ -2376,7 +2393,7 @@ class _GraphScreenState extends State<GraphScreen>
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisSize: MainAxisSize.max,
                   children: [
-                    rowTitle(ppg),
+                    rowTitle(ppg,true),
                      Padding(
                         padding: const EdgeInsets.fromLTRB(0, 0, 30, 0),
                         child: Container(
@@ -2463,7 +2480,7 @@ class _GraphScreenState extends State<GraphScreen>
                               style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 50,
-                                  color: Color(0xFF90CAF9)),
+                                  color: clrblue),
                             )
                                 : TextSpan(
                               text:
@@ -2471,12 +2488,12 @@ class _GraphScreenState extends State<GraphScreen>
                               style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 50,
-                                  color: Color(0xFF90CAF9)),
+                                  color: clrblue),
                             ),
                             TextSpan(
                               text: '   steps',
                               style: TextStyle(
-                                  fontSize: 12, color: Color(0xFF90CAF9)),
+                                  fontSize: 12, color: clrblue),
                             )
                           ],
                         ),
@@ -2949,106 +2966,134 @@ class _GraphScreenState extends State<GraphScreen>
     return Center(
       child: Container(
         height: MediaQuery.of(context).size.height/1.25,
-        child: SfRadialGauge(axes: <RadialAxis>[
-          RadialAxis(
-            axisLineStyle: AxisLineStyle(
-              color: Color(0xFFD7DBD7),
-              thickness: 0.2,
-              thicknessUnit: GaugeSizeUnit.factor,
+        child: Column(
+          children: [
+            Text(
+              "Battery Percentage : ${providerGraphDataWatch!.batteryPercent.toString()} %",
+              style: TextStyle(fontSize: 12),
             ),
-            startAngle: 130,
-            maximum: 100,
-            endAngle: 410,
-            canScaleToFit: true,
-            minimum: 0,
-            showLabels: false,
-            showTicks: false,
-            pointers: <GaugePointer>[
-              RangePointer(
-                value: providerGraphDataWatch!.spo2Val,
-                width: 0.2,
-                enableAnimation: true,
-                sizeUnit: GaugeSizeUnit.factor,
-                gradient: const SweepGradient(colors: <Color>[
-                  Color.fromARGB(242, 147, 250, 151),
-                  Color.fromARGB(242, 82, 222, 88),
-                  Color.fromARGB(242, 48, 191, 54),
-                  Color.fromARGB(242, 16, 145, 21)
-                ], stops: <double>[
-                  0.20,
-                  0.40,
-                  0.60,
-                  0.80
-                ]),
-              )
-            ],
-            annotations: [
-              GaugeAnnotation(
-                widget: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          providerGraphDataWatch!.spo2Val == 0
-                              ? providerGraphDataWatch!.isServiceStarted == true
-                                  ? Text(
-                                      'Checking....',
-                                      style: TextStyle(fontSize: 30,color: Colors.green,),
-                                    )
-                                  : Text(
-                                      'Click Start...',
-                                      style: TextStyle(
-                                          color: Colors.green,
-                                          fontSize: 20),
-                                    )
-                              : Row(
-                                  children: [
-                                    Text(
-                                      providerGraphDataWatch!.spo2Val
-                                          .toStringAsFixed(2),
-                                      style: TextStyle(
-                                          color: Colors.green, fontSize: 40),
-                                    ),
-                                    Text(
-                                      ' %',
-                                      style: TextStyle(
-                                          color: Colors.green, fontSize: 25),
-                                    ),
-                                  ],
-                                ),
-                        ],
-                      ),
-                      SizedBox(height: 10,),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-
-                          Text(
-                            'SpO2',
-                            style: TextStyle(
-                              color: Colors.green,
-                              fontSize: 25,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+            Expanded(
+              child: SfRadialGauge(axes: <RadialAxis>[
+                RadialAxis(
+                  axisLineStyle: AxisLineStyle(
+                    color: Color(0xFFD7DBD7),
+                    thickness: 0.2,
+                    thicknessUnit: GaugeSizeUnit.factor,
                   ),
+                  startAngle: 130,
+                  maximum: 100,
+                  endAngle: 410,
+                  canScaleToFit: true,
+                  minimum: 0,
+                  showLabels: false,
+                  showTicks: false,
+                  pointers: <GaugePointer>[
+                    RangePointer(
+                      value: providerGraphDataWatch!.spo2Val == 0
+                                ? providerGraphDataWatch!.spo2Val
+                                : providerGraphDataWatch!.timer!.isActive
+                                    ? 0
+                                    : providerGraphDataWatch!.start == 0
+                                        ? providerGraphDataWatch!.spo2Val
+                                        : 0,
+                      width: 0.2,
+                      enableAnimation: true,
+                      sizeUnit: GaugeSizeUnit.factor,
+                      gradient: const SweepGradient(colors: <Color>[
+                        Color.fromARGB(242, 147, 250, 151),
+                        Color.fromARGB(242, 82, 222, 88),
+                        Color.fromARGB(242, 48, 191, 54),
+                        Color.fromARGB(242, 16, 145, 21)
+                      ], stops: <double>[
+                        0.20,
+                        0.40,
+                        0.60,
+                        0.80
+                      ]),
+                    )
+                  ],
+                  annotations: [
+                    GaugeAnnotation(
+                      widget: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                providerGraphDataWatch!.spo2Val == 0
+                                    ? providerGraphDataWatch!.isServiceStarted == true
+                                        ? Text(
+                                            'Checking....',
+                                            style: TextStyle(fontSize: 30,color: Colors.green,),
+                                          )
+                                        : Text(
+                                            'Click Start...',
+                                            style: TextStyle(
+                                                color: Colors.green,
+                                                fontSize: 20),
+                                          )
+                                    : providerGraphDataWatch!.timer!.isActive
+                                ? Text(
+                                  providerGraphDataWatch!.start >= 10 ? '00:${providerGraphDataWatch!.start}':'00:0${providerGraphDataWatch!.start}',
+                                  style: TextStyle(fontSize: 30,color: Colors.green,),
+                                )
+                                : providerGraphDataWatch!.start == 0
+                                    ? Row(
+                                        children: [
+                                          Text(
+                                            providerGraphDataWatch!.spo2Val
+                                                .toStringAsFixed(2),
+                                            style: TextStyle(
+                                                color: Colors.green, fontSize: 40),
+                                          ),
+                                          Text(
+                                            ' %',
+                                            style: TextStyle(
+                                                color: Colors.green, fontSize: 25),
+                                          ),
+                                        ],
+                                      )
+                                    : Text(
+                                  'Click Start...',
+                                  style: TextStyle(
+                                      color: Colors.green,
+                                      fontSize: 20),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 10,),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+
+                                Text(
+                                  'SpO2',
+                                  style: TextStyle(
+                                    color: Colors.green,
+                                    fontSize: 25,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                        positionFactor: 0.0,
+                        angle: 90
+                    ),
+                  ],
                 ),
-                  positionFactor: 0.0,
-                  angle: 90
-              ),
-            ],
-          ),
-        ]),
+              ]),
+            ),
+          ],
+        ),
       ),
       // child: Row(
       //   mainAxisAlignment: MainAxisAlignment.center,
@@ -3125,5 +3170,18 @@ class _GraphScreenState extends State<GraphScreen>
     providerGraphDataWatch!.setLoading(false);
 
     Share.shareFiles(['${file.path}'], text: 'Exported csv');
+  }
+
+  Future<void> startReadData() async {
+    await providerGraphDataWatch!.readCharacteristic!
+        .setNotifyValue(true);
+    sub = providerGraphDataWatch!.readCharacteristic!.value
+        .listen((value) {
+      readCharacteristics(value);
+    }, onError: (error) {
+      printLog("onError: ${error.toString()}");
+    }, onDone: () {
+      printLog("onDone");
+    });
   }
 }

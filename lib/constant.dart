@@ -67,6 +67,8 @@ class Constant {
   // Color clrPrimary = Color(0xFF23B6E6);
   Color clrPrimary = Color(0xFF4CBB17);
   Color clrdrawerHeader = Color(0xFF7CC16A);
+  //Color clrblue = Color(0xFF0387F1);
+  Color clrblue = Color(0xFF90CAF9);
   Color clrPrimaryYellow = Color(0xFFEFE139);
   Color clrPrimaryRed = Color(0xFFF32D31);
 

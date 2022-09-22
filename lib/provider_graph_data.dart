@@ -20,7 +20,8 @@ class ProviderGraphData with ChangeNotifier, Constant {
   final FlutterBlue flutterBlue = FlutterBlue.instance;
   BluetoothDevice? connectedDevice;
   List<BluetoothService>? services;
-  bool isFirst = true;
+  bool isFirstData = true;
+  bool istimerStart = false;
   String? arrhythmia_type;
 
   Location location = new Location();
@@ -89,6 +90,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
   double totalOfPeaksEcg1 = 0;
 
   double stepCount = 0;
+  num batteryPercent = 0;
   int heartRate = 0;
   List<double> pttArray = [];
   List<int> R_peaksPositionsEcgArray = [];
@@ -116,6 +118,9 @@ class ProviderGraphData with ChangeNotifier, Constant {
   double avgHrv = 0;
   List<double> prv = [];
   double avgPrv = 0;
+  Timer? timer;
+  int start = 10;
+  static const oneSec = const Duration(seconds: 1);
 
   clearProviderGraphData() {
     BpFromRt = 0;
@@ -137,6 +142,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
     isServiceStarted = false;
     isCsv = false;
     stepCount = 0;
+    batteryPercent = 0;
     spo2Val = 0;
     avgPTT = 0;
     heartRate = 0;
@@ -187,8 +193,18 @@ class ProviderGraphData with ChangeNotifier, Constant {
     notifyListeners();
   }
 
-  setisFirst(bool value) {
-    isFirst = value;
+  setisFirstData(bool value) {
+    isFirstData = value;
+    //notifyListeners();
+  }
+
+  setistimerStart(bool value) {
+    istimerStart = value;
+    //notifyListeners();
+  }
+
+  setstart(int value) {
+    start = value;
     //notifyListeners();
   }
 
@@ -206,14 +222,17 @@ class ProviderGraphData with ChangeNotifier, Constant {
     isEnabled = !isEnabled;
     notifyListeners();
   }
+
   setIsShare(bool is_share) {
     isShare =is_share;
     notifyListeners();
   }
+
   setIsCsv() {
     isCsv = !isCsv;
     notifyListeners();
   }
+
   setecgSelected() {
     isecgSelected = !isecgSelected;
     notifyListeners();
@@ -401,29 +420,56 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
   void getSpo2Data(List<int>? valueList) {
     if (valueList != null && valueList.length > 0) {
-      //print("getSpo2Data");
-      List<int>? msgIdList = [valueList[0], valueList[1]];
+      print("getSpo2Data");
+      printLog("getSpo2Data data ${valueList.toList()}");
+      //List<int>? msgIdList = [valueList[0], valueList[1]];
+      List<int>? msgIdList = [valueList[0]];
+
+      // List<String> msgIdHexList = [
+      //   msgIdList[0].toRadixString(16).padLeft(2, '0'),
+      //   msgIdList[1].toRadixString(16).padLeft(2, '0')
+      // ];
 
       List<String> msgIdHexList = [
-        msgIdList[0].toRadixString(16).padLeft(2, '0'),
-        msgIdList[1].toRadixString(16).padLeft(2, '0')
+        msgIdList[0].toRadixString(16).padLeft(2, '0')
       ];
 
-      msg_id=int.parse(msgIdHexList[1] + msgIdHexList[0], radix: 16).toString();
-      //print('msg_id===${msg_id}');
+      //msg_id=int.parse(msgIdHexList[1] + msgIdHexList[0], radix: 16).toString();
+      msg_id=int.parse(msgIdHexList[0], radix: 16).toString();
+      print('msg_id===${msg_id}');
 
       if (msg_id == '13') {
-        if (valueList.length == 4) {
-          String strHex = valueList[3].toRadixString(16).padLeft(2, '0') +
-              valueList[2].toRadixString(16).padLeft(2, '0');
+        if(istimerStart == false){
+          setistimerStart(true);
+          startTimer();
+        }
+        //if (valueList.length == 4) {
+        if (valueList.length == 3) {
+          // String strHex = valueList[3].toRadixString(16).padLeft(2, '0') +
+          //     valueList[2].toRadixString(16).padLeft(2, '0');
+          String strHex = valueList[2].toRadixString(16).padLeft(2, '0') +
+              valueList[1].toRadixString(16).padLeft(2, '0');
           spo2Val = (double.parse(
                   int.parse(strHex, radix: 16).toString().padLeft(1, '0'))) /
               100;
           if (spo2Val > 100) {
+            print("spo2Val read ${spo2Val.toString()}");
             spo2Val = 100.0;
           }
           print("spo2Val read ${spo2Val.toString()}");
         }
+      }
+      else if (msg_id == '16') {
+        List<String> stepCountHexList = [
+          valueList[1].toRadixString(16).padLeft(2, '0'),
+          valueList[2].toRadixString(16).padLeft(2, '0')
+        ];
+
+        String strBatHex = stepCountHexList[1] + stepCountHexList[0];
+
+        batteryPercent = int.parse(strBatHex, radix: 16);
+        //Utils().showToast("battery $batteryPercent");
+        print("battery $batteryPercent");
       }
       notifyListeners();
     }
@@ -432,24 +478,35 @@ class ProviderGraphData with ChangeNotifier, Constant {
   void generateGraphValuesList(List<int>? valueList) async {
     if (valueList != null && valueList.length > 0) {
       printLog("valueList.lengh ${valueList.length}");
+      printLog("valueList ${valueList.toList()}");
 
-      List<int>? msgIdList = [valueList[0], valueList[1]];
+      //List<int>? msgIdList = [valueList[0], valueList[1]];
+      List<int>? msgIdList = [valueList[0]];
 
+      // List<String> msgIdHexList = [
+      //   msgIdList[0].toRadixString(16).padLeft(2, '0'),
+      //   msgIdList[1].toRadixString(16).padLeft(2, '0')
+      // ];
       List<String> msgIdHexList = [
-        msgIdList[0].toRadixString(16).padLeft(2, '0'),
-        msgIdList[1].toRadixString(16).padLeft(2, '0')
+        msgIdList[0].toRadixString(16).padLeft(2, '0')
       ];
 
+      // msg_id =
+      //     int.parse(msgIdHexList[1] + msgIdHexList[0], radix: 16).toString();
       msg_id =
-          int.parse(msgIdHexList[1] + msgIdHexList[0], radix: 16).toString();
-      //print('msg_id===${msg_id}');
+          int.parse(msgIdHexList[0], radix: 16).toString();
+      print('msg_id===${msg_id}');
       if (msg_id == '10') {
         mainEcgHexList.clear();
         mainPpgHexList.clear();
-        for (int i = 2; i < (valueList.length); i++) {
-          if (i < ((valueList.length + 2) / 2)) {
+        //for (int i = 2; i < (valueList.length); i++) {
+        for (int i = 1; i < (valueList.length); i++) {
+          //if (i < ((valueList.length + 2) / 2)) {
+          if (i < ((valueList.length + 1) / 2)) {
+            //mainEcgHexList.add(valueList[i].toRadixString(16).padLeft(2, '0'));
             mainEcgHexList.add(valueList[i].toRadixString(16).padLeft(2, '0'));
           } else {
+            //mainPpgHexList.add(valueList[i].toRadixString(16).padLeft(2, '0'));
             mainPpgHexList.add(valueList[i].toRadixString(16).padLeft(2, '0'));
           }
         }
@@ -499,20 +556,36 @@ class ProviderGraphData with ChangeNotifier, Constant {
 
         //mainEcgDecimalList.clear();
         for (int h = 0; h < mainEcgHexList.length; h++) {
-          if (h % 2 == 0) {
-            String strHex = mainEcgHexList[h + 1] + mainEcgHexList[h];
+          //if (h % 2 == 0) {
+          if (h % 4 == 0) {
+            //String strHex = mainEcgHexList[h + 1] + mainEcgHexList[h];
+            String strHex = mainEcgHexList[h + 3] +mainEcgHexList[h + 2] +mainEcgHexList[h + 1] + mainEcgHexList[h];
+            // mainEcgDecimalList.add(
+            //     (double.parse(int.parse(strHex, radix: 16).toString()) / 1000));
+            // mainEcgDecimalList.add(
+            //     (double.parse(BigInt.parse(strHex, radix: 32).toString()) / 1000));
             mainEcgDecimalList.add(
-                (double.parse(int.parse(strHex, radix: 16).toString()) / 1000));
+                (double.parse(BigInt.parse(strHex, radix: 16).toString())));
           }
         }
+        print('mainEcgDecimalList.length ${mainEcgDecimalList.length}');
+        print('mainEcgDecimalList ${mainEcgDecimalList.toList()}');
         //mainPpgDecimalList.clear();
         for (int h = 0; h < mainPpgHexList.length; h++) {
-          if (h % 2 == 0) {
-            String strHex = mainPpgHexList[h + 1] + mainPpgHexList[h];
+          //if (h % 2 == 0) {
+          if (h % 4 == 0) {
+            //String strHex = mainPpgHexList[h + 1] + mainPpgHexList[h];
+            String strHex = mainPpgHexList[h + 3] + mainPpgHexList[h + 2] +mainPpgHexList[h + 1] + mainPpgHexList[h];
+            // mainPpgDecimalList.add(
+            //     (double.parse(int.parse(strHex, radix: 16).toString()) / 1000));
+            // mainPpgDecimalList.add(
+            //     (double.parse(BigInt.parse(strHex, radix: 32).toString()) / 1000));
             mainPpgDecimalList.add(
-                (double.parse(int.parse(strHex, radix: 16).toString()) / 1000));
+                (double.parse(BigInt.parse(strHex, radix: 16).toString())));
           }
         }
+        print('mainPpgDecimalList.length ${mainPpgDecimalList.length}');
+        print('mainPpgDecimalList ${mainPpgDecimalList.toList()}');
         if (mainEcgDecimalList.length > yAxisGraphData) {
           tempEcgDecimalList = mainEcgDecimalList
               .getRange(mainEcgDecimalList.length - yAxisGraphData,
@@ -520,7 +593,7 @@ class ProviderGraphData with ChangeNotifier, Constant {
               .toList();
         } else {
           //tempEcgDecimalList = mainEcgDecimalList.toList();
-          tempEcgDecimalList = [5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5];
+          tempEcgDecimalList = [5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5];
         }
 
         if (mainPpgDecimalList.length > yAxisGraphData) {
@@ -530,25 +603,43 @@ class ProviderGraphData with ChangeNotifier, Constant {
               .toList();
         } else {
           //tempPpgDecimalList = mainPpgDecimalList.toList();
-          tempPpgDecimalList = [5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5];
+          tempPpgDecimalList = [5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5];
         }
         tempEcgDecimalList = average_numbers_ecg(tempEcgDecimalList);
         tempPpgDecimalList = average_numbers_ppg(tempPpgDecimalList);
         setSpotsListData();
-      } else if (msg_id == '11') {
+      }
+      else if (msg_id == '11') {
         // List<int>? stepCountList = [
         //   valueList[valueList.length - 2],
         //   valueList[valueList.length - 1]
         // ];
+        // List<String> stepCountHexList = [
+        //   valueList[2].toRadixString(16).padLeft(2, '0'),
+        //   valueList[3].toRadixString(16).padLeft(2, '0')
+        // ];
+
         List<String> stepCountHexList = [
-          valueList[2].toRadixString(16).padLeft(2, '0'),
-          valueList[3].toRadixString(16).padLeft(2, '0')
+          valueList[1].toRadixString(16).padLeft(2, '0'),
+          valueList[2].toRadixString(16).padLeft(2, '0')
         ];
 
         String strStepHex = stepCountHexList[1] + stepCountHexList[0];
 
         stepCount = double.parse(int.parse(strStepHex, radix: 16).toString());
-      } else if (msg_id == '12') {}
+      }
+      else if (msg_id == '16') {
+        List<String> stepCountHexList = [
+          valueList[1].toRadixString(16).padLeft(2, '0'),
+          valueList[2].toRadixString(16).padLeft(2, '0')
+        ];
+
+        String strBatHex = stepCountHexList[1] + stepCountHexList[0];
+
+        batteryPercent = int.parse(strBatHex, radix: 16);
+        //Utils().showToast("battery $batteryPercent");
+        print("battery $batteryPercent");
+      }
       notifyListeners();
     }
   }
@@ -985,4 +1076,27 @@ class ProviderGraphData with ChangeNotifier, Constant {
     //print("createClassifier ${createClassifier.toString()}");
     classifier = createClassifier(samples);
   }
+
+  void startTimer() {
+    timer = new Timer.periodic(
+      oneSec,
+          (Timer timer) {
+        if (start == 0) {
+            timer.cancel();
+            notifyListeners();
+        } else {
+            start--;
+            notifyListeners();
+        }
+      },
+    );
+  }
+
+  void stopTimer(){
+    if(timer != null) {
+      if(timer!.isActive)
+        timer!.cancel();
+    }
+  }
+
 }
